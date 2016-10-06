@@ -2,9 +2,11 @@
 #define __LASER_SCAN_OBSERVER_H
 
 #include <utility>
+#include <memory>
 #include <sensor_msgs/LaserScan.h>
 #include <boost/shared_ptr.hpp>
 
+#include "../core/slam_fascade.h"
 #include "../core/sensor_data.h"
 #include "topic_with_transform.h"
 
@@ -14,14 +16,17 @@
  */
 class LaserScanObserver : public TopicObserver<sensor_msgs::LaserScan> {
   using ScanPtr = boost::shared_ptr<sensor_msgs::LaserScan>;
+  using SlamPtr = std::shared_ptr<SlamFascade<TransformedLaserScan>>;
 public: //methods
+
 /**
  * Initializes the base laser scan observer.
+ * \param slam The pointer to the global slam fascade.
  * \param skip_max_vals Whether scan points that exceed the max reliable scan-specific distance be skipped.
  */
-  LaserScanObserver(bool skip_max_vals = false):
-    _skip_max_vals(skip_max_vals),
-    _prev_x(0), _prev_y(0), _prev_yaw(0) {}
+  LaserScanObserver(SlamPtr slam, bool skip_max_vals = false):
+    _slam(slam), _skip_max_vals(skip_max_vals) {}
+
 /**
  * \brief Converts ROS-specific structures that hold sensor data to internal framework's structures;
  * Laser scan filtering is performed as part of the conversion.
@@ -31,9 +36,8 @@ public: //methods
   virtual void handle_transformed_msg(
     const ScanPtr msg, const tf::StampedTransform& t) {
 
-    double new_x = t.getOrigin().getX();
-    double new_y = t.getOrigin().getY();
-    double new_yaw = tf::getYaw(t.getRotation());
+    RobotPose new_pose(t.getOrigin().getX(), t.getOrigin().getY(),
+                        tf::getYaw(t.getRotation()));
 
     TransformedLaserScan laser_scan;
     laser_scan.quality = 1.0;
@@ -55,19 +59,16 @@ public: //methods
       laser_scan.points.push_back(sp);
     }
 
-    laser_scan.d_x = new_x - _prev_x;
-    laser_scan.d_y = new_y - _prev_y;
-    laser_scan.d_yaw = new_yaw - _prev_yaw;
-    _prev_x = new_x, _prev_y = new_y, _prev_yaw = new_yaw;
+    laser_scan.pose_delta = new_pose - _prev_pose;
+    _prev_pose = new_pose;
 
-    handle_laser_scan(laser_scan);
+    _slam->handle_sensor_data(laser_scan);
   }
 
-  virtual void handle_laser_scan(TransformedLaserScan &) = 0;
-
 private: // fields
+  std::shared_ptr<SlamFascade<TransformedLaserScan>> _slam;
   bool _skip_max_vals;
-  double _prev_x, _prev_y, _prev_yaw;
+  RobotPose _prev_pose;
 };
 
 #endif

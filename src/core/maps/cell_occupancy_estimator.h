@@ -41,6 +41,7 @@ struct Occupancy {
            EQ_DOUBLE(estimation_quality, that.estimation_quality);
   }
 };
+
 /**
  * The representation of a laser beam bounded by an obstacle.
  */

@@ -8,17 +8,17 @@
 #include <nav_msgs/OccupancyGrid.h>
 
 #include "../core/state_data.h"
+#include "../core/slam_fascade.h"
 #include "../core/maps/grid_map.h"
 
 /**
  * \brief The class publishes information about robot's map and location
  *  in ROS-compatible format so it can be shown by rviz.
  */
-class RvizGridViewer {
+class RvizGridViewer : public WorldObserver<GridMap> {
 public: // method
-
 /**
- * Initializes a map and robot's position publisher.
+ * Initializes a map publishing rate and robot's position publisher.
  * \param pub A map publisher to ROS.
  */
   RvizGridViewer(ros::Publisher pub, const double show_map_rate) :
@@ -26,13 +26,13 @@ public: // method
 
 /**
  * Publishes a robot state as TF message.
- * \param r A robot state in internal format.
+ * \param rs A robot state in internal format.
  */
-  void show_robot_pose(const RobotState &r) {
+  virtual void on_pose_update(const RobotPose &rs) override {
     tf::Transform t;
-    t.setOrigin(tf::Vector3(r.x, r.y, 0.0));
+    t.setOrigin(tf::Vector3(rs.x, rs.y, 0.0));
     tf::Quaternion q;
-    q.setRPY(0, 0, r.theta);
+    q.setRPY(0, 0, rs.theta);
     t.setRotation(q);
     _tf_brcst.sendTransform(
       tf::StampedTransform(t, ros::Time::now(),
@@ -43,7 +43,7 @@ public: // method
  * Publishes given GridMap as a ROS message.
  * \param map A grid map in framework's internal format.
  */
-  void show_map(const GridMap &map) {
+  virtual void on_map_update(const GridMap &map) override {
     // TODO: move map publishing rate to parameter
     if ((ros::Time::now() - _last_pub_time).toSec() < map_publishing_rate) {
       return;

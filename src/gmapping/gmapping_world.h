@@ -36,13 +36,6 @@ private:
   double _phys_x, _phys_y;
 };
 
-class GmappingBaseCellFactory : public GridCellFactory {
-public:
-  std::shared_ptr<GridCell> create_cell() override {
-    return std::shared_ptr<GridCell>(new GmappingBaseCell());
-  }
-};
-
 class GmappingWorld : public Particle, public LaserScanGridWorld {
 public:
   using MapType = GridMap;

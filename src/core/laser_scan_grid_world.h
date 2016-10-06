@@ -32,14 +32,13 @@ public: // methods
   LaserScanGridWorld(std::shared_ptr<GridCellStrategy> gcs,
                      const GridMapParams &init_params) :
     _map(gcs->cell_factory(), init_params) {}
-
   /**
    * Updates the map cells according to a given sensor data. Straightforward
    * scan points projection is used.
    * \param scan The current scan from Laser Rangefinder.
    */
   virtual void handle_observation(TransformedLaserScan &scan) {
-    const RobotState& pose = World<TransformedLaserScan, MapType>::pose();
+    const RobotPose& pose = World<TransformedLaserScan, MapType>::pose();
     for (const auto &sp : scan.points) {
       // move to world frame assume sensor is in robots' (0,0)
       double x_world = pose.x + sp.range * std::cos(sp.angle + pose.theta);

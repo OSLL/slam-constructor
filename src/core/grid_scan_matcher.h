@@ -25,7 +25,7 @@ public:
    * \param TransformedLaserScan A laser scan with a transformation.
    * \param GridMap A grid map that is used by the matcher.
    */
-  virtual void on_matching_start(const RobotState &,           /*pose*/
+  virtual void on_matching_start(const RobotPose &,           /*pose*/
                                  const TransformedLaserScan &, /*scan*/
                                  const GridMap &) {}    /*map*/
 
@@ -34,7 +34,7 @@ public:
    * \param RobotState A pose of a robot.
    * \param TransformedLaserScan A laser scan with a transformation.
    */
-  virtual void on_scan_test(const RobotState &,           /*pose*/
+  virtual void on_scan_test(const RobotPose &,           /*pose*/
                             const TransformedLaserScan &, /*scan*/
                             double) {};                  /*score*/
 
@@ -44,7 +44,7 @@ public:
    * \param RobotState A pose of a robot.
    * \param TransformedLaserScan A laser scan with a transformation.
    */
-  virtual void on_pose_update(const RobotState &,            /*pose*/
+  virtual void on_pose_update(const RobotPose &,            /*pose*/
                               const TransformedLaserScan &,  /*scan*/
                               double) {};                    /*score*/
 
@@ -52,7 +52,7 @@ public:
    * A callback invoked when scan matching is done.
    * \param RobotState A pose of a robot.
    */
-  virtual void on_matching_end(const RobotState &, /*delta*/
+  virtual void on_matching_end(const RobotPose &, /*delta*/
                                double) {};         /*best_score*/
 };
 
@@ -69,7 +69,7 @@ public:
    * \param scan A laser scan with a transformation.
    * \param map A grid map that is used by the matcher.
    */
-  virtual double estimate_scan_cost(const RobotState &pose,
+  virtual double estimate_scan_cost(const RobotPose &pose,
                                     const TransformedLaserScan &scan,
                                     const GridMap &map,
                                     double min_cost) = 0;
@@ -94,10 +94,10 @@ public:
    * \param pose_delta The difference between the real robot pose and its
    * estimation.
    */
-  virtual double process_scan(const RobotState &init_pose,
+  virtual double process_scan(const RobotPose &init_pose,
                               const TransformedLaserScan &scan,
                               const GridMap &map,
-                              RobotState &pose_delta) = 0;
+                              RobotPoseDelta &pose_delta) = 0;
 
   /// Invoked to reset the scan matcher's state.
   virtual void reset_state() {};

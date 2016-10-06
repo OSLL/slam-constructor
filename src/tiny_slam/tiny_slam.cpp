@@ -16,10 +16,12 @@
 
 //#define RVIZ_DEBUG 1
 
-#include "../core/sensor_data.h"
 #include "../ros/topic_with_transform.h"
 #include "../ros/rviz_grid_viewer.h"
 #include "../ros/utils.h"
+#include "../ros/laser_scan_observer.h"
+
+#include "../core/sensor_data.h"
 #include "../core/maps/area_occupancy_estimator.h"
 #include "../core/maps/const_occupancy_estimator.h"
 #include "../core/maps/grid_cell_strategy.h"
@@ -39,7 +41,7 @@ public:
    * Publishes the robot pose tested by the scan matcher at the moment.
    * \param[in] pose - the robot location in the space.
    */
-  virtual void on_scan_test(const RobotState &pose,
+  virtual void on_scan_test(const RobotPose &pose,
                             const TransformedLaserScan &scan,
                             double score) override {
     publish_transform("sm_curr_pose", pose);
@@ -48,14 +50,14 @@ public:
    * Publishes the best found robot pose.
    * \param[in] pose - the robot location in the space.
    */
-  virtual void on_pose_update(const RobotState &pose,
+  virtual void on_pose_update(const RobotPose &pose,
                               const TransformedLaserScan &scan,
                               double score) override {
     publish_transform("sm_best_pose", pose);
   }
 private:
-    void publish_transform(const std::string& frame_id, const RobotState& p) {
-      publish_2D_transform(frame_id, "odom_combined", p.x, p.y, p.theta);
+    void publish_transform(const std::string& frame_id, const RobotPose& p) {
+      publish_2D_transform(frame_id, "odom_combined", p);
     }
 };
 
@@ -165,7 +167,7 @@ void init_constants_for_ros(double &ros_tf_buffer_size,
 int main(int argc, char** argv) {
   ros::init(argc, argv, "tinySLAM");
 
-  ros::NodeHandle nh;
+  // init tiny slam
   TinyWorldParams params = init_common_world_params();
   GridMapParams grid_map_params = init_grid_map_params();
   std::shared_ptr<ScanCostEstimator> cost_est{new TinyScanCostEstimator()};
@@ -178,15 +180,19 @@ int main(int argc, char** argv) {
   int ros_filter_queue, ros_subscr_queue;
   init_constants_for_ros(ros_tf_buffer_size, ros_map_publishing_rate,
                          ros_filter_queue, ros_subscr_queue);
-  TopicWithTransform<sensor_msgs::LaserScan> scan_observer(nh,
+  // connect the slam to a ros-topic based data provider
+  ros::NodeHandle nh;
+  TopicWithTransform<sensor_msgs::LaserScan> scan_provider(nh,
     "laser_scan", "odom_combined", ros_tf_buffer_size,
     ros_filter_queue, ros_subscr_queue);
-  scan_observer.subscribe(slam);
+  std::shared_ptr<LaserScanObserver> scan_obs{
+    new LaserScanObserver{slam, init_skip_exceeding_lsr()}};
+  scan_provider.subscribe(scan_obs);
 
   std::shared_ptr<RvizGridViewer> viewer(
     new RvizGridViewer(nh.advertise<nav_msgs::OccupancyGrid>("/map", 5),
                        ros_map_publishing_rate));
-  slam->set_viewer(viewer);
+  slam->subscribe(viewer);
 
 #ifdef RVIZ_DEBUG
   std::shared_ptr<PoseScanMatcherObserver> obs(new PoseScanMatcherObserver);

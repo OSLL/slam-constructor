@@ -106,6 +106,7 @@ public:
     #undef METERS_TO_CELLS
   }
 
+
   /// Returnes the scale.
   double cell_scale() const { return _m_per_cell; }
 
@@ -224,20 +225,19 @@ private: // methods
   }
   #undef INDEX_I
   #undef INDEX_J
-
 private: //flag constants
-  const int RESIZE_VERT    = 0;
-  const int RESIZE_HORZ    = 1;
-  const int RESIZE_DIM_BIT = 1;
+  static const int RESIZE_VERT    = 0;
+  static const int RESIZE_HORZ    = 1;
+  static const int RESIZE_DIM_BIT = 1;
 
-  const int RESIZE_FWD     = 0;
-  const int RESIZE_BWD     = 1;
-  const int RESIZE_DIR_BIT = 0;
+  static const int RESIZE_FWD     = 0;
+  static const int RESIZE_BWD     = 1;
+  static const int RESIZE_DIR_BIT = 0;
 
-  const int RESIZE_UP    = RESIZE_DIR(RESIZE_VERT, RESIZE_FWD);
-  const int RESIZE_DOWN  = RESIZE_DIR(RESIZE_VERT, RESIZE_BWD);
-  const int RESIZE_RIGHT = RESIZE_DIR(RESIZE_HORZ, RESIZE_FWD);
-  const int RESIZE_LEFT  = RESIZE_DIR(RESIZE_HORZ, RESIZE_BWD);
+  static const int RESIZE_UP    = RESIZE_DIR(RESIZE_VERT, RESIZE_FWD);
+  static const int RESIZE_DOWN  = RESIZE_DIR(RESIZE_VERT, RESIZE_BWD);
+  static const int RESIZE_RIGHT = RESIZE_DIR(RESIZE_HORZ, RESIZE_FWD);
+  static const int RESIZE_LEFT  = RESIZE_DIR(RESIZE_HORZ, RESIZE_BWD);
   #undef RESIZE_DIR
 
 private: // fields

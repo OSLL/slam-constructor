@@ -40,7 +40,7 @@ public:
   }
 
 protected:
-  virtual void sample_pose(RobotState &base_pose) override {
+  virtual void sample_pose(RobotPose &base_pose) override {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::normal_distribution<> d_coord(0.0, _curr_sigma_coord);

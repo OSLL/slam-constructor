@@ -62,15 +62,14 @@ public:
    * \param[in] scan - data from a laser scanner.
    */
   virtual void handle_observation(TransformedLaserScan &scan) override {
-    RobotState pose_delta;
     _scan_matcher->reset_state();
-    _scan_matcher->process_scan(pose(), scan, map(), pose_delta);
-    update_robot_pose(pose_delta.x, pose_delta.y, pose_delta.theta);
 
-    bool pose_was_fixed = pose_delta.x || pose_delta.y || pose_delta.theta;
-    auto factory = _gcs->cell_factory();
-    scan.quality = pose_was_fixed ? _params.localized_scan_quality :
-                                    _params.raw_scan_quality;
+    RobotPoseDelta pose_delta;
+    _scan_matcher->process_scan(pose(), scan, map(), pose_delta);
+    update_robot_pose(pose_delta);
+
+    scan.quality = pose_delta ? _params.localized_scan_quality :
+                                _params.raw_scan_quality;
     LaserScanGridWorld::handle_observation(scan);
   }
 

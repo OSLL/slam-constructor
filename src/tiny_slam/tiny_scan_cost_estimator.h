@@ -22,7 +22,7 @@ public:
    * \param[in] min_cost - the minimum found cost of the scan at the moment.
    * \return The value cost of the given scan.
    */
-  virtual double estimate_scan_cost(const RobotState &pose,
+  virtual double estimate_scan_cost(const RobotPose &pose,
                                     const TransformedLaserScan &scan,
                                     const GridMap &map,
                                     double min_cost) override {

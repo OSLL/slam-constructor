@@ -8,6 +8,7 @@
 #define __SENSOR_DATA_H
 
 #include <vector>
+#include "state_data.h"
 
 /**
  * \brief Contains a point in polar coordinates and a state whether it is
@@ -31,7 +32,7 @@ struct ScanPoint {
  * \brief Framework internal representation of a laser scan.
  */
 struct TransformedLaserScan {
-  double d_x, d_y, d_yaw; ///< The odometry delta.
+  RobotPoseDelta pose_delta; ///< The odometry delta.
 
   std::vector<ScanPoint> points; ///< The vector of points on scan.
   double quality; ///< The quality of scan. 0 - low, 1 - fine.

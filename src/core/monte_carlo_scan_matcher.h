@@ -53,10 +53,10 @@ public:
    * \param pose_delta An output parameter of the best pose_delta.
    * \return The lowest scan cost that corresponds to output pose_delta.
    */
-  virtual double process_scan(const RobotState &init_pose,
+  virtual double process_scan(const RobotPose &init_pose,
                       const TransformedLaserScan &scan,
                       const GridMap &map,
-                      RobotState &pose_delta) override {
+                      RobotPoseDelta &pose_delta) override {
     do_for_each_observer([init_pose, scan, map](ObsPtr obs) {
       obs->on_matching_start(init_pose, scan, map);
     });
@@ -64,7 +64,7 @@ public:
     unsigned failed_tries = 0, total_tries = 0;
     std::shared_ptr<ScanCostEstimator> sce = GridScanMatcher::cost_estimator();
     double min_scan_cost = std::numeric_limits<double>::max();
-    RobotState optimal_pose = init_pose;
+    RobotPose optimal_pose = init_pose;
 
     min_scan_cost = sce->estimate_scan_cost(optimal_pose, scan,
                                             map, min_scan_cost);
@@ -78,7 +78,7 @@ public:
            total_tries < _total_tries_limit) {
       total_tries++;
 
-      RobotState sampled_pose = optimal_pose;
+      RobotPose sampled_pose = optimal_pose;
       sample_pose(sampled_pose);
       double sampled_scan_cost = sce->estimate_scan_cost(sampled_pose, scan,
                                                          map, min_scan_cost);
@@ -100,10 +100,7 @@ public:
       });
     }
 
-    pose_delta.x = optimal_pose.x - init_pose.x;
-    pose_delta.y = optimal_pose.y - init_pose.y;
-    pose_delta.theta = optimal_pose.theta - init_pose.theta;
-
+    pose_delta = optimal_pose - init_pose;
     do_for_each_observer([pose_delta, min_scan_cost](ObsPtr obs) {
         obs->on_matching_end(pose_delta, min_scan_cost);
     });
@@ -115,7 +112,7 @@ protected:
    * Generates the pose of a robot in a vicinity of a base pose.
    * \param base_pose A basical pose of a robot.
    */
-  virtual void sample_pose(RobotState &base_pose) = 0;
+  virtual void sample_pose(RobotPose &base_pose) = 0;
 
   /**
    * A callback invoked when a better estimate is found.
