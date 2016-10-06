@@ -45,11 +45,11 @@ std::shared_ptr<GridCellFactory> init_cell_factory(TinyWorldParams &params) {
   if (cell_type == "base") {
     params.localized_scan_quality = 0.2;
     params.raw_scan_quality = 0.1;
-    return std::shared_ptr<GridCellFactory>{new TinyBaseCellFactory()};
+    return std::make_shared<PlainGridCellFactory<BaseTinyCell>>();
   } else if (cell_type == "avg") {
     params.localized_scan_quality = 0.9;
     params.raw_scan_quality = 0.6;
-    return std::shared_ptr<GridCellFactory>{new TinyAvgCellFactory()};
+    return std::make_shared<PlainGridCellFactory<AvgTinyCell>>();
   } else {
     std::cerr << "Unknown cell type: " << cell_type << std::endl;
     std::exit(-1);

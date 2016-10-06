@@ -17,13 +17,6 @@ private:
   double _prob;
 };
 
-class TinyBaseCellFactory : public GridCellFactory {
-public:
-  std::shared_ptr<GridCell> create_cell() override {
-    return std::shared_ptr<GridCell>(new BaseTinyCell());
-  }
-};
-
 //------------------------------------------------------------------------------
 // Modified cell
 
@@ -37,13 +30,6 @@ public:
   }
 private:
   double _cnt, _n;
-};
-
-class TinyAvgCellFactory : public GridCellFactory {
-public:
-  std::shared_ptr<GridCell> create_cell() override {
-    return std::shared_ptr<GridCell>(new AvgTinyCell());
-  }
 };
 
 #endif
