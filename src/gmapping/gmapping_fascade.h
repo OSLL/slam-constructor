@@ -39,12 +39,11 @@ public: // methods
     _pose_delta += scan.pose_delta;
 
     // TODO: add threashold to speedup
-    //double d_dist = std::pow(_d_x, 2) + std::pow(_d_y, 2);
-    //if (std::isnan(_d_yaw) || 1 < d_dist || 0.5 < std::fabs(_d_yaw)) {
+    //if (1 < _pose_delta.sq_dist() || 0.25 < std::fabs(_pose_delta.theta)) {
       //correction step
-    _world->handle_observation(scan);
-    //  _d_x = _d_y = _d_yaw = 0;
-    //}
+      _world->handle_observation(scan);
+      _pose_delta.reset();
+      //}
 
     // updateWeightsTree (?)
 
