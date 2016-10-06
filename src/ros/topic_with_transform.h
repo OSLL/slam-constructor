@@ -1,3 +1,10 @@
+/**
+ * \file
+ * \brief The following classes are defined in this file
+ * TopicObserver - abstract base class which subclasses observe odometry and laser scan;
+ * TopicWithTransform - class that synchronizes odometry and transform.
+ */
+
 #ifndef __TOPIC_WITH_TRANSFORM_H
 #define __TOPIC_WITH_TRANSFORM_H
 
@@ -9,6 +16,10 @@
 #include <tf/transform_listener.h>
 #include <boost/shared_ptr.hpp>
 
+/**
+ * \brief The base class which subclasses convert laser scan
+ * and odometry data ROS structures to internal data structure.
+ */
 // TODO: make this class inner
 template <typename MType>
 class TopicObserver { // iface
@@ -17,6 +28,9 @@ public: // methods
                                       const tf::StampedTransform&) = 0;
 };
 
+/**
+ * \brief This class synchronizes the transform and odometry.
+ */
 // TODO: add scan drop
 template <typename MsgType>
 class TopicWithTransform {
@@ -29,16 +43,25 @@ public: // methods
   // TODO: copy, move ctrs, dtor
   TopicWithTransform(ros::NodeHandle nh,
                      const std::string& topic_name,
-                     const std::string& target_frame):
+                     const std::string& target_frame,
+                     const double buffer_duration,
+                     const double tf_filter_queue_size,
+                     const double subscribers_queue_size):
+     FILTER_QUEUE_SZ(tf_filter_queue_size),
+     SUBSCR_QUEUE_SZ(subscribers_queue_size),
     _target_frame{target_frame},
     _subscr{nh, topic_name, SUBSCR_QUEUE_SZ},
-    _tf_lsnr{ros::Duration(5.0)},
+    _tf_lsnr{ros::Duration(buffer_duration)},
     _msg_flt{new tf::MessageFilter<MsgType>{
       _subscr, _tf_lsnr, _target_frame, FILTER_QUEUE_SZ}} {
       _msg_flt->registerCallback(&TopicWithTransform::transformed_msg_cb,
                                   this);
   }
 
+/**
+ * \brief Registers a topic observer to be notified with sensor data.
+ * \param obs Pointer to the TopicObserver.
+ */
   void subscribe(std::shared_ptr<TopicObserver<MsgType>> obs) {
     _observers.push_back(obs);
   }
