@@ -47,16 +47,16 @@ public:
 
   virtual void handle_observation(TransformedLaserScan &scan) override {
     RobotPose pd;
-    //static bool scan_is_first = true;
+    static bool scan_is_first = true;
     // TODO: fix SM iface
     double scan_score = _matcher.processScan(pose(), scan, map(), pd);
     RobotPoseDelta pose_delta(pd.x, pd.y, pd.theta);
     update_robot_pose(pose_delta);
-    //if (pose_delta || scan_is_first) {
+    if (pose_delta || scan_is_first) {
       // map update accordig to original gmapping code (ref?)
-    //  scan_is_first = false;
-    //  LaserScanGridWorld::handle_observation(scan);
-    //}
+      scan_is_first = false;
+      LaserScanGridWorld::handle_observation(scan);
+    }
 
     Particle::set_weight(scan_score / scan.points.size() * Particle::weight());
   }

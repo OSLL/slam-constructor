@@ -61,7 +61,6 @@ public:
         double refinedScore = optimize(initPose, scan, map, refinedPose, refinedLikelihood);
         //std::cout << "Refined score: " << refinedScore << " | "  << refinedPose.x << ", " << refinedPose.y << ", " << refinedPose.theta << std::endl;
         if(refinedScore > minRegScore || firstScan) {
-            registerScan(refinedPose, scan, map);
             poseDelta = RobotPose(refinedPose.x - initPose.x, refinedPose.y - initPose.y, refinedPose.theta - initPose.theta);
             firstScan = false;
         }
@@ -245,27 +244,6 @@ private:
 //            likelihood += found ? -1.0 / m_likelihoodSigma * mu : noHit;
         }
         return resScore;
-    }
-
-    void registerScan(const RobotPose &pose, const TransformedLaserScan &scan, GridMap &map) {
-        RobotPose laserPose = getLaserPose(pose);
-        angleCache.setTheta(laserPose.theta);
-        DiscretePoint2D p0 = map.world_to_cell(laserPose.x , laserPose.y);
-
-        for(unsigned int i = laserScanMargin; i < scan.points.size() - laserScanMargin; ++i) {
-          const double &r = scan.points[i].range;
-          const double angle = scan.points[i].angle;
-//            if(d < scan.range_min || d > scan.range_max) continue;
-            double spx = laserPose.x + r * angleCache.cos(angle);
-            double spy = laserPose.y + r * angleCache.sin(angle);
-            DiscretePoint2D p1 = map.world_to_cell(spx, spy);
-
-            DiscreteLine2D line = DiscreteLine2D(p0, p1);
-            map.cell(line.points().back())->set_value(Occupancy{1.0, 1.0, spx, spy});
-            for (auto p = line.points().begin(); p != line.points().end() - 1; ++p) {
-              map.cell(*p)->set_value(Occupancy{0.0, 1.0, 0.0, 0.0});
-            }
-        }
     }
 
 };

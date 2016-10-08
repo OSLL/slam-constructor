@@ -42,7 +42,8 @@ public: // methods
 
     std::vector<Point> pts = DiscreteLine2D(robot_pt, obst_pt).points();
 
-    map.update_cell(pts.back(), Occupancy{is_occ ? 1.0 : 0.0, 1.0}, quality);
+    Occupancy beam_end_occ{is_occ ? 1.0 : 0.0, 1.0, beam_end_x, beam_end_y};
+    map.update_cell(pts.back(), beam_end_occ, quality);
     pts.pop_back();
     for (const auto &pt : pts) {
       map.update_cell(pt, Occupancy{0.0, 1.0}, quality);
