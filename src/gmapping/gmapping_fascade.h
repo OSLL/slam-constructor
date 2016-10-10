@@ -14,13 +14,15 @@ class GmappingParticleFactory : public ParticleFactory<GmappingWorld> {
 private:
   using GcsPtr = std::shared_ptr<GridCellStrategy>;
 public:
-  GmappingParticleFactory(GcsPtr gcs) : _gcs(gcs) {}
+  GmappingParticleFactory(GcsPtr gcs, const GridMapParams &init_params) 
+                         : _gcs(gcs), _init_params(init_params) {}
 
   virtual std::shared_ptr<GmappingWorld> create_particle() {
-    return std::make_shared<GmappingWorld>(_gcs);
+    return std::make_shared<GmappingWorld>(_gcs, _init_params);
   }
 private:
   GcsPtr _gcs;
+  GridMapParams _init_params;
 };
 
 class GmappingSlamFascade :
@@ -28,9 +30,10 @@ class GmappingSlamFascade :
   public WorldObservable<GmappingWorld::MapType> {
 public: // methods
   // TODO: copy ctor, move ctor, dtor
-  GmappingSlamFascade(std::shared_ptr<GridCellStrategy> gcs) :
+  GmappingSlamFascade(std::shared_ptr<GridCellStrategy> gcs, 
+                      const GridMapParams &init_params) :
     _world(new GmappingParticleFilter<TransformedLaserScan>(
-      std::make_shared<GmappingParticleFactory>(gcs), 1)) {}
+      std::make_shared<GmappingParticleFactory>(gcs, init_params), 1)) {}
 
   virtual void handle_sensor_data(TransformedLaserScan &scan) override {
     // prediction step

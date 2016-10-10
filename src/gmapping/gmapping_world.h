@@ -42,8 +42,9 @@ public:
   using Point2D = DiscretePoint2D;
 public:
 
-  GmappingWorld(std::shared_ptr<GridCellStrategy> gcs) :
-    LaserScanGridWorld(gcs) {}
+  GmappingWorld(std::shared_ptr<GridCellStrategy> gcs,
+                const GridMapParams &init_params) :
+    LaserScanGridWorld(gcs, init_params) {}
 
   virtual void handle_observation(TransformedLaserScan &scan) override {
     RobotPose pd;

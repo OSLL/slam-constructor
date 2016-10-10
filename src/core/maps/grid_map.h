@@ -124,6 +124,38 @@ public:
     return bounds;
   }
 
+  /**
+   * Returns the cell with coordinates of cell_coord (and the zero value if 
+   * the requried cell does not exist).
+   */
+  const Cell &cell(const DiscretePoint2D& cell_coord) const {
+    if (!has_cell(cell_coord)) {
+      return _unvisited_cell;
+    }
+    return _cells[ROW_IND(cell_coord)][COL_IND(cell_coord)];
+  }
+
+  /**
+   * Returns the cell with coordinates of cell_coord
+   */
+  Cell &cell(const DiscretePoint2D& cell_coord){
+    update_size(cell_coord);
+    return _cells[ROW_IND(cell_coord)][COL_IND(cell_coord)];
+  }
+
+  /**
+   * Returns the cell with coordinates (x; y).
+   */
+  const Cell &cell(int x, int y) const {
+    return cell({x,y});
+  }
+  /**
+   * Returns the cell with coordinates (x; y).
+   */
+  Cell &cell(int x, int y) {
+    return cell({x,y});
+  }
+
   /*!
    * Returns the \f$x\f$ coordinate of the map center
    */
@@ -223,8 +255,8 @@ private: // methods
     }
     _width += cols_count;
   }
-  #undef INDEX_I
-  #undef INDEX_J
+  #undef COL_IND
+  #undef ROW_IND
 private: //flag constants
   static const int RESIZE_VERT    = 0;
   static const int RESIZE_HORZ    = 1;
