@@ -2,12 +2,9 @@
  * \file
  * \brief Definition of classes file:\n
  *   BaseTinyCell, AvgTinyCell (are inherited from GidCell),\n
- *   TinyBaseCellFactory, TinyAvgCellFactory (from GridCellFactory)
  *
  * The classes inherited from GridCell implements different approaches of a
  * grid cell's occupancy maintaining.\n
- * The another ones inherited from GridCellFactory presents factories to
- * produce the cells meant before.
  */
 #ifndef __TINY_GRID_CELLS_H
 #define __TINY_GRID_CELLS_H
@@ -45,22 +42,6 @@ private:
   double _prob;
 };
 
-/*!
- * \brief A strategy creates cells of the base tiny model (BaseTinyCell).
- *
- * This class is inherited from an abstract cell factory
- * and generates cells with the base rule of the probability calculation.
- */
-class TinyBaseCellFactory : public GridCellFactory {
-public:
-  /*!
-   * Creates a pointer to an instance of BaseTinyCell.
-   */
-  std::shared_ptr<GridCell> create_cell() override {
-    return std::shared_ptr<GridCell>(new BaseTinyCell());
-  }
-};
-
 //------------------------------------------------------------------------------
 // Modified cell
 
@@ -92,23 +73,6 @@ public:
   }
 private:
   double _cnt, _n;
-};
-
-/*!
- * \brief A strategy creates cells with the average probability
- *        calculation rule (AvgTinyCell).
- *
- * This class is inherited from an abstract cell factory and generates cells
- * with the AvgTinyCell model of the probability calculation.
- */
-class TinyAvgCellFactory : public GridCellFactory {
-public:
-  /*!
-   * Creates a pointer to an instance of AvgTinyCell.
-   */
-  std::shared_ptr<GridCell> create_cell() override {
-    return std::shared_ptr<GridCell>(new AvgTinyCell());
-  }
 };
 
 #endif

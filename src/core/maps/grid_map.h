@@ -60,7 +60,7 @@ public:
   double scale() const { return _m_per_cell; }
 
   /// Returns map's cells.
-  const std::vector<std::vector<Cell>> cells() const { return _cells; }
+  const std::vector<std::vector<Cell>>& cells() const { return _cells; }
 
   #define COL_IND(cell_coord)         \
       ((cell_coord).x + _map_center_x)

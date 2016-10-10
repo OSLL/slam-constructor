@@ -44,4 +44,12 @@ public:
   virtual std::shared_ptr<GridCell> create_cell() = 0;
 };
 
+template <typename CellType>
+class PlainGridCellFactory : public GridCellFactory {
+public:
+  std::shared_ptr<GridCell> create_cell() override {
+    return std::make_shared<CellType>();
+  }
+};
+
 #endif

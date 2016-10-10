@@ -30,8 +30,9 @@ public: // methods
    * \param gcs A shared pointer to a cell strategy.
    */
   LaserScanGridWorld(std::shared_ptr<GridCellStrategy> gcs,
-                     const GridMapParams &init_params) :
-    _map(gcs->cell_factory(), init_params) {}
+                     const GridMapParams &init_params,
+                     size_t scan_margin = 0) :
+    _map(gcs->cell_factory(), init_params), _scan_margin(scan_margin) {}
   /**
    * Updates the map cells according to a given sensor data. Straightforward
    * scan points projection is used.
@@ -39,7 +40,10 @@ public: // methods
    */
   virtual void handle_observation(TransformedLaserScan &scan) {
     const RobotPose& pose = World<TransformedLaserScan, MapType>::pose();
-    for (const auto &sp : scan.points) {
+
+    size_t last_pt_i = scan.points.size() - _scan_margin - 1;
+    for (size_t pt_i = _scan_margin; pt_i <= last_pt_i; ++pt_i) {
+      const ScanPoint &sp = scan.points[pt_i];
       // move to world frame assume sensor is in robots' (0,0)
       double x_world = pose.x + sp.range * std::cos(sp.angle + pose.theta);
       double y_world = pose.y + sp.range * std::sin(sp.angle + pose.theta);
@@ -79,6 +83,7 @@ public: // methods
 
 private: // fields
   MapType _map;
+  size_t _scan_margin;
 };
 
 #endif

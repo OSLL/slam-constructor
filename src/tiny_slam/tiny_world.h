@@ -27,6 +27,7 @@ struct TinyWorldParams {
 
   TinyWorldParams(double sig_XY, double sig_T, unsigned lim_bad,
                   unsigned lim_totl, double hole_width) :
+    localized_scan_quality(0.95), raw_scan_quality(0.5),
     SIG_XY(sig_XY), SIG_TH(sig_T), BAD_LMT(lim_bad), TOT_LMT(lim_totl),
     HOLE_WIDTH(hole_width) {}
 };

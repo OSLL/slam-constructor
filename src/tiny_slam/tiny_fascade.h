@@ -3,8 +3,8 @@
 
 #include <memory>
 
-#include "../ros/laser_scan_observer.h"
-#include "../ros/rviz_grid_viewer.h"
+//#include "../ros/laser_scan_observer.h"
+//#include "../ros/rviz_grid_viewer.h"
 #include "../core/slam_fascade.h"
 #include "../core/maps/grid_cell_strategy.h"
 
