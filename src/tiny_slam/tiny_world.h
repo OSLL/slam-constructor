@@ -9,6 +9,7 @@
 #include "../core/sensor_data.h"
 #include "../core/laser_scan_grid_world.h"
 #include "../core/maps/grid_cell_strategy.h"
+#include "../core/maps/cell_occupancy_estimator.h"
 
 #include "tiny_grid_cells.h"
 #include "tiny_scan_matcher.h"
@@ -35,7 +36,8 @@ public:
     LaserScanGridWorld(gcs), _gcs(gcs), _params(params),
     _scan_matcher(new TinyScanMatcher(_gcs->cost_est(),
                                       BAD_LMT, TOT_LMT,
-                                      SIG_XY, SIG_TH)) {}
+                                      SIG_XY, SIG_TH)),
+    _map_update_ctx(_gcs->occupancy_est()) {}
 
   virtual void handle_observation(TransformedLaserScan &scan) override {
     _scan_matcher->reset_state();
@@ -49,45 +51,74 @@ public:
     LaserScanGridWorld::handle_observation(scan);
   }
 
-  virtual void handle_scan_point(GridMap &map,
-                                 double laser_x, double laser_y,
-                                 double beam_end_x, double beam_end_y,
-                                 bool is_occ, double quality) override {
-    Beam beam{laser_x, laser_y, beam_end_x, beam_end_y};
-    Point robot_pt = map.world_to_cell(laser_x, laser_y);
-    Point obst_pt = map.world_to_cell(beam_end_x, beam_end_y);
-
-    double obst_dist_sq = robot_pt.dist_sq(obst_pt);
-    std::vector<Point> pts = DiscreteLine2D(robot_pt, obst_pt).points();
-    double hole_dist_sq = std::pow(HOLE_WIDTH / map.cell_scale(), 2);
-
-    auto occ_est = _gcs->occupancy_est();
-    Occupancy beam_end_occ = occ_est->estimate_occupancy(beam,
-        map.world_cell_bounds(pts.back()), is_occ);
-    map.update_cell(pts.back(), beam_end_occ, quality);
-    pts.pop_back();
-
-    for (const auto &pt : pts) {
-      Occupancy empty_cell_value = occ_est->estimate_occupancy(beam,
-          map.world_cell_bounds(pts.back()), false);
-      // wall blur
-      double dist_sq = pt.dist_sq(obst_pt);
-      if (dist_sq < hole_dist_sq && hole_dist_sq < obst_dist_sq && is_occ) {
-        empty_cell_value.prob_occ +=
-          (1.0 - dist_sq / hole_dist_sq) * beam_end_occ.prob_occ;
-      }
-
-      map.update_cell(pt, empty_cell_value, quality);
-    }
-  }
 
   std::shared_ptr<GridScanMatcher> scan_matcher() {
     return _scan_matcher;
   }
+
+  virtual void handle_scan_point(GridMap &map, bool is_occ, double scan_quality,
+    const Point2D &lsr, const Point2D &beam_end) override {
+
+    _map_update_ctx.blur_is_enabled = is_occ;
+    _map_update_ctx.beam = Beam{lsr.x, lsr.y, beam_end.x, beam_end.y};
+
+    DPoint robot_pt = map.world_to_cell(lsr.x, lsr.y);
+    DPoint obst_pt = map.world_to_cell(beam_end.x, beam_end.y);
+    _map_update_ctx.obst_dist_sq = robot_pt.dist_sq(obst_pt);
+    _map_update_ctx.hole_dist_sq = std::pow(HOLE_WIDTH / map.cell_scale(), 2);
+    _map_update_ctx.obst_pt = obst_pt;
+
+    LaserScanGridWorld::handle_scan_point(map, is_occ, scan_quality,
+                                          lsr, beam_end);
+  }
+
+  virtual GridCellValue& setup_cell_value(
+    GridCellValue &dst, const DPoint &pt, const Rectangle &pt_bounds,
+    bool is_occ, const Point2D &lsr, const Point2D &obstacle) override {
+
+    const Beam &beam = _map_update_ctx.beam;
+    auto occ_est = _map_update_ctx.occ_est;
+    dst.occupancy = occ_est->estimate_occupancy(beam, pt_bounds, is_occ);
+    if (is_occ) {
+      _map_update_ctx.base_occupied_prob = dst.occupancy;
+      return dst;
+    }
+
+    if (!_map_update_ctx.blur_is_enabled) { return dst; }
+
+    // perform wall blur
+    const double hole_dist_sq = _map_update_ctx.hole_dist_sq;
+    const double obst_dist_sq = _map_update_ctx.obst_dist_sq;
+    const double dist_sq = pt.dist_sq(_map_update_ctx.obst_pt);
+
+    if (dist_sq < hole_dist_sq && hole_dist_sq < obst_dist_sq) {
+      double prob_scale = 1.0 - dist_sq / hole_dist_sq;
+      dst.occupancy.prob_occ = prob_scale * _map_update_ctx.base_occupied_prob;
+    }
+    return dst;
+  }
+
+ private: // types
+  struct MapUpdateCtx {
+    MapUpdateCtx(std::shared_ptr<CellOccupancyEstimator> e) : occ_est(e) {}
+
+    Rectangle cell_bounds;
+    Beam beam;
+    DiscretePoint2D obst_pt;
+    double base_occupied_prob;
+    double obst_dist_sq, hole_dist_sq;
+
+    bool blur_is_enabled;
+    std::shared_ptr<CellOccupancyEstimator> occ_est;
+  };
+
 private:
   std::shared_ptr<GridCellStrategy> _gcs;
   const TinyWorldParams _params;
   std::shared_ptr<TinyScanMatcher> _scan_matcher;
+
+  // a context set up for each map update with a scan point
+  MapUpdateCtx _map_update_ctx;
 };
 
 #endif

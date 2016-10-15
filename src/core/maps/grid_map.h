@@ -14,7 +14,7 @@ public:
 public:
   // TODO: cp, mv ctors, dtor
   GridMap(std::shared_ptr<GridCellFactory> cell_factory,
-          int width = 500, int height = 500):
+          int width = 1000, int height = 1000):
     // TODO: replace hardcoded value with params
     _width(width), _height(height), _m_per_cell(0.1),
     _cell_factory(cell_factory), _cells(_height) {
@@ -32,25 +32,18 @@ public:
   const std::vector<std::vector<Cell>> cells() const { return _cells; }
 
   void update_cell(const DiscretePoint2D& cell_coord,
-                   const Occupancy &new_value, double quality = 1.0) {
-    // TODO: bounds check
+                   const GridCellValue &new_value, double quality = 1.0) {
+    assert(has_cell(cell_coord));
     _cells[cell_coord.y][cell_coord.x]->set_value(new_value, quality);
   }
 
-  double cell_value(const DiscretePoint2D& cell_coord) const {
+  const GridCellValue &operator[](const DiscretePoint2D& cell_coord) const {
+    return cell_value(cell_coord);
+  }
+
+  const GridCellValue &cell_value(const DiscretePoint2D& cell_coord) const {
+    assert(has_cell(cell_coord));
     return _cells[cell_coord.y][cell_coord.x]->value();
-  }
-
-  const Cell &cell(const DiscretePoint2D& cell_coord) const {
-    return _cells[cell_coord.y][cell_coord.x];
-  }
-
-  const Cell &cell(int x, int y) const {
-      return _cells[x][y];
-  }
-
-  Cell &cell(const DiscretePoint2D& cell_coord) {
-    return _cells[cell_coord.y][cell_coord.x];
   }
 
   bool has_cell(const DiscretePoint2D& cell_coord) const {
@@ -68,6 +61,7 @@ public:
   double cell_scale() const { return _m_per_cell; }
 
   Rectangle world_cell_bounds(const DiscretePoint2D &cell_coord) {
+    assert(has_cell(cell_coord));
     Rectangle bounds;
     bounds.bot = (cell_coord.y + _height/2) * _m_per_cell;
     bounds.top = bounds.bot + _m_per_cell;

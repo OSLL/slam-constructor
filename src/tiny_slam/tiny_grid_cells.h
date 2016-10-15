@@ -8,13 +8,14 @@
 
 class BaseTinyCell : public GridCell {
 public:
-  BaseTinyCell(): _prob(0.5) {}
-  double value() const override { return _prob; }
-  void set_value(const Occupancy &value, double quality) override {
-    _prob = (1.0 - quality) * _prob + quality * value.prob_occ;
+  BaseTinyCell(): _value(0.5, 1) {}
+  const GridCellValue& value() const override { return _value; }
+  void set_value(const GridCellValue &new_value, double quality) override {
+    double &prob = _value.occupancy.prob_occ;
+    prob = (1.0 - quality) * prob + quality * new_value.occupancy;
   }
 private:
-  double _prob;
+  GridCellValue _value;
 };
 
 //------------------------------------------------------------------------------
@@ -22,14 +23,19 @@ private:
 
 class AvgTinyCell : public GridCell {
 public:
-  AvgTinyCell(): _cnt(0), _n(0) {}
-  double value() const override { return _n == 0 ? -1 : _cnt / _n; }
-  void set_value (const Occupancy &value, double quality) override {
+  AvgTinyCell(): _value(0, 1), _n(0), _hits(0) {}
+  const GridCellValue& value() const override {
+    // TODO: _n == 0 case -- invalid occupancy
+    _value.occupancy.prob_occ = _n ? _hits / _n : -1;
+    return _value;
+  }
+  void set_value (const GridCellValue &new_value, double quality) override {
     _n += 1;
-    _cnt += 0.5 + (value.prob_occ - 0.5) * quality;
+    _hits += 0.5 + (new_value.occupancy - 0.5) * quality;
   }
 private:
-  double _cnt, _n;
+  mutable GridCellValue _value;
+  double _n, _hits;
 };
 
 #endif

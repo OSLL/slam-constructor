@@ -15,7 +15,8 @@ int main(int argc, char** argv) {
 
   // TODO: setup CostEstimator and OccEstimator
   std::shared_ptr<GridCellStrategy> gcs(new GridCellStrategy(
-    std::make_shared<PlainGridCellFactory<GmappingBaseCell>>(),
+    std::make_shared<PlainGridCellFactory<GmappingBaseCell,
+                                          GmappingCellValue>>(),
     std::shared_ptr<ScanCostEstimator>(nullptr),
     std::shared_ptr<CellOccupancyEstimator>(nullptr)
   ));

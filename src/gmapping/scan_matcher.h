@@ -175,7 +175,8 @@ private:
     }
 
     RobotPose getLaserPose(const RobotPose &robotPose) const {
-        if(!laserOffset.x && !laserOffset.y && !laserOffset.theta) return robotPose;
+        if (!laserOffset.x && !laserOffset.y && !laserOffset.theta)
+          return robotPose;
         RobotPose laserPose = robotPose;
         double c = cos(robotPose.theta), s = sin(robotPose.theta);
         laserPose.x += c * laserOffset.x - s * laserOffset.y;
@@ -189,11 +190,15 @@ private:
     }
 
     double score(const RobotPose &pose, const TransformedLaserScan &scan, const GridMap &map, double &likelihood) const {
-        static const double m_fullnessThreshold = 0.2;   //hardcoded in gmapping (0.1)
-        static const double m_gaussianSigma = 0.01;      //default value in ros gmapping
+         //hardcoded in gmapping (0.1)
+        static const double m_fullnessThreshold = 0.2;
+        //default value in ros gmapping
+        static const double m_gaussianSigma = 0.01;
 //        double m_likelihoodSigma = 0.075;   //default value in ros gmapping
 //        double m_nullLikelihood = -0.5;     //hardcoded in gmapping
-        static const double freeDelta = sqrt(2.0);       //looks like hole_width in tinySlam; NB: map.cellSize()^2 * sqrt(2.0) in gmapping
+        //looks like hole_width in tinySlam;
+        // NB: map.cellSize()^2 * sqrt(2.0) in gmapping
+        static const double freeDelta = sqrt(2.0);
 //        double noHit = m_nullLikelihood / m_likelihoodSigma;
 
         double resScore = 0.0;
@@ -201,7 +206,8 @@ private:
         likelihood = 0.0;
         RobotPose laserPose = getLaserPose(pose);
         angleCache.setTheta(laserPose.theta);
-        for (unsigned int i = laserScanMargin; i < scan.points.size() - laserScanMargin; ++i) {
+        for (unsigned int i = laserScanMargin;
+             i < scan.points.size() - laserScanMargin; ++i) {
             skip = ++skip > laserScanSkipRate ? 0 : skip;
             if (skip) continue;
 
@@ -213,18 +219,28 @@ private:
             double spx = laserPose.x + r * c;
             double spy = laserPose.y + r * s;
             DiscretePoint2D scanPoint = map.world_to_cell(spx, spy);
-            DiscretePoint2D freePoint = -DiscretePoint2D(round(freeDelta * c), round(freeDelta * s));
+            DiscretePoint2D freePoint =
+              -DiscretePoint2D(round(freeDelta * c), round(freeDelta * s));
 
             bool found = false;
             double bestDist = 0.0;
             for (int xx = -windowSize; xx <= windowSize; ++xx) {
                 for (int yy = -windowSize; yy <= windowSize; ++yy) {
-                    DiscretePoint2D testPoint = scanPoint + DiscretePoint2D(xx, yy);
+                    DiscretePoint2D testPoint =
+                      scanPoint + DiscretePoint2D(xx, yy);
 //                    if(!map.has_cell(pr) || !map.has_cell(pf)) continue;
-                    const GridMap::Cell &cell = map.cell(testPoint);
-                    const GridMap::Cell &fcell = map.cell(testPoint.x + freePoint.x, testPoint.y + freePoint.y);
-                    if (cell->value() >= m_fullnessThreshold && fcell->value() < m_fullnessThreshold){
-                        double dist = length(spx - cell->obst_x(), spy - cell->obst_y());
+                    const GridCellValue &cell_value = map[testPoint];
+                    const GridCellValue &fcell_value = map[DiscretePoint2D{
+                        testPoint.x + freePoint.x,
+                        testPoint.y + freePoint.y}];
+                    if (cell_value >= m_fullnessThreshold &&
+                        fcell_value < m_fullnessThreshold){
+
+                      const GmappingCellValue &gmg_val =
+                        dynamic_cast<const GmappingCellValue&>(cell_value);
+
+                        double dist = length(spx - gmg_val.obst_x,
+                                             spy - gmg_val.obst_y);
                         if (dist < bestDist || !found) {
                             bestDist = dist;
                             found = true;

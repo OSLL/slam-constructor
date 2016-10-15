@@ -9,37 +9,55 @@
 #include "../core/maps/grid_cell_factory.h"
 #include "../core/maps/grid_cell_strategy.h"
 
+class GmappingCellValue : public GridCellValue {
+public:
+  GmappingCellValue() : GridCellValue(0, 0), obst_x(0), obst_y(0) {}
+
+  virtual void reset() {
+    obst_x = obst_y = 0;
+    GridCellValue::reset();
+  }
+
+  double obst_x, obst_y;
+};
+
+// TODO: move grid cell models to a separate file
 #include "scan_matcher.h"
 
 class GmappingBaseCell : public GridCell {
 public:
-  GmappingBaseCell(): _hits(0), _tries(0), _phys_x(0), _phys_y(0) {}
+  GmappingBaseCell(): _hits(0), _tries(0), _obst_x(0), _obst_y(0) {}
 
-  double value() const override {
-    return _tries ? 1.0*_hits / _tries : -1;
+  const GridCellValue& value() const override {
+    _out_value.occupancy.prob_occ = _tries ? 1.0*_hits / _tries : -1;
+    // TODO: _hits == 0 -> return cell middle?
+    _out_value.obst_x = _hits ? _obst_x / _hits : 0;
+    _out_value.obst_y = _hits ? _obst_y / _hits : 0;
+    return _out_value;
   }
 
-  void set_value(const Occupancy &occ, double) override {
-    if (0.5 < occ.prob_occ) {
-      _phys_x += occ.x;
-      _phys_y += occ.y;
-      ++_hits;
-    }
+  void set_value (const GridCellValue &new_value, double quality) override {
     ++_tries;
-  }
+    if (new_value.occupancy <= 0.5) {
+      return;
+    }
 
-  double obst_x() const override { return _hits ? _phys_x / _hits : 0; }
-  double obst_y() const override { return _hits ? _phys_y / _hits : 0; }
+    ++_hits;
+    const GmappingCellValue &new_obs =
+      dynamic_cast<const GmappingCellValue&>(new_value);
+    _obst_x += new_obs.obst_x;
+    _obst_y += new_obs.obst_y;
+  }
 
 private:
+  mutable GmappingCellValue _out_value;
   int _hits, _tries;
-  double _phys_x, _phys_y;
+  double _obst_x, _obst_y;
 };
 
 class GmappingWorld : public Particle, public LaserScanGridWorld {
 public:
   using MapType = GridMap;
-  using Point2D = DiscretePoint2D;
 public:
 
   GmappingWorld(std::shared_ptr<GridCellStrategy> gcs) :
@@ -59,6 +77,20 @@ public:
     }
 
     Particle::set_weight(scan_score / scan.points.size() * Particle::weight());
+  }
+
+  virtual GridCellValue& setup_cell_value(
+      GridCellValue &dst, const DPoint &pt, const Rectangle &pt_bounds,
+      bool is_occ, const Point2D &lsr, const Point2D &obstacle) override {
+
+    if (is_occ) {
+      GmappingCellValue &gmg_dst = dynamic_cast<GmappingCellValue&>(dst);
+      gmg_dst.obst_x = obstacle.x;
+      gmg_dst.obst_y = obstacle.y;
+    }
+    LaserScanGridWorld::setup_cell_value(dst, pt, pt_bounds,
+                                         is_occ, lsr, obstacle);
+    return dst;
   }
 
   virtual void sample() override {

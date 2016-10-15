@@ -3,17 +3,16 @@
 
 #include "../geometry_utils.h"
 
+// TODO: move Occupancy type to more appropriate file
 struct Occupancy {
   double prob_occ;
   double estimation_quality;
-  // estimated obstacle center
-  double x, y;
 
-  Occupancy(double prob, double quality) :
+  // TODO: is NaN better for as a dflt value?
+  Occupancy(double prob = 0, double quality = 0) :
     prob_occ(prob), estimation_quality(quality) {}
 
-  Occupancy(double prob, double quality, double curr_x, double curr_y) :
-    prob_occ(prob), estimation_quality(quality), x(curr_x), y(curr_y) {}
+  operator double() const { return prob_occ; }
 
   bool operator==(const Occupancy &that) {
     return EQ_DOUBLE(prob_occ, that.prob_occ) &&

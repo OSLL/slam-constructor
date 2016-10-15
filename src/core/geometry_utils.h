@@ -24,9 +24,13 @@ struct Rectangle {
   double bot, top, left, right;
 };
 
+struct Point2D {
+  double x, y;
+};
+
 struct DiscretePoint2D {
 public:
-  DiscretePoint2D(int x_coord, int y_coord):
+  DiscretePoint2D(int x_coord = 0, int y_coord = 0):
     x{x_coord}, y{y_coord} {}
   // TODO: mv (!!), cpy ctors
   int x, y;
