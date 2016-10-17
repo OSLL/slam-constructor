@@ -8,21 +8,22 @@
 #include "../core/laser_scan_grid_world.h"
 #include "../core/maps/grid_cell_factory.h"
 #include "../core/maps/grid_cell_strategy.h"
+#include "../core/gradient_walker_scan_matcher.h"
 
 class GmappingCellValue : public GridCellValue {
 public:
-  GmappingCellValue() : GridCellValue(0, 0), obst_x(0), obst_y(0) {}
+  GmappingCellValue() : GridCellValue(0, 0) {}
 
   virtual void reset() {
-    obst_x = obst_y = 0;
+    obst.x = obst.y = 0;
     GridCellValue::reset();
   }
 
-  double obst_x, obst_y;
+  Point2D obst;
 };
 
 // TODO: move grid cell models to a separate file
-#include "scan_matcher.h"
+#include "gmapping_cost_estimator.h"
 
 class GmappingBaseCell : public GridCell {
 public:
@@ -31,8 +32,8 @@ public:
   const GridCellValue& value() const override {
     _out_value.occupancy.prob_occ = _tries ? 1.0*_hits / _tries : -1;
     // TODO: _hits == 0 -> return cell middle?
-    _out_value.obst_x = _hits ? _obst_x / _hits : 0;
-    _out_value.obst_y = _hits ? _obst_y / _hits : 0;
+    _out_value.obst.x = _hits ? _obst_x / _hits : 0;
+    _out_value.obst.y = _hits ? _obst_y / _hits : 0;
     return _out_value;
   }
 
@@ -45,8 +46,8 @@ public:
     ++_hits;
     const GmappingCellValue &new_obs =
       dynamic_cast<const GmappingCellValue&>(new_value);
-    _obst_x += new_obs.obst_x;
-    _obst_y += new_obs.obst_y;
+    _obst_x += new_obs.obst.x;
+    _obst_y += new_obs.obst.y;
   }
 
 private:
@@ -61,16 +62,17 @@ public:
 public:
 
   GmappingWorld(std::shared_ptr<GridCellStrategy> gcs) :
-    LaserScanGridWorld(gcs) {}
+    LaserScanGridWorld(gcs),
+    _matcher(std::make_shared<GmappingCostEstimator>()) {}
 
   virtual void handle_observation(TransformedLaserScan &scan) override {
-    RobotPose pd;
     static bool scan_is_first = true;
-    // TODO: fix SM iface
-    double scan_score = _matcher.processScan(pose(), scan, map(), pd);
-    RobotPoseDelta pose_delta(pd.x, pd.y, pd.theta);
+    RobotPoseDelta pose_delta;
+    double scan_score = _matcher.process_scan(pose(), scan, map(), pose_delta);
     update_robot_pose(pose_delta);
-    if (pose_delta || scan_is_first) {
+
+    // TODO: scan_prob threshold to params
+    if (0.0 < scan_score || scan_is_first) {
       // map update accordig to original gmapping code (ref?)
       scan_is_first = false;
       LaserScanGridWorld::handle_observation(scan);
@@ -85,8 +87,7 @@ public:
 
     if (is_occ) {
       GmappingCellValue &gmg_dst = dynamic_cast<GmappingCellValue&>(dst);
-      gmg_dst.obst_x = obstacle.x;
-      gmg_dst.obst_y = obstacle.y;
+      gmg_dst.obst = obstacle;
     }
     LaserScanGridWorld::setup_cell_value(dst, pt, pt_bounds,
                                          is_occ, lsr, obstacle);
@@ -104,7 +105,7 @@ public:
   }
 
 private:
-  ScanMatcher _matcher;
+  GradientWalkerScanMatcher _matcher;
 };
 
 

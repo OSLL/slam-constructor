@@ -25,6 +25,10 @@ struct Rectangle {
 };
 
 struct Point2D {
+  Point2D(double x_par = 0, double y_par = 0) : x(x_par), y(y_par) {}
+  double dist_sq(const Point2D &pt) const {
+    return std::pow(x - pt.x, 2) + std::pow(y - pt.y, 2);
+  }
   double x, y;
 };
 
