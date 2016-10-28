@@ -4,7 +4,6 @@
 #include <vector>
 #include <cmath>
 
-
 #define EQ_DOUBLE(a, b)                         \
   (std::abs((a) - (b)) < 0.0001)
 
@@ -43,6 +42,14 @@ public:
     return DiscretePoint2D(x + p.x, y + p.y);
   }
 
+  DiscretePoint2D operator-(const DiscretePoint2D &p) const {
+    return DiscretePoint2D(x - p.x, y - p.y);
+  }
+
+  bool operator==(const DiscretePoint2D &p) const {
+    return x == p.x && y == p.y;
+  }
+
   DiscretePoint2D operator-() const {
     return DiscretePoint2D(-x, -y);
   }
@@ -56,6 +63,8 @@ class DiscreteLine2D {
   using Point = DiscretePoint2D;
 public: // methods
   DiscreteLine2D(const Point &start, const Point &end) {
+    _points.reserve(std::fabs(start.x - end.x + 1) +
+                    std::fabs(start.y - end.y + 1));
     generatePointsWithBresenham(start.x, start.y, end.x, end.y);
   }
   const std::vector<Point>& points() const { return _points; }
@@ -109,6 +118,51 @@ private:
   }
 private: // fields
   std::vector<Point> _points;
+};
+
+class TrigonometricCache {
+public:
+ TrigonometricCache() :
+    _sin_theta(0), _cos_theta(0),
+    _angle_min(0), _angle_max(0), _angle_delta(0) {}
+
+  inline double sin(double angle) const {
+    int angle_idx = (angle - _angle_min) / _angle_delta;
+    return _sin_theta * _cos[angle_idx] + _cos_theta * _sin[angle_idx];
+  }
+
+  inline double cos(double angle) const {
+    int angle_idx = (angle - _angle_min) / _angle_delta;
+    return _cos_theta * _cos[angle_idx] - _sin_theta * _sin[angle_idx];
+  }
+
+  void set_theta(double theta) {
+    _sin_theta = std::sin(theta);
+    _cos_theta = std::cos(theta);
+  }
+
+  void update(double a_min, double a_max, double a_inc) {
+    if (a_min == _angle_min && a_max == _angle_max && a_inc == _angle_delta)
+      return;
+    _sin.clear();
+    _cos.clear();
+    _angle_min = a_min;
+    _angle_max = a_max;
+    _angle_delta = a_inc;
+
+    int angles_nm = (_angle_max - _angle_min) / _angle_delta + 1;
+    _sin.reserve(angles_nm);
+    _cos.reserve(angles_nm);
+    for(double angle = _angle_min; angle < _angle_max; angle += _angle_delta) {
+      _sin.push_back(std::sin(angle));
+      _cos.push_back(std::cos(angle));
+    }
+  }
+
+private:
+  std::vector<double> _sin, _cos;
+  double _sin_theta, _cos_theta;
+  double _angle_min, _angle_max, _angle_delta;
 };
 
 #endif

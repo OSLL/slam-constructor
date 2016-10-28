@@ -39,12 +39,11 @@ public: // methods
     _pose_delta += scan.pose_delta;
 
     // TODO: add threashold to speedup
-    //if (1 < _pose_delta.sq_dist() || 0.25 < std::fabs(_pose_delta.theta)) {
+    if (0.8 < _pose_delta.sq_dist() || 0.4 < std::fabs(_pose_delta.theta)) {
       //correction step
       _world->handle_observation(scan);
       _pose_delta.reset();
-      //}
-
+    }
     // updateWeightsTree (?)
 
     notify_with_pose(_world->pose());

@@ -1,8 +1,10 @@
 #ifndef __SENSOR_DATA_H
 #define __SENSOR_DATA_H
 
+#include <memory>
 #include <vector>
 #include "state_data.h"
+#include "geometry_utils.h"
 
 struct ScanPoint {
   ScanPoint(double rng = 0, double ang = 0, bool is_occ = true):
@@ -14,6 +16,9 @@ struct ScanPoint {
 };
 
 struct TransformedLaserScan {
+  // TODO: create simple and effective way
+  //       to translate LS to world by a given pose
+  std::shared_ptr<TrigonometricCache> trig_cache;
   RobotPoseDelta pose_delta;
 
   std::vector<ScanPoint> points;

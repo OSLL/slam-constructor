@@ -27,17 +27,23 @@ public:
 
 class GmappingBaseCell : public GridCell {
 public:
-  GmappingBaseCell(): _hits(0), _tries(0), _obst_x(0), _obst_y(0) {}
+  GmappingBaseCell(): _cached(false),
+    _hits(0), _tries(0), _obst_x(0), _obst_y(0) {}
 
   const GridCellValue& value() const override {
+    if (_cached) {
+      return _out_value;
+    }
     _out_value.occupancy.prob_occ = _tries ? 1.0*_hits / _tries : -1;
     // TODO: _hits == 0 -> return cell middle?
     _out_value.obst.x = _hits ? _obst_x / _hits : 0;
     _out_value.obst.y = _hits ? _obst_y / _hits : 0;
+    _cached = true;
     return _out_value;
   }
 
   void set_value (const GridCellValue &new_value, double quality) override {
+    _cached = false;
     ++_tries;
     if (new_value.occupancy <= 0.5) {
       return;
@@ -52,6 +58,7 @@ public:
 
 private:
   mutable GmappingCellValue _out_value;
+  mutable int _cached;
   int _hits, _tries;
   double _obst_x, _obst_y;
 };

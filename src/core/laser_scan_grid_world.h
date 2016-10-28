@@ -21,12 +21,16 @@ public: // methods
   virtual void handle_observation(TransformedLaserScan &scan) {
     const RobotPose& pose = World<TransformedLaserScan, MapType>::pose();
 
+    scan.trig_cache->set_theta(pose.theta);
     size_t last_pt_i = scan.points.size() - _scan_margin - 1;
     for (size_t pt_i = _scan_margin; pt_i <= last_pt_i; ++pt_i) {
       const ScanPoint &sp = scan.points[pt_i];
       // move to world frame assume sensor is in robots' (0,0)
-      double x_world = pose.x + sp.range * std::cos(sp.angle + pose.theta);
-      double y_world = pose.y + sp.range * std::sin(sp.angle + pose.theta);
+      double c = scan.trig_cache->cos(sp.angle);
+      double s = scan.trig_cache->sin(sp.angle);
+
+      double x_world = pose.x + sp.range * c;
+      double y_world = pose.y + sp.range * s;
 
       handle_scan_point(map(), sp.is_occupied, scan.quality,
                         Point2D{pose.x, pose.y}, Point2D{x_world, y_world});

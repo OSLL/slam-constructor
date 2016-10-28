@@ -5,6 +5,8 @@
 #include <memory>
 #include <sensor_msgs/LaserScan.h>
 #include <boost/shared_ptr.hpp>
+#include <cassert>
+#include <iostream>
 
 #include "../core/slam_fascade.h"
 #include "../core/sensor_data.h"
@@ -16,7 +18,8 @@ class LaserScanObserver : public TopicObserver<sensor_msgs::LaserScan> {
 public: //methods
 
   LaserScanObserver(SlamPtr slam, bool skip_max_vals = false):
-    _slam(slam), _skip_max_vals(skip_max_vals) {}
+    _slam(slam), _skip_max_vals(skip_max_vals),
+    _cache(std::make_shared<TrigonometricCache>()) {}
 
   virtual void handle_transformed_msg(
     const ScanPtr msg, const tf::StampedTransform& t) {
@@ -25,7 +28,11 @@ public: //methods
                         tf::getYaw(t.getRotation()));
 
     TransformedLaserScan laser_scan;
+    laser_scan.points.reserve(msg->ranges.size());
     laser_scan.quality = 1.0;
+    laser_scan.trig_cache = _cache;
+    double a_max = msg->angle_min + msg->angle_increment * msg->ranges.size();
+    _cache->update(msg->angle_min, a_max, msg->angle_increment);
     double angle = msg->angle_min;
 
     for (const auto &range : msg->ranges) {
@@ -43,6 +50,7 @@ public: //methods
       }
       laser_scan.points.push_back(sp);
     }
+    assert(EQ_DOUBLE(angle, a_max));
 
     laser_scan.pose_delta = new_pose - _prev_pose;
     _prev_pose = new_pose;
@@ -54,6 +62,7 @@ private: // fields
   std::shared_ptr<SlamFascade<TransformedLaserScan>> _slam;
   bool _skip_max_vals;
   RobotPose _prev_pose;
+  std::shared_ptr<TrigonometricCache> _cache;
 };
 
 #endif
