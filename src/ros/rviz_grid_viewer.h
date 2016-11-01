@@ -11,7 +11,8 @@
 #include "../core/slam_fascade.h"
 #include "../core/maps/grid_map.h"
 
-class RvizGridViewer : public WorldObserver<GridMap> {
+template <typename GridMapType>
+class RvizGridViewer : public WorldObserver<GridMapType> {
 public: // method
   RvizGridViewer(ros::Publisher pub):
     _map_pub(pub) {}
@@ -27,7 +28,7 @@ public: // method
                            "odom_combined", "robot_pose"));
   }
 
-  virtual void on_map_update(const GridMap &map) override {
+  virtual void on_map_update(const GridMapType &map) override {
     // TODO: move map publishing rate to parameter
     if ((ros::Time::now() - _last_pub_time).toSec() < 5.0) {
       return;

@@ -9,7 +9,7 @@
 /* An element of ParticleFilter. Used to approximate target distribution */
 class Particle {
 public:
-  Particle(): _weight(0) {}
+  Particle(): _weight(1.0) {}
   double weight() const { return _weight; }
   void set_weight(double w) { _weight = w; }
 

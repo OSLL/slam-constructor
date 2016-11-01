@@ -4,6 +4,7 @@
 #include <cmath>
 #include <vector>
 #include <memory>
+#include <random>
 
 #include "../core/slam_fascade.h"
 #include "../core/maps/grid_cell_strategy.h"
@@ -26,6 +27,8 @@ private:
 class GmappingSlamFascade :
   public SlamFascade<TransformedLaserScan>,
   public WorldObservable<GmappingWorld::MapType> {
+public:
+  using MapType = GmappingWorld::MapType;
 public: // methods
   // TODO: copy ctor, move ctor, dtor
   GmappingSlamFascade(std::shared_ptr<GridCellStrategy> gcs) :
@@ -42,7 +45,14 @@ public: // methods
     if (0.8 < _pose_delta.sq_dist() || 0.4 < std::fabs(_pose_delta.theta)) {
       //correction step
       _world->handle_observation(scan);
-      _pose_delta.reset();
+
+      std::random_device rd;
+      std::mt19937 eng(rd());
+      std::normal_distribution<> d_coord(0.0, 0.2);
+      std::normal_distribution<> d_angle(0.0, 0.1);
+      _pose_delta = RobotPoseDelta(std::fabs(d_coord(eng)),
+                                   std::fabs(d_coord(eng)),
+                                   std::fabs(d_angle(eng)));
     }
     // updateWeightsTree (?)
 

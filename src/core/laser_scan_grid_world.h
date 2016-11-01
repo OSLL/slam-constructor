@@ -8,9 +8,10 @@
 #include "maps/grid_cell_strategy.h"
 #include "maps/grid_map.h"
 
-class LaserScanGridWorld : public World<TransformedLaserScan, GridMap> {
+template <typename Map>
+class LaserScanGridWorld : public World<TransformedLaserScan, Map> {
 public: //types
-  using MapType = GridMap;
+  using MapType = Map;
   using DPoint = DiscretePoint2D;
 public: // methods
 

@@ -10,6 +10,7 @@
 #include "../core/laser_scan_grid_world.h"
 #include "../core/maps/grid_cell_strategy.h"
 #include "../core/maps/cell_occupancy_estimator.h"
+#include "../core/maps/plain_grid_map.h"
 
 #include "tiny_grid_cells.h"
 #include "tiny_scan_matcher.h"
@@ -18,7 +19,7 @@ struct TinyWorldParams {
   double localized_scan_quality, raw_scan_quality;
 };
 
-class TinyWorld : public LaserScanGridWorld {
+class TinyWorld : public LaserScanGridWorld<PlainGridMap> {
 private: // internal params
   // Scan matcher
   const double SIG_XY = 0.2;
@@ -56,7 +57,7 @@ public:
     return _scan_matcher;
   }
 
-  virtual void handle_scan_point(GridMap &map, bool is_occ, double scan_quality,
+  virtual void handle_scan_point(MapType &map, bool is_occ, double scan_quality,
     const Point2D &lsr, const Point2D &beam_end) override {
 
     _map_update_ctx.blur_is_enabled = is_occ;

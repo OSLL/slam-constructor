@@ -11,6 +11,8 @@
 class TinySlamFascade :
   public SlamFascade<TransformedLaserScan>,
   public WorldObservable<TinyWorld::MapType> {
+public:
+  using MapType = TinyWorld::MapType;
 private:
   using ScanMatcherObsPtr = std::shared_ptr<GridScanMatcherObserver>;
 public: // methods

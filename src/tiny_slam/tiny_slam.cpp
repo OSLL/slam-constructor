@@ -100,8 +100,8 @@ int main(int argc, char** argv) {
     new LaserScanObserver{slam, init_skip_exceeding_lsr()}};
   scan_provider.subscribe(scan_obs);
 
-  std::shared_ptr<RvizGridViewer> viewer(
-    new RvizGridViewer(nh.advertise<nav_msgs::OccupancyGrid>("/map", 5)));
+  auto viewer = std::make_shared<RvizGridViewer<TinySlamFascade::MapType>>(
+    nh.advertise<nav_msgs::OccupancyGrid>("/map", 5));
   slam->subscribe(viewer);
 
 #ifdef RVIZ_DEBUG

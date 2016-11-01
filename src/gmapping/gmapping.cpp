@@ -29,8 +29,8 @@ int main(int argc, char** argv) {
   std::shared_ptr<LaserScanObserver> scan_obs{new LaserScanObserver{slam}};
   scan_provider.subscribe(scan_obs);
 
-  std::shared_ptr<RvizGridViewer> viewer(
-    new RvizGridViewer(nh.advertise<nav_msgs::OccupancyGrid>("/map", 5)));
+  auto viewer = std::make_shared<RvizGridViewer<GmappingSlamFascade::MapType>>(
+    nh.advertise<nav_msgs::OccupancyGrid>("/map", 5));
   slam->subscribe(viewer);
 
   ros::spin();

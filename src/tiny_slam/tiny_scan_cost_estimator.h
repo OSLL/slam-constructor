@@ -23,7 +23,7 @@ public:
         cost += 1.0;
         continue;
       }
-      double cell_value = map.cell_value(cell_coord);
+      double cell_value = map[cell_coord];
       cost += 1.0 - cell_value;
       if (min_cost < cost) {
         break;

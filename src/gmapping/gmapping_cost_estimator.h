@@ -66,7 +66,8 @@ public:
           }
         }
       }
-      last_dpoint_weight = 0 < best_dist ? exp(-best_dist / SIGMA_SQ) : 0;
+      double dist_sq = 0 < best_dist ? best_dist : 9 * SIGMA_SQ;
+      last_dpoint_weight = exp(-dist_sq / SIGMA_SQ);
       scan_weight += last_dpoint_weight;
     }
 

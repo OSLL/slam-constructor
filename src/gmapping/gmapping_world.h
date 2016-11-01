@@ -8,6 +8,7 @@
 #include "../core/laser_scan_grid_world.h"
 #include "../core/maps/grid_cell_factory.h"
 #include "../core/maps/grid_cell_strategy.h"
+#include "../core/maps/plain_grid_map.h"
 #include "../core/gradient_walker_scan_matcher.h"
 
 class GmappingCellValue : public GridCellValue {
@@ -63,9 +64,9 @@ private:
   double _obst_x, _obst_y;
 };
 
-class GmappingWorld : public Particle, public LaserScanGridWorld {
+class GmappingWorld : public Particle, public LaserScanGridWorld<PlainGridMap> {
 public:
-  using MapType = GridMap;
+  using MapType = PlainGridMap;
 public:
 
   GmappingWorld(std::shared_ptr<GridCellStrategy> gcs) :
@@ -85,7 +86,8 @@ public:
       LaserScanGridWorld::handle_observation(scan);
     }
 
-    Particle::set_weight(scan_score / scan.points.size() * Particle::weight());
+    double scan_prob = scan_score / scan.points.size();
+    Particle::set_weight(scan_prob * Particle::weight());
   }
 
   virtual GridCellValue& setup_cell_value(

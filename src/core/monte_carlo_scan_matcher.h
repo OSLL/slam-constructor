@@ -23,7 +23,7 @@ public:
                       const TransformedLaserScan &scan,
                       const GridMap &map,
                       RobotPoseDelta &pose_delta) override {
-    do_for_each_observer([init_pose, scan, map](ObsPtr obs) {
+    do_for_each_observer([&init_pose, &scan, &map](ObsPtr obs) {
       obs->on_matching_start(init_pose, scan, map);
     });
 
