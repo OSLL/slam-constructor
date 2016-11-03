@@ -24,8 +24,12 @@ public:
 
 class GridCell {
 public:
+  virtual ~GridCell() {}
   virtual const GridCellValue& value() const = 0;
   virtual void set_value(const GridCellValue &value, double quality = 1.0) = 0;
+  virtual std::shared_ptr<GridCell> clone() const {
+    return nullptr;
+  }
 };
 
 class GridCellFactory {

@@ -20,6 +20,8 @@ public:
     _width(width), _height(height), _m_per_cell(0.1),
     _cell_factory(cell_factory) {}
 
+  virtual ~GridMap() {}
+
   int width() const { return _width; }
   int height() const { return _height; }
   double scale() const { return _m_per_cell; }

@@ -2,6 +2,7 @@
 #define __GMAPPING_COST_ESTIMATOR
 
 #include <cmath>
+#include <limits>
 #include "../core/geometry_utils.h"
 #include "../core/grid_scan_matcher.h"
 #include "gmapping_world.h"
@@ -11,9 +12,10 @@ private:
   constexpr static double FULLNESS_TH = 0.5;
   constexpr static double SIGMA_SQ = 0.01;
   constexpr static double FREE_CELL_DIST = std::sqrt(2.0);
+  constexpr static double DBL_INF = std::numeric_limits<double>::infinity();
   using CellValue = const GmappingCellValue &;
 public:
-  GmappingCostEstimator() : _scan_margin(0), _pts_skip_rate(0), _window_sz(1) {}
+  GmappingCostEstimator() : _scan_margin(0), _pts_skip_rate(3), _window_sz(1) {}
 
   virtual double estimate_scan_cost(const RobotPose &pose,
                                     const TransformedLaserScan &scan,
@@ -40,7 +42,7 @@ public:
       }
 
       last_handled_dpoint = sp_coord;
-      double best_dist = -1.0;
+      double best_dist = DBL_INF;
       double d_free_x = FREE_CELL_DIST * c; // 0< int cast - implicit floor
       double d_free_y = FREE_CELL_DIST * s;
       for (int d_x = -_window_sz; d_x <= _window_sz; ++d_x) {
@@ -61,12 +63,12 @@ public:
           // NB: static (not dynamic) cast is used for performance reasons
           CellValue gmg_val = static_cast<CellValue>(cell_value);
           double dist = sp_world.dist_sq(gmg_val.obst);
-          if (dist < best_dist || best_dist < 0) {
+          if (dist < best_dist) {
             best_dist = dist;
           }
         }
       }
-      double dist_sq = 0 < best_dist ? best_dist : 9 * SIGMA_SQ;
+      double dist_sq = best_dist != DBL_INF ? best_dist : 9 * SIGMA_SQ;
       last_dpoint_weight = exp(-dist_sq / SIGMA_SQ);
       scan_weight += last_dpoint_weight;
     }

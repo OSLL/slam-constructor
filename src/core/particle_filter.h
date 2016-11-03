@@ -35,7 +35,7 @@ public:
     for (auto &p : particles) {
       sq_sum += p->weight() * p->weight();
     }
-    uint effective_particles_cnt = 1.0 / sq_sum;
+    double effective_particles_cnt = 1.0 / sq_sum;
     return effective_particles_cnt * 2 < particles.size();
   }
 

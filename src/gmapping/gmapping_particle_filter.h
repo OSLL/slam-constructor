@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <vector>
+#include <cmath>
 #include <iostream>
 #include <iomanip>
 
@@ -30,8 +31,13 @@ public: // methods
     for (auto &world : _pf.particles()) {
       world->update_robot_pose(delta);
     }
+    _traversed_since_last_resample += delta;
 
-    _pf.try_resample();
+    if (0.8 < _traversed_since_last_resample.sq_dist() &&
+        0.4 < std::fabs(_traversed_since_last_resample.theta) &&
+      _pf.try_resample()) {
+      _traversed_since_last_resample.reset();
+    }
   }
 
   virtual void handle_observation(ObservationType &obs) override {
@@ -65,6 +71,7 @@ public: // methods
   virtual const GmappingWorld::MapType& map() const { return world().map(); }
 private: // fields
   ParticleFilter<GmappingWorld> _pf;
+  RobotPoseDelta _traversed_since_last_resample;
 };
 
 #endif // header-guard

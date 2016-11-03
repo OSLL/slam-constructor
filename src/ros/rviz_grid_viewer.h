@@ -45,11 +45,11 @@ public: // method
     info.origin.position.y = -info.resolution * info.width  / 2;
     info.origin.position.z = 0;
 
-    map_msg.data.reserve(map.height() * map.width());
+    map_msg.data.reserve(info.height * info.width);
     DiscretePoint2D pnt;
     for (pnt.y = 0; pnt.y < map.height(); ++pnt.y) {
       for (pnt.x = 0; pnt.x < map.width(); ++pnt.x) {
-        auto value = map[pnt];
+        double value = (double)map[pnt];
         int cell_value = value == -1 ? -1 : value * 100;
         map_msg.data.push_back(cell_value);
       }

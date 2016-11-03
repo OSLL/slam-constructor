@@ -1,6 +1,7 @@
 #ifndef __GMAPPING_WORLD
 #define __GMAPPING_WORLD
 
+#include <memory>
 #include <random>
 #include <cmath>
 
@@ -8,7 +9,7 @@
 #include "../core/laser_scan_grid_world.h"
 #include "../core/maps/grid_cell_factory.h"
 #include "../core/maps/grid_cell_strategy.h"
-#include "../core/maps/plain_grid_map.h"
+#include "../core/maps/lazy_layered_grid_map.h"
 #include "../core/gradient_walker_scan_matcher.h"
 
 class GmappingCellValue : public GridCellValue {
@@ -57,6 +58,12 @@ public:
     _obst_y += new_obs.obst.y;
   }
 
+  virtual std::shared_ptr<GridCell> clone() const {
+    auto cloned = std::make_shared<GmappingBaseCell>();
+    *cloned = *this;
+    return cloned;
+  }
+
 private:
   mutable GmappingCellValue _out_value;
   mutable int _cached;
@@ -64,29 +71,43 @@ private:
   double _obst_x, _obst_y;
 };
 
-class GmappingWorld : public Particle, public LaserScanGridWorld<PlainGridMap> {
+class GmappingWorld : public Particle,
+                      public LaserScanGridWorld<LazyLayeredGridMap> {
 public:
-  using MapType = PlainGridMap;
+  using MapType = LazyLayeredGridMap;
 public:
 
-  GmappingWorld(std::shared_ptr<GridCellStrategy> gcs) :
-    LaserScanGridWorld(gcs),
-    _matcher(std::make_shared<GmappingCostEstimator>()) {}
+  GmappingWorld(std::shared_ptr<GridCellStrategy> gcs)
+    : LaserScanGridWorld(gcs)
+    , _matcher{std::make_shared<GmappingCostEstimator>()}
+    , _rnd_engine(std::random_device{}()) {
+    init_pose_delta();
+  }
+
+  virtual void update_robot_pose(const RobotPoseDelta& delta) {
+    _pose_delta += delta;
+    LaserScanGridWorld<MapType>::update_robot_pose(delta);
+  }
 
   virtual void handle_observation(TransformedLaserScan &scan) override {
-    static bool scan_is_first = true;
+    if (_pose_delta.sq_dist() < dist_sq_lim &&
+        std::fabs(_pose_delta.theta) < ang_lim) {
+      return;
+    }
+
     RobotPoseDelta pose_delta;
     double scan_score = _matcher.process_scan(pose(), scan, map(), pose_delta);
     update_robot_pose(pose_delta);
-
-    // TODO: scan_prob threshold to params
-    if (0.0 < scan_score || scan_is_first) {
-      // map update accordig to original gmapping code (ref?)
-      scan_is_first = false;
-      LaserScanGridWorld::handle_observation(scan);
-    }
+    init_pose_delta();
 
     double scan_prob = scan_score / scan.points.size();
+    // TODO: scan_prob threshold to params
+    if (0.0 < scan_prob || _scan_is_first) {
+      // map update accordig to original gmapping code (ref?)
+      LaserScanGridWorld::handle_observation(scan);
+      _scan_is_first = false;
+    }
+
     Particle::set_weight(scan_prob * Particle::weight());
   }
 
@@ -95,7 +116,8 @@ public:
       bool is_occ, const Point2D &lsr, const Point2D &obstacle) override {
 
     if (is_occ) {
-      GmappingCellValue &gmg_dst = dynamic_cast<GmappingCellValue&>(dst);
+      // static cast is used for performance reasons
+      GmappingCellValue &gmg_dst = static_cast<GmappingCellValue&>(dst);
       gmg_dst.obst = obstacle;
     }
     LaserScanGridWorld::setup_cell_value(dst, pt, pt_bounds,
@@ -104,18 +126,28 @@ public:
   }
 
   virtual void sample() override {
-    std::random_device rd;
-    std::mt19937 engine(rd());
     std::normal_distribution<> d_coord(0.0, 0.1);
     std::normal_distribution<> d_angle(0.0, 0.03);
 
-   RobotPoseDelta norm_delta(d_coord(engine), d_coord(engine), d_angle(engine));
-   LaserScanGridWorld::update_robot_pose(norm_delta);
+    RobotPoseDelta norm_dlt(d_coord(_rnd_engine), d_coord(_rnd_engine),
+                            d_angle(_rnd_engine));
+    LaserScanGridWorld::update_robot_pose(norm_dlt);
   }
 
 private:
+  void init_pose_delta() {
+    std::uniform_real_distribution<> d_coord(0.6, 0.9);
+    std::uniform_real_distribution<> d_angle(0.3, 0.5);
+    dist_sq_lim = d_coord(_rnd_engine);
+    ang_lim = d_angle(_rnd_engine);
+    _pose_delta.reset();
+  }
+private:
   GradientWalkerScanMatcher _matcher;
+  RobotPoseDelta _pose_delta;
+  double dist_sq_lim, ang_lim;
+  bool _scan_is_first = true;
+  std::mt19937 _rnd_engine;
 };
-
 
 #endif
