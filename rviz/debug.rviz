@@ -4,11 +4,12 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /Global Options1
         - /Grid1
         - /Axes1
         - /LaserScan1
       Splitter Ratio: 0.592949
-    Tree Height: 363
+    Tree Height: 474
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -54,7 +55,7 @@ Visualization Manager:
       Length: 1
       Name: Axes
       Radius: 0.1
-      Reference Frame: robot_pose
+      Reference Frame: base_link
       Value: true
     - Alpha: 0.7
       Class: rviz/Map
@@ -96,7 +97,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: odom_combined
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
@@ -129,10 +130,10 @@ Visualization Manager:
         Z: -0.586975
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 1.5648
+      Pitch: 1.4898
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.71355
+      Yaw: 4.95855
     Saved: ~
 Window Geometry:
   Displays:

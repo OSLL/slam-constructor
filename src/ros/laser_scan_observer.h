@@ -25,7 +25,7 @@ public: //methods
     const ScanPtr msg, const tf::StampedTransform& t) {
 
     RobotPose new_pose(t.getOrigin().getX(), t.getOrigin().getY(),
-                        tf::getYaw(t.getRotation()));
+                       tf::getYaw(t.getRotation()));
 
     TransformedLaserScan laser_scan;
     laser_scan.points.reserve(msg->ranges.size());

@@ -25,7 +25,4 @@
   <node name="rviz" pkg="rviz" type="rviz" respawn="true"
         args="-d $(find slam_fmwk)/rviz/debug.rviz" />
 
-  <node name="MapTrasformPublisher" pkg="tf" type="static_transform_publisher"
-        args="0 0 0 0 0 0 odom_combined map 250" cwd="node" required="true"/>
-
 </launch>

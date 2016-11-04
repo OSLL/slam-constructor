@@ -39,6 +39,7 @@ int main(int argc, char** argv) {
 
   auto viewer = std::make_shared<RvizGridViewer<GmappingSlamFascade::MapType>>(
     nh.advertise<nav_msgs::OccupancyGrid>("/map", 5));
+  scan_provider.subscribe(viewer);
   slam->subscribe(viewer);
 
   ros::spin();

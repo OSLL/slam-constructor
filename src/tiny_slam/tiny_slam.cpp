@@ -5,8 +5,6 @@
 
 #include <nav_msgs/OccupancyGrid.h>
 
-//#define RVIZ_DEBUG 1
-
 #include "../ros/topic_with_transform.h"
 #include "../ros/rviz_grid_viewer.h"
 #include "../ros/utils.h"
@@ -19,24 +17,6 @@
 #include "tiny_fascade.h"
 #include "tiny_world.h"
 #include "tiny_grid_cells.h"
-
-class PoseScanMatcherObserver : public GridScanMatcherObserver {
-public:
-  virtual void on_scan_test(const RobotPose &pose,
-                            const TransformedLaserScan &scan,
-                            double score) override {
-    publish_transform("sm_curr_pose", pose);
-  }
-  virtual void on_pose_update(const RobotPose &pose,
-                              const TransformedLaserScan &scan,
-                              double score) override {
-    publish_transform("sm_best_pose", pose);
-  }
-private:
-    void publish_transform(const std::string& frame_id, const RobotPose& p) {
-      publish_2D_transform(frame_id, "odom_combined", p);
-    }
-};
 
 std::shared_ptr<GridCellFactory> init_cell_factory(TinyWorldParams &params) {
   std::string cell_type;
@@ -102,11 +82,8 @@ int main(int argc, char** argv) {
 
   auto viewer = std::make_shared<RvizGridViewer<TinySlamFascade::MapType>>(
     nh.advertise<nav_msgs::OccupancyGrid>("/map", 5));
+  scan_provider.subscribe(viewer);
   slam->subscribe(viewer);
 
-#ifdef RVIZ_DEBUG
-  std::shared_ptr<PoseScanMatcherObserver> obs(new PoseScanMatcherObserver);
-  slam->add_scan_matcher_observer(obs);
-#endif
   ros::spin();
 }
