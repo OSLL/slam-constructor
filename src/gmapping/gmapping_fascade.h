@@ -30,9 +30,10 @@ public:
   using MapType = GmappingWorld::MapType;
 public: // methods
   // TODO: copy ctor, move ctor, dtor
-  GmappingSlamFascade(std::shared_ptr<GridCellStrategy> gcs) :
-    _world(new GmappingParticleFilter<TransformedLaserScan>(
-      std::make_shared<GmappingParticleFactory>(gcs), 30)) {}
+ GmappingSlamFascade(std::shared_ptr<GridCellStrategy> gcs,
+                     unsigned particles_nm) :
+    _world{new GmappingParticleFilter<TransformedLaserScan>{
+      std::make_shared<GmappingParticleFactory>(gcs), particles_nm}} {}
 
   virtual void handle_sensor_data(TransformedLaserScan &scan) override {
     // prediction step
