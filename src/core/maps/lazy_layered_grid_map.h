@@ -5,7 +5,8 @@
 #include <cmath>
 #include <cstring>
 #include <vector>
-#include <iostream>
+#include <array>
+#include <algorithm>
 
 #include "cell_occupancy_estimator.h"
 #include "grid_cell_factory.h"
@@ -53,7 +54,7 @@ public:
   }
 
   virtual const GridCellValue &operator[](const DPnt& cell_coord) const {
-    assert(has_cell(cell_coord));
+    //assert(has_cell(cell_coord));
     //if (!has_cell(cell_coord)) {
     //  return _unknown_cell->value();
     //}
@@ -73,14 +74,15 @@ private: // map
 
 private: // types
   struct Tile {
-    Tile(std::shared_ptr<GridCell> dflt) :
-      _cells{TILE_SIZE * TILE_SIZE, dflt} {}
+    Tile(std::shared_ptr<GridCell> dflt) {
+      std::fill(_cells.begin(), _cells.end(), dflt);
+    }
 
     std::shared_ptr<GridCell> &get_cell(const DPnt& cell_coord) const {
-      return _cells[(cell_coord.y & TILE_COORD_MASK) * TILE_SIZE +
-                    (cell_coord.x & TILE_COORD_MASK)];
+      return _cells[(cell_coord.x & TILE_COORD_MASK) * TILE_SIZE +
+                    (cell_coord.y & TILE_COORD_MASK)];
     }
-    mutable std::vector<std::shared_ptr<GridCell>> _cells;
+    mutable std::array<std::shared_ptr<GridCell>, TILE_SIZE*TILE_SIZE> _cells;
   };
 
 private: // fields

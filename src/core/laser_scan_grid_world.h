@@ -2,6 +2,7 @@
 #define __LASER_SCAN_GRID_WORLD_H
 
 #include <memory>
+#include <utility>
 
 #include "sensor_data.h"
 #include "state_data.h"
@@ -40,16 +41,16 @@ public: // methods
 
   virtual void handle_scan_point(MapType &map, bool is_occ, double scan_quality,
                                  const Point2D &lsr, const Point2D &beam_end) {
-    DPoint robot_pt = map.world_to_cell(lsr.x, lsr.y);
-    DPoint obst_pt = map.world_to_cell(beam_end.x, beam_end.y);
+    const DPoint robot_pt = map.world_to_cell(lsr.x, lsr.y);
+    const DPoint obst_pt = map.world_to_cell(beam_end.x, beam_end.y);
 
-    std::vector<DPoint> pts = DiscreteLine2D(robot_pt, obst_pt).points();
+    std::vector<DPoint> pts = std::move(
+      DiscreteLine2D(robot_pt, obst_pt).points());
 
     std::shared_ptr<GridCellValue> cell_value = _gcf->create_cell_value();
     const DPoint &beam_end_pt = pts.back();
     const Rectangle &beam_end_pt_bnds = map.world_cell_bounds(beam_end_pt);
 
-    cell_value->reset();
     setup_cell_value(*cell_value, beam_end_pt, beam_end_pt_bnds,
                      is_occ, lsr, beam_end);
     map.update_cell(beam_end_pt, *cell_value, scan_quality);
@@ -57,8 +58,6 @@ public: // methods
 
     for (const auto &pt : pts) {
       const Rectangle pt_bnds = map.world_cell_bounds(pt);
-
-      cell_value->reset();
       setup_cell_value(*cell_value, pt, pt_bnds, false, lsr, beam_end);
       map.update_cell(pt, *cell_value, scan_quality);
     }

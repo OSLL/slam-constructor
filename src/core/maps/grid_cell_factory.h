@@ -7,24 +7,28 @@
 
 class GridCellValue {
 public:
-  GridCellValue(double prob = 0, double qual = 0) :
-    _init_occ{prob, qual}, occupancy{_init_occ} {}
+  GridCellValue(double prob = 0, double qual = 0) : occupancy{prob, qual} {}
+  GridCellValue(const GridCellValue&) = default;
+  GridCellValue &operator=(const GridCellValue&) = default;
+  GridCellValue(GridCellValue&&) = default;
+  GridCellValue &operator=(GridCellValue&&) = default;
+  virtual ~GridCellValue() = default;
+
   operator double() const { return occupancy.prob_occ; }
   explicit operator bool() const { return occupancy.prob_occ == 0; }
-
-  virtual void reset() {
-    occupancy = _init_occ;
-  }
-
-private:
-  Occupancy _init_occ;
 public:
   Occupancy occupancy;
 };
 
 class GridCell {
 public:
-  virtual ~GridCell() {}
+  GridCell() = default;
+  GridCell(const GridCell& gc) = default;
+  GridCell& operator=(const GridCell& gc) = default;
+  GridCell(GridCell&& gc) = default;
+  GridCell& operator=(GridCell&& gc) = default;
+  virtual ~GridCell() = default;
+
   virtual const GridCellValue& value() const = 0;
   virtual void set_value(const GridCellValue &value, double quality = 1.0) = 0;
   virtual std::shared_ptr<GridCell> clone() const {

@@ -67,7 +67,7 @@ public: // methods
                     std::fabs(start.y - end.y + 1));
     generatePointsWithBresenham(start.x, start.y, end.x, end.y);
   }
-  const std::vector<Point>& points() const { return _points; }
+  std::vector<Point>& points() { return _points; }
 private:
   void generatePointsWithBresenham(int x1, int y1, int x2, int y2) {
     // TODO: copypasted from

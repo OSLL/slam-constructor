@@ -15,12 +15,6 @@
 class GmappingCellValue : public GridCellValue {
 public:
   GmappingCellValue() : GridCellValue(0, 0) {}
-
-  virtual void reset() {
-    obst.x = obst.y = 0;
-    GridCellValue::reset();
-  }
-
   Point2D obst;
 };
 
@@ -29,33 +23,28 @@ public:
 
 class GmappingBaseCell : public GridCell {
 public:
-  GmappingBaseCell(): _cached(false),
-    _hits(0), _tries(0), _obst_x(0), _obst_y(0) {}
+  GmappingBaseCell(): _hits(0), _tries(0), _obst_x(0), _obst_y(0) {
+    update_value();
+  }
 
   const GridCellValue& value() const override {
-    if (_cached) {
-      return _out_value;
-    }
-    _out_value.occupancy.prob_occ = _tries ? 1.0*_hits / _tries : -1;
-    // TODO: _hits == 0 -> return cell middle?
-    _out_value.obst.x = _hits ? _obst_x / _hits : 0;
-    _out_value.obst.y = _hits ? _obst_y / _hits : 0;
-    _cached = true;
     return _out_value;
   }
 
   void set_value (const GridCellValue &new_value, double quality) override {
-    _cached = false;
     ++_tries;
     if (new_value.occupancy <= 0.5) {
+      update_value();
       return;
     }
 
     ++_hits;
+    // use static cast for performance reasons
     const GmappingCellValue &new_obs =
-      dynamic_cast<const GmappingCellValue&>(new_value);
+      static_cast<const GmappingCellValue&>(new_value);
     _obst_x += new_obs.obst.x;
     _obst_y += new_obs.obst.y;
+    update_value();
   }
 
   virtual std::shared_ptr<GridCell> clone() const {
@@ -65,8 +54,13 @@ public:
   }
 
 private:
-  mutable GmappingCellValue _out_value;
-  mutable int _cached;
+  void update_value() {
+    _out_value.occupancy.prob_occ = _tries ? 1.0*_hits / _tries : -1;
+    _out_value.obst.x = _hits ? _obst_x / _hits : 0;
+    _out_value.obst.y = _hits ? _obst_y / _hits : 0;
+  }
+private:
+  GmappingCellValue _out_value;
   int _hits, _tries;
   double _obst_x, _obst_y;
 };
@@ -90,6 +84,7 @@ public:
   }
 
   virtual void handle_observation(TransformedLaserScan &scan) override {
+
     if (_pose_delta.sq_dist() < dist_sq_lim &&
         std::fabs(_pose_delta.theta) < ang_lim) {
       return;
@@ -136,8 +131,8 @@ public:
 
 private:
   void init_pose_delta() {
-    std::uniform_real_distribution<> d_coord(0.6, 0.9);
-    std::uniform_real_distribution<> d_angle(0.3, 0.5);
+    std::uniform_real_distribution<> d_coord(0.6, 0.8);
+    std::uniform_real_distribution<> d_angle(0.3, 0.4);
     dist_sq_lim = d_coord(_rnd_engine);
     ang_lim = d_angle(_rnd_engine);
     _pose_delta.reset();

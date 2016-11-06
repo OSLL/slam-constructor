@@ -33,9 +33,10 @@ public:
       const ScanPoint &sp = scan.points[i];
       double c = scan.trig_cache->cos(sp.angle);
       double s = scan.trig_cache->sin(sp.angle);
-      Point2D sp_world(pose.x + sp.range * c, pose.y + sp.range * s);
+      const Point2D sp_world(pose.x + sp.range * c, pose.y + sp.range * s);
 
-      DiscretePoint2D sp_coord = map.world_to_cell(sp_world.x, sp_world.y);
+      const DiscretePoint2D sp_coord = map.world_to_cell(sp_world.x,
+                                                         sp_world.y);
       if (sp_coord == last_handled_dpoint && last_dpoint_weight != -1) {
         scan_weight += last_dpoint_weight;
         continue;
