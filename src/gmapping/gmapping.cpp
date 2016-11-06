@@ -6,7 +6,8 @@
 #include "../core/sensor_data.h"
 #include "../ros/topic_with_transform.h"
 #include "../ros/laser_scan_observer.h"
-#include "../ros/rviz_grid_viewer.h"
+#include "../ros/pose_correction_tf_publisher.h"
+#include "../ros/occupancy_grid_publisher.h"
 #include "gmapping_fascade.h"
 #include <nav_msgs/OccupancyGrid.h>
 
@@ -16,6 +17,15 @@ unsigned init_particles_nm() {
   assert(0 < particles_nm && "Particles number must be positive");
   return particles_nm;
 }
+
+bool is_async_correction() {
+  bool async_correction;
+  ros::param::param<bool>("~async_correction", async_correction, false);
+  return async_correction;
+}
+
+using ObservT = sensor_msgs::LaserScan;
+using GmappingMap = GmappingSlamFascade::MapType;
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "gMapping");
@@ -37,10 +47,14 @@ int main(int argc, char** argv) {
   std::shared_ptr<LaserScanObserver> scan_obs{new LaserScanObserver{slam}};
   scan_provider.subscribe(scan_obs);
 
-  auto viewer = std::make_shared<RvizGridViewer<GmappingSlamFascade::MapType>>(
+  auto map_publisher = std::make_shared<OccupancyGridPublisher<GmappingMap>>(
     nh.advertise<nav_msgs::OccupancyGrid>("/map", 5));
-  scan_provider.subscribe(viewer);
-  slam->subscribe(viewer);
+  slam->subscribe_map(map_publisher);
+
+  using PosePublT = PoseCorrectionTfPublisher<ObservT>;
+  auto pose_publisher = std::make_shared<PosePublT>(is_async_correction());
+  scan_provider.subscribe(pose_publisher);
+  slam->subscribe_pose(pose_publisher);
 
   ros::spin();
 }

@@ -9,6 +9,7 @@
         cwd="node" required="true" output="screen">
     <remap from="laser_scan" to="/base_scan" />
     <param name="rbpf_particles_nm" value="30" />
+    <param name="async_correction" value="false" />
   </node>
 
   <node name="player" pkg="rosbag" type="play"

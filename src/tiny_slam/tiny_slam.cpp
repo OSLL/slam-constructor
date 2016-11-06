@@ -6,8 +6,8 @@
 #include <nav_msgs/OccupancyGrid.h>
 
 #include "../ros/topic_with_transform.h"
-#include "../ros/rviz_grid_viewer.h"
-#include "../ros/utils.h"
+#include "../ros/pose_correction_tf_publisher.h"
+#include "../ros/occupancy_grid_publisher.h"
 #include "../ros/laser_scan_observer.h"
 
 #include "../core/sensor_data.h"
@@ -61,6 +61,9 @@ bool init_skip_exceeding_lsr() {
   return param_value;
 }
 
+using ObservT = sensor_msgs::LaserScan;
+using TinySlamMap = TinySlamFascade::MapType;
+
 int main(int argc, char** argv) {
   ros::init(argc, argv, "tinySLAM");
 
@@ -74,16 +77,18 @@ int main(int argc, char** argv) {
 
   // connect the slam to a ros-topic based data provider
   ros::NodeHandle nh;
-  TopicWithTransform<sensor_msgs::LaserScan> scan_provider(nh,
-      "laser_scan", "odom_combined");
+  TopicWithTransform<ObservT> scan_provider(nh, "laser_scan", "odom_combined");
   std::shared_ptr<LaserScanObserver> scan_obs{
     new LaserScanObserver{slam, init_skip_exceeding_lsr()}};
   scan_provider.subscribe(scan_obs);
 
-  auto viewer = std::make_shared<RvizGridViewer<TinySlamFascade::MapType>>(
+  auto map_publisher = std::make_shared<OccupancyGridPublisher<TinySlamMap>>(
     nh.advertise<nav_msgs::OccupancyGrid>("/map", 5));
-  scan_provider.subscribe(viewer);
-  slam->subscribe(viewer);
+  slam->subscribe_map(map_publisher);
+
+  auto pose_publisher = std::make_shared<PoseCorrectionTfPublisher<ObservT>>();
+  scan_provider.subscribe(pose_publisher);
+  slam->subscribe_pose(pose_publisher);
 
   ros::spin();
 }
