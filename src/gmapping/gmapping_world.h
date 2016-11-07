@@ -48,9 +48,7 @@ public:
   }
 
   virtual std::shared_ptr<GridCell> clone() const {
-    auto cloned = std::make_shared<GmappingBaseCell>();
-    *cloned = *this;
-    return cloned;
+    return std::make_shared<GmappingBaseCell>(*this);
   }
 
 private:

@@ -40,9 +40,7 @@ public:
       tile = std::make_shared<Tile>(_unknown_cell);
     }
     if (1 < tile.use_count()) {
-      Tile *cloned_tile = new Tile{_unknown_cell};
-      *cloned_tile = *tile;
-      tile.reset(cloned_tile);
+      tile.reset(new Tile{*tile});
     }
 
     std::shared_ptr<GridCell> &cell = tile->get_cell(cell_coord);
