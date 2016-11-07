@@ -1,6 +1,7 @@
 #ifndef __TINY_SCAN_COST_ESTIMATOR
 #define __TINY_SCAN_COST_ESTIMATOR
 
+#include "../core/sensor_data.h"
 #include "../core/grid_scan_matcher.h"
 
 class TinyScanCostEstimator : public ScanCostEstimator {
@@ -9,6 +10,8 @@ public:
                                     const TransformedLaserScan &scan,
                                     const GridMap &map,
                                     double min_cost) override {
+    auto OCCUPIED_OBSERVATION = AreaOccupancyObservation{
+      {1.0, 1.0}, {0, 0}, 1.0};
     double cost = 0;
     for (const auto &sp : scan.points) {
       if (!sp.is_occupied) {
@@ -23,8 +26,7 @@ public:
         cost += 1.0;
         continue;
       }
-      double cell_value = map[cell_coord];
-      cost += 1.0 - cell_value;
+      cost += map[cell_coord].discrepancy(OCCUPIED_OBSERVATION);
       if (min_cost < cost) {
         break;
       }

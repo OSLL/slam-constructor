@@ -2,13 +2,11 @@
 #define __GRID_CELL_H_INCLUDED
 
 #include <memory>
-
-#include "cell_occupancy_estimator.h"
+#include "../sensor_data.h"
 
 class GridCell {
 public:
-  GridCell(const Occupancy &occ, double qual = 1.0) :
-    occupancy{occ}, quality{qual} {}
+  GridCell(const Occupancy &occ) : occupancy{occ} {}
   GridCell(const GridCell& gc) = default;
   GridCell& operator=(const GridCell& gc) = default;
   GridCell(GridCell&& gc) = default;
@@ -22,13 +20,16 @@ public:
     return std::make_unique<GridCell>(*this);
   }
 
-  virtual void operator+=(const GridCell &that) {
-    *this = that;
+  virtual void operator+=(const AreaOccupancyObservation &aoo) {
+    occupancy = aoo.occupancy;
   }
 
-public:
+  virtual double discrepancy(const AreaOccupancyObservation &aoo) const {
+    return std::abs(occupancy - aoo.occupancy);
+  }
+
+protected:
   Occupancy occupancy;
-  double quality;
 };
 
 #endif

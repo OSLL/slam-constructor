@@ -35,6 +35,10 @@ public:
     return _cell_prototype->clone();
   }
 
+  DiscretePoint2D world_to_cell(const Point2D &pt) const {
+    return world_to_cell(pt.x, pt.y);
+  }
+
   DiscretePoint2D world_to_cell(double x, double y) const {
     int cell_x = std::floor(_width /2 + x/_m_per_cell);
     int cell_y = std::floor(_height/2 + y/_m_per_cell);
@@ -42,7 +46,7 @@ public:
     return DiscretePoint2D(cell_x, cell_y);
   }
 
-  Rectangle world_cell_bounds(const DiscretePoint2D &cell_coord) {
+  Rectangle world_cell_bounds(const DiscretePoint2D &cell_coord) const {
     assert(has_cell(cell_coord));
     Rectangle bounds;
     bounds.bot = (cell_coord.y + _height/2) * _m_per_cell;

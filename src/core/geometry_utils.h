@@ -31,6 +31,10 @@ struct Point2D {
   double x, y;
 };
 
+struct Beam {
+  Point2D beg, end;
+};
+
 struct DiscretePoint2D {
 public:
   DiscretePoint2D(int x_coord = 0, int y_coord = 0):

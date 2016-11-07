@@ -13,23 +13,25 @@ public:
     return std::make_unique<GmappingBaseCell>(*this);
   }
 
-  virtual void operator+=(const GridCell &that) override {
+  virtual void operator+=(const AreaOccupancyObservation &aoo) override {
     ++_tries;
-    bool that_is_free = that <= 0.5;
-    double that_p = that_is_free ? 0 : that;
-    occupancy.prob_occ = ((*this) * (_tries - 1) + that_p) / _tries;
-    if (that_is_free) return;
+    bool aoo_is_free = aoo.occupancy <= 0.5;
+    double aoo_p = aoo_is_free ? 0.0 : aoo.occupancy.prob_occ;
+    occupancy.prob_occ = ((*this) * (_tries - 1) + aoo_p) / _tries;
+    if (aoo_is_free) return;
 
-    // use static cast for performance reasons
-    auto gmg_that = static_cast<const GmappingBaseCell&>(that);
     ++_hits;
-    obst.x = (obst.x * (_hits - 1) + gmg_that.obst.x) / _hits;
-    obst.y = (obst.y * (_hits - 1) + gmg_that.obst.y) / _hits;
+    obst.x = (obst.x * (_hits - 1) + aoo.obstacle.x) / _hits;
+    obst.y = (obst.y * (_hits - 1) + aoo.obstacle.y) / _hits;
   }
-public:
-  Point2D obst;
+
+  virtual double discrepancy(const AreaOccupancyObservation &aoo) const {
+    return obst.dist_sq(aoo.obstacle);
+  }
+
 private:
   int _hits, _tries;
+  Point2D obst;
 };
 
 #endif

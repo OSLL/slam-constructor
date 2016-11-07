@@ -1,7 +1,8 @@
-#ifndef __STATE_DATA_H
-#define __STATE_DATA_H
+#ifndef __STATE_DATA_H_INCLUDED
+#define __STATE_DATA_H_INCLUDED
 
 #include <memory>
+#include "geometry_utils.h"
 
 class RobotPoseDelta {
 public: // methods
@@ -73,8 +74,21 @@ public:
   double x, y, theta;
 };
 
+struct Occupancy {
+  double prob_occ;
+  double estimation_quality;
 
-#include "maps/grid_map.h"
+  // TODO: is NaN better for as a dflt value?
+  Occupancy(double prob = 0, double quality = 0) :
+    prob_occ(prob), estimation_quality(quality) {}
+
+  operator double() const { return prob_occ; }
+
+  bool operator==(const Occupancy &that) {
+    return EQ_DOUBLE(prob_occ, that.prob_occ) &&
+           EQ_DOUBLE(estimation_quality, that.estimation_quality);
+  }
+};
 
 // TODO: try to simplify template params
 template <typename ObservationType, typename MapType>

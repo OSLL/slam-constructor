@@ -4,6 +4,7 @@
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <utility>
 
 #include "../core/geometry_utils.h"
 #include "../core/grid_scan_matcher.h"
@@ -24,6 +25,8 @@ public:
                                     const TransformedLaserScan &scan,
                                     const GridMap &map,
                                     double min_cost = 0) {
+    auto sp_observation = AreaOccupancyObservation{{1.0, 1.0}, {0, 0}, 1.0};
+
     double scan_weight = 0, last_dpoint_weight = -1;
     DiscretePoint2D last_handled_dpoint;
     scan.trig_cache->set_theta(pose.theta);
@@ -36,10 +39,9 @@ public:
       const ScanPoint &sp = scan.points[i];
       double c = scan.trig_cache->cos(sp.angle);
       double s = scan.trig_cache->sin(sp.angle);
-      const Point2D sp_world(pose.x + sp.range * c, pose.y + sp.range * s);
+      sp_observation.obstacle = {pose.x + sp.range * c, pose.y + sp.range * s};
 
-      const DiscretePoint2D sp_coord = map.world_to_cell(sp_world.x,
-                                                         sp_world.y);
+      auto sp_coord = map.world_to_cell(sp_observation.obstacle);
       if (sp_coord == last_handled_dpoint && last_dpoint_weight != -1) {
         scan_weight += last_dpoint_weight;
         continue;
@@ -64,9 +66,7 @@ public:
             continue; //occlusion is detected
           }
 
-          // NB: static (not dynamic) cast is used for performance reasons
-          auto gmg_cell = static_cast<const GmappingBaseCell&>(cell);
-          double dist = sp_world.dist_sq(gmg_cell.obst);
+          double dist = cell.discrepancy(sp_observation);
           if (dist < best_dist) {
             best_dist = dist;
           }

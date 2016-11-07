@@ -78,10 +78,10 @@ private: // methods
     Intersections intersections;
     // if the cell is occupied, rotate ray around beam by 90 degrees
     Ray ray = is_occ ?
-      Ray(beam.x_end, beam.y_st - beam.y_end,
-          beam.y_end, beam.x_end - beam.x_st) :
-      Ray(beam.x_st, beam.x_end - beam.x_st,
-          beam.y_st, beam.y_end - beam.y_st);
+      Ray(beam.end.x, beam.beg.y - beam.end.y,
+          beam.end.y, beam.end.x - beam.beg.x) :
+      Ray(beam.beg.x, beam.end.x - beam.beg.x,
+          beam.beg.y, beam.end.y - beam.beg.y);
 
     ray.intersect_horiz_segm(bnds.left, bnds.right, bnds.top,
                              IntersLocation::Top, intersections);
@@ -147,7 +147,7 @@ private: // methods
     }
     if (is_occ &&
         are_on_the_same_side(inters[0].x, inters[0].y, inters[1].x, inters[1].y,
-                             beam.x_st, beam.y_st, corner_x, corner_y)) {
+                             beam.beg.x, beam.beg.y, corner_x, corner_y)) {
       area = bnds.area() - area;
     }
     return area;

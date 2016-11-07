@@ -57,27 +57,28 @@ public:
     return _scan_matcher;
   }
 
-  virtual void handle_scan_point(MapType &map, bool is_occ, double scan_quality,
-    const Point2D &lsr, const Point2D &beam_end) override {
+  virtual void handle_scan_point(bool is_occ, double scan_quality,
+    const Beam &beam) override {
 
+    auto &map = this->map();
     _map_update_ctx.blur_is_enabled = is_occ;
-    _map_update_ctx.beam = Beam{lsr.x, lsr.y, beam_end.x, beam_end.y};
 
-    DPoint robot_pt = map.world_to_cell(lsr.x, lsr.y);
-    DPoint obst_pt = map.world_to_cell(beam_end.x, beam_end.y);
+    DPoint robot_pt = map.world_to_cell(beam.beg);
+    DPoint obst_pt = map.world_to_cell(beam.end);
+
     _map_update_ctx.obst_dist_sq = robot_pt.dist_sq(obst_pt);
     _map_update_ctx.hole_dist_sq = std::pow(HOLE_WIDTH / map.cell_scale(), 2);
     _map_update_ctx.obst_pt = obst_pt;
 
-    LaserScanGridWorld::handle_scan_point(map, is_occ, scan_quality,
-                                          lsr, beam_end);
+    LaserScanGridWorld::handle_scan_point(is_occ, scan_quality, beam);
   }
 
-  virtual GridCell& setup_cell_value(
-    GridCell &dst, const DPoint &pt, const Rectangle &pt_bounds,
-    bool is_occ, const Point2D &lsr, const Point2D &obstacle) override {
+  virtual AreaOccupancyObservation sp2obs(
+    const DPoint &pt, bool is_occ, double quality, const Beam &beam) const {
+    AreaOccupancyObservation dst;
+    dst.quality = quality;
 
-    const Beam &beam = _map_update_ctx.beam;
+    auto pt_bounds = map().world_cell_bounds(pt);
     auto occ_est = _map_update_ctx.occ_est;
     dst.occupancy = occ_est->estimate_occupancy(beam, pt_bounds, is_occ);
     if (is_occ) {
@@ -103,8 +104,6 @@ public:
   struct MapUpdateCtx {
     MapUpdateCtx(std::shared_ptr<CellOccupancyEstimator> e) : occ_est(e) {}
 
-    Rectangle cell_bounds;
-    Beam beam;
     DiscretePoint2D obst_pt;
     double base_occupied_prob;
     double obst_dist_sq, hole_dist_sq;
@@ -119,7 +118,7 @@ private:
   std::shared_ptr<TinyScanMatcher> _scan_matcher;
 
   // a context set up for each map update with a scan point
-  MapUpdateCtx _map_update_ctx;
+  mutable MapUpdateCtx _map_update_ctx;
 };
 
 #endif

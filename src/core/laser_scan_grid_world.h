@@ -34,43 +34,27 @@ public: // methods
       double x_world = pose.x + sp.range * c;
       double y_world = pose.y + sp.range * s;
 
-      handle_scan_point(map(), sp.is_occupied, scan.quality,
-                        Point2D{pose.x, pose.y}, Point2D{x_world, y_world});
+      handle_scan_point(sp.is_occupied, scan.quality,
+                        Beam{{pose.x, pose.y}, {x_world, y_world}});
     }
   }
 
-  virtual void handle_scan_point(MapType &map, bool is_occ, double scan_quality,
-                                 const Point2D &lsr, const Point2D &beam_end) {
-    const DPoint robot_pt = map.world_to_cell(lsr.x, lsr.y);
-    const DPoint obst_pt = map.world_to_cell(beam_end.x, beam_end.y);
-
-    std::vector<DPoint> pts = std::move(
-      DiscreteLine2D(robot_pt, obst_pt).points());
-
-    const DPoint &beam_end_pt = pts.back();
-    const Rectangle &beam_end_pt_bnds = map.world_cell_bounds(beam_end_pt);
-
-    std::unique_ptr<GridCell> new_value = _map.new_cell();
-    new_value->quality = scan_quality;
-
-    setup_cell_value(*new_value, beam_end_pt, beam_end_pt_bnds,
-                     is_occ, lsr, beam_end);
-    map[beam_end_pt] += *new_value;
+  virtual void handle_scan_point(bool is_occ, double scan_quality,
+                                 const Beam &beam) {
+    auto &map = this->map();
+    auto pts = std::move(DiscreteLine2D{map.world_to_cell(beam.beg),
+                                        map.world_to_cell(beam.end)}.points());
+    map[pts.back()] += sp2obs(pts.back(), is_occ, scan_quality, beam);
     pts.pop_back();
 
     for (const auto &pt : pts) {
-      const Rectangle pt_bnds = map.world_cell_bounds(pt);
-      setup_cell_value(*new_value, pt, pt_bnds, false, lsr, beam_end);
-      map[pt] += *new_value;
+      map[pt] += sp2obs(pt, false, scan_quality, beam);
     }
   }
 
-  virtual GridCell& setup_cell_value(
-      GridCell &dst, const DPoint &pt, const Rectangle &pt_bounds,
-      bool is_occ, const Point2D &lsr, const Point2D &obstacle) {
-
-    dst.occupancy = Occupancy{is_occ ? 1.0 : 0.0, 1.0};
-    return dst;
+  virtual AreaOccupancyObservation sp2obs(
+    const DPoint &, bool is_occ, double quality, const Beam &beam) const {
+    return AreaOccupancyObservation{{(double)is_occ, 1.0}, beam.end, quality};
   }
 
   virtual const MapType& map() const { return _map; }

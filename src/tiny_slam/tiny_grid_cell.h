@@ -14,9 +14,9 @@ public:
     return std::make_unique<BaseTinyCell>(*this);
   }
 
-  virtual void operator+=(const GridCell &that) {
-    const double q = that.quality;
-    occupancy.prob_occ = (1.0 - q) * (*this) + q * that;
+  virtual void operator+=(const AreaOccupancyObservation &aoo) {
+    const double q = aoo.quality;
+    occupancy.prob_occ = (1.0 - q) * (*this) + q * aoo.occupancy;
   }
 };
 
@@ -31,9 +31,9 @@ public:
     return std::make_unique<AvgTinyCell>(*this);
   }
 
-  virtual void operator+=(const GridCell &that) {
+  virtual void operator+=(const AreaOccupancyObservation &aoo) {
     _n += 1;
-    double that_p = 0.5 + (that - 0.5) * that.quality;
+    double that_p = 0.5 + (aoo.occupancy - 0.5) * aoo.quality;
     occupancy.prob_occ = ((*this) * (_n - 1) + that_p) / _n;
   }
 

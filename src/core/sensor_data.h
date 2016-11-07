@@ -1,5 +1,5 @@
-#ifndef __SENSOR_DATA_H
-#define __SENSOR_DATA_H
+#ifndef __SENSOR_DATA_H_INCLUDED
+#define __SENSOR_DATA_H_INCLUDED
 
 #include <memory>
 #include <vector>
@@ -23,6 +23,12 @@ struct TransformedLaserScan {
 
   std::vector<ScanPoint> points;
   double quality; // 0 - low, 1 - fine
+};
+
+struct AreaOccupancyObservation {
+  Occupancy occupancy;
+  Point2D obstacle;
+  double quality;
 };
 
 #endif

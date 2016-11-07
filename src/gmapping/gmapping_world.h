@@ -56,20 +56,6 @@ public:
     Particle::set_weight(scan_prob * Particle::weight());
   }
 
-  virtual GridCell& setup_cell_value(
-      GridCell &dst, const DPoint &pt, const Rectangle &pt_bounds,
-      bool is_occ, const Point2D &lsr, const Point2D &obstacle) override {
-
-    if (is_occ) {
-      // static cast is used for performance reasons
-      GmappingBaseCell &gmg_dst = static_cast<GmappingBaseCell&>(dst);
-      gmg_dst.obst = obstacle;
-    }
-    LaserScanGridWorld::setup_cell_value(dst, pt, pt_bounds,
-                                         is_occ, lsr, obstacle);
-    return dst;
-  }
-
   virtual void sample() override {
     std::normal_distribution<> d_coord(0.0, 0.1);
     std::normal_distribution<> d_angle(0.0, 0.03);
