@@ -11,8 +11,8 @@
 #include "../core/maps/grid_cell_strategy.h"
 #include "../core/maps/cell_occupancy_estimator.h"
 #include "../core/maps/plain_grid_map.h"
+#include "../core/maps/grid_cell.h"
 
-#include "tiny_grid_cells.h"
 #include "tiny_scan_matcher.h"
 
 struct TinyWorldParams {
@@ -73,8 +73,8 @@ public:
                                           lsr, beam_end);
   }
 
-  virtual GridCellValue& setup_cell_value(
-    GridCellValue &dst, const DPoint &pt, const Rectangle &pt_bounds,
+  virtual GridCell& setup_cell_value(
+    GridCell &dst, const DPoint &pt, const Rectangle &pt_bounds,
     bool is_occ, const Point2D &lsr, const Point2D &obstacle) override {
 
     const Beam &beam = _map_update_ctx.beam;

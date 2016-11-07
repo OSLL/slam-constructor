@@ -16,20 +16,20 @@
 #include "../core/maps/grid_cell_strategy.h"
 #include "tiny_fascade.h"
 #include "tiny_world.h"
-#include "tiny_grid_cells.h"
+#include "tiny_grid_cell.h"
 
-std::shared_ptr<GridCellFactory> init_cell_factory(TinyWorldParams &params) {
+std::shared_ptr<GridCell> init_cell_prototype(TinyWorldParams &params) {
   std::string cell_type;
   ros::param::param<std::string>("~cell_type", cell_type, "avg");
 
   if (cell_type == "base") {
     params.localized_scan_quality = 0.2;
     params.raw_scan_quality = 0.1;
-    return std::make_shared<PlainGridCellFactory<BaseTinyCell>>();
+    return std::make_shared<BaseTinyCell>();
   } else if (cell_type == "avg") {
     params.localized_scan_quality = 0.9;
     params.raw_scan_quality = 0.6;
-    return std::make_shared<PlainGridCellFactory<AvgTinyCell>>();
+    return std::make_shared<AvgTinyCell>();
   } else {
     std::cerr << "Unknown cell type: " << cell_type << std::endl;
     std::exit(-1);
@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
   TinyWorldParams params;
   std::shared_ptr<ScanCostEstimator> cost_est{new TinyScanCostEstimator()};
   std::shared_ptr<GridCellStrategy> gcs{new GridCellStrategy{
-    init_cell_factory(params), cost_est, init_occ_estimator()}};
+    init_cell_prototype(params), cost_est, init_occ_estimator()}};
   std::shared_ptr<TinySlamFascade> slam{new TinySlamFascade(gcs,
     params)};
 

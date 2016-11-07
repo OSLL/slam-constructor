@@ -11,27 +11,24 @@
 class PlainGridMap : public GridMap {
 public:
   // TODO: cp, mv ctors, dtor
-  PlainGridMap(std::shared_ptr<GridCellFactory> cell_factory,
+  PlainGridMap(std::shared_ptr<GridCell> prototype,
           int width = 1000, int height = 1000) :
-    GridMap(cell_factory, width, height), _cells(height) {
+    GridMap(prototype, width, height), _cells(height) {
     for (auto &row : _cells) {
       for (int i = 0; i < GridMap::width(); i++) {
-        row.push_back(cell_factory->create_cell());
+        row.push_back(prototype->clone());
       }
     }
   }
 
-  virtual void update_cell(
-    const DiscretePoint2D& cell_coord,
-    const GridCellValue &new_value, double quality = 1.0) {
-    assert(has_cell(cell_coord));
-    _cells[cell_coord.y][cell_coord.x]->set_value(new_value, quality);
+  virtual GridCell &operator[] (const DPnt2D& coord) override {
+    assert(has_cell(coord));
+    return *_cells[coord.y][coord.x];
   }
 
-  virtual const GridCellValue &operator[](
-    const DiscretePoint2D& cell_coord) const {
-    assert(has_cell(cell_coord));
-    return _cells[cell_coord.y][cell_coord.x]->value();
+  virtual const GridCell &operator[](const DPnt2D& coord) const override {
+    assert(has_cell(coord));
+    return *_cells[coord.y][coord.x];
   }
 
   virtual bool has_cell(const DiscretePoint2D& cell_coord) const {
@@ -40,7 +37,7 @@ public:
   }
 
 private: // fields
-  std::vector<std::vector<Cell>> _cells;
+  std::vector<std::vector<std::unique_ptr<GridCell>>> _cells;
 };
 
 #endif

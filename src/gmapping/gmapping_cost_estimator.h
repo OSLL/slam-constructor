@@ -3,9 +3,13 @@
 
 #include <cmath>
 #include <limits>
+#include <memory>
+
 #include "../core/geometry_utils.h"
 #include "../core/grid_scan_matcher.h"
-#include "gmapping_world.h"
+#include "../core/maps/grid_map.h"
+
+#include "gmapping_grid_cell.h"
 
 class GmappingCostEstimator : public ScanCostEstimator {
 private:
@@ -13,7 +17,6 @@ private:
   constexpr static double SIGMA_SQ = 0.01;
   constexpr static double FREE_CELL_DIST = std::sqrt(2.0);
   constexpr static double DBL_INF = std::numeric_limits<double>::infinity();
-  using CellValue = const GmappingCellValue &;
 public:
   GmappingCostEstimator() : _scan_margin(0), _pts_skip_rate(3), _window_sz(1) {}
 
@@ -23,8 +26,8 @@ public:
                                     double min_cost = 0) {
     double scan_weight = 0, last_dpoint_weight = -1;
     DiscretePoint2D last_handled_dpoint;
-
     scan.trig_cache->set_theta(pose.theta);
+
     for (size_t i = _scan_margin; i < scan.points.size() - _scan_margin; ++i) {
       if (_pts_skip_rate && i % _pts_skip_rate) {
         continue;
@@ -48,22 +51,22 @@ public:
       double d_free_y = FREE_CELL_DIST * s;
       for (int d_x = -_window_sz; d_x <= _window_sz; ++d_x) {
         for (int d_y = -_window_sz; d_y <= _window_sz; ++d_y) {
-          DiscretePoint2D cell = sp_coord + DiscretePoint2D(d_x, d_y);
-          const GridCellValue &cell_value = map[cell];
-          if (cell_value < FULLNESS_TH) {
+          DiscretePoint2D cell_coord = sp_coord + DiscretePoint2D(d_x, d_y);
+          const GridCell &cell = map[cell_coord];
+          if (cell < FULLNESS_TH) {
             continue; // cell is not occupied
           }
-          cell.x -= d_free_x;
-          cell.y -= d_free_y;
-          const GridCellValue &free_cell_val = map[cell];
+          cell_coord.x -= d_free_x;
+          cell_coord.y -= d_free_y;
+          const GridCell &free_cell = map[cell_coord];
 
-          if (FULLNESS_TH <= free_cell_val) {
+          if (FULLNESS_TH <= free_cell) {
             continue; //occlusion is detected
           }
 
           // NB: static (not dynamic) cast is used for performance reasons
-          CellValue gmg_val = static_cast<CellValue>(cell_value);
-          double dist = sp_world.dist_sq(gmg_val.obst);
+          auto gmg_cell = static_cast<const GmappingBaseCell&>(cell);
+          double dist = sp_world.dist_sq(gmg_cell.obst);
           if (dist < best_dist) {
             best_dist = dist;
           }

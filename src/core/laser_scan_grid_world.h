@@ -18,7 +18,7 @@ public: // methods
 
   LaserScanGridWorld(std::shared_ptr<GridCellStrategy> gcs,
                     size_t scan_margin = 0) :
-    _gcf(gcs->cell_factory()), _map(_gcf), _scan_margin(scan_margin) {}
+    _map(gcs->cell_prototype()), _scan_margin(scan_margin) {}
 
   virtual void handle_observation(TransformedLaserScan &scan) {
     const RobotPose& pose = World<TransformedLaserScan, MapType>::pose();
@@ -47,24 +47,26 @@ public: // methods
     std::vector<DPoint> pts = std::move(
       DiscreteLine2D(robot_pt, obst_pt).points());
 
-    std::shared_ptr<GridCellValue> cell_value = _gcf->create_cell_value();
     const DPoint &beam_end_pt = pts.back();
     const Rectangle &beam_end_pt_bnds = map.world_cell_bounds(beam_end_pt);
 
-    setup_cell_value(*cell_value, beam_end_pt, beam_end_pt_bnds,
+    std::unique_ptr<GridCell> new_value = _map.new_cell();
+    new_value->quality = scan_quality;
+
+    setup_cell_value(*new_value, beam_end_pt, beam_end_pt_bnds,
                      is_occ, lsr, beam_end);
-    map.update_cell(beam_end_pt, *cell_value, scan_quality);
+    map[beam_end_pt] += *new_value;
     pts.pop_back();
 
     for (const auto &pt : pts) {
       const Rectangle pt_bnds = map.world_cell_bounds(pt);
-      setup_cell_value(*cell_value, pt, pt_bnds, false, lsr, beam_end);
-      map.update_cell(pt, *cell_value, scan_quality);
+      setup_cell_value(*new_value, pt, pt_bnds, false, lsr, beam_end);
+      map[pt] += *new_value;
     }
   }
 
-  virtual GridCellValue& setup_cell_value(
-      GridCellValue &dst, const DPoint &pt, const Rectangle &pt_bounds,
+  virtual GridCell& setup_cell_value(
+      GridCell &dst, const DPoint &pt, const Rectangle &pt_bounds,
       bool is_occ, const Point2D &lsr, const Point2D &obstacle) {
 
     dst.occupancy = Occupancy{is_occ ? 1.0 : 0.0, 1.0};
@@ -75,7 +77,6 @@ public: // methods
   virtual MapType& map() { return _map; }
 
 private: // fields
-  std::shared_ptr<GridCellFactory> _gcf;
   MapType _map;
   size_t _scan_margin;
 };

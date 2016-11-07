@@ -1,5 +1,5 @@
-#ifndef __GMAPPING_WORLD
-#define __GMAPPING_WORLD
+#ifndef __GMAPPING_WORLD_H_INCLUDED
+#define __GMAPPING_WORLD_H_INCLUDED
 
 #include <memory>
 #include <random>
@@ -7,61 +7,13 @@
 
 #include "../core/particle_filter.h"
 #include "../core/laser_scan_grid_world.h"
-#include "../core/maps/grid_cell_factory.h"
+#include "../core/maps/grid_cell.h"
 #include "../core/maps/grid_cell_strategy.h"
 #include "../core/maps/lazy_layered_grid_map.h"
 #include "../core/gradient_walker_scan_matcher.h"
 
-class GmappingCellValue : public GridCellValue {
-public:
-  GmappingCellValue() : GridCellValue(0, 0) {}
-  Point2D obst;
-};
-
-// TODO: move grid cell models to a separate file
+#include "gmapping_grid_cell.h"
 #include "gmapping_cost_estimator.h"
-
-class GmappingBaseCell : public GridCell {
-public:
-  GmappingBaseCell(): _hits(0), _tries(0), _obst_x(0), _obst_y(0) {
-    update_value();
-  }
-
-  const GridCellValue& value() const override {
-    return _out_value;
-  }
-
-  void set_value (const GridCellValue &new_value, double quality) override {
-    ++_tries;
-    if (new_value.occupancy <= 0.5) {
-      update_value();
-      return;
-    }
-
-    ++_hits;
-    // use static cast for performance reasons
-    const GmappingCellValue &new_obs =
-      static_cast<const GmappingCellValue&>(new_value);
-    _obst_x += new_obs.obst.x;
-    _obst_y += new_obs.obst.y;
-    update_value();
-  }
-
-  virtual std::shared_ptr<GridCell> clone() const {
-    return std::make_shared<GmappingBaseCell>(*this);
-  }
-
-private:
-  void update_value() {
-    _out_value.occupancy.prob_occ = _tries ? 1.0*_hits / _tries : -1;
-    _out_value.obst.x = _hits ? _obst_x / _hits : 0;
-    _out_value.obst.y = _hits ? _obst_y / _hits : 0;
-  }
-private:
-  GmappingCellValue _out_value;
-  int _hits, _tries;
-  double _obst_x, _obst_y;
-};
 
 class GmappingWorld : public Particle,
                       public LaserScanGridWorld<LazyLayeredGridMap> {
@@ -104,13 +56,13 @@ public:
     Particle::set_weight(scan_prob * Particle::weight());
   }
 
-  virtual GridCellValue& setup_cell_value(
-      GridCellValue &dst, const DPoint &pt, const Rectangle &pt_bounds,
+  virtual GridCell& setup_cell_value(
+      GridCell &dst, const DPoint &pt, const Rectangle &pt_bounds,
       bool is_occ, const Point2D &lsr, const Point2D &obstacle) override {
 
     if (is_occ) {
       // static cast is used for performance reasons
-      GmappingCellValue &gmg_dst = static_cast<GmappingCellValue&>(dst);
+      GmappingBaseCell &gmg_dst = static_cast<GmappingBaseCell&>(dst);
       gmg_dst.obst = obstacle;
     }
     LaserScanGridWorld::setup_cell_value(dst, pt, pt_bounds,

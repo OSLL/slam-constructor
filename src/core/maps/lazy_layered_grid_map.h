@@ -9,14 +9,12 @@
 #include <algorithm>
 
 #include "cell_occupancy_estimator.h"
-#include "grid_cell_factory.h"
+#include "grid_cell.h"
 #include "grid_map.h"
 #include "../geometry_utils.h"
 #include <iostream>
 
 class LazyLayeredGridMap : public GridMap {
-public:
-  using DPnt = DiscretePoint2D;
 private:
   static constexpr unsigned TILE_NM = 9;
   static constexpr unsigned TILE_SIZE_BITS = 7;
@@ -25,17 +23,16 @@ private:
 private:
   struct Tile;
 public:
-  LazyLayeredGridMap(std::shared_ptr<GridCellFactory> cell_factory)
-    : GridMap{cell_factory, TILE_SIZE*TILE_NM, TILE_SIZE*TILE_NM}
-    , _unknown_cell{cell_factory->create_cell()}
+  LazyLayeredGridMap(std::shared_ptr<GridCell> prototype)
+    : GridMap{prototype, TILE_SIZE*TILE_NM, TILE_SIZE*TILE_NM}
+    , _unknown_cell{prototype->clone()}
     , _tiles{TILE_NM*TILE_NM, std::make_shared<Tile>(_unknown_cell)} {}
 
-  virtual void update_cell(const DPnt& cell_coord,
-      const GridCellValue &new_value, double quality = 1.0) {
+  virtual GridCell &operator[](const DPnt2D& coord) override {
     //    if (!has_cell(cell_coord)) {
     //  return;
     //}
-    std::shared_ptr<Tile> &tile = get_tile(cell_coord);
+    std::shared_ptr<Tile> &tile = this->tile(coord);
     if (!tile) {
       tile = std::make_shared<Tile>(_unknown_cell);
     }
@@ -43,29 +40,28 @@ public:
       tile.reset(new Tile{*tile});
     }
 
-    std::shared_ptr<GridCell> &cell = tile->get_cell(cell_coord);
+    std::shared_ptr<GridCell> &cell = tile->cell(coord);
     if (1 < cell.use_count()) {
       cell = cell->clone();
     }
-
-    cell->set_value(new_value, quality);
+    return *cell;
   }
 
-  virtual const GridCellValue &operator[](const DPnt& cell_coord) const {
+  virtual const GridCell &operator[](const DPnt2D& coord) const override {
     //assert(has_cell(cell_coord));
     //if (!has_cell(cell_coord)) {
     //  return _unknown_cell->value();
     //}
-    return get_tile(cell_coord)->get_cell(cell_coord)->value();
+    return *tile(coord)->cell(coord);
   }
 
-  virtual bool has_cell(const DPnt& cell_coord) const {
+  virtual bool has_cell(const DPnt2D& cell_coord) const {
     return 0 <= cell_coord.x && cell_coord.x < width() &&
            0 <= cell_coord.y && cell_coord.y < height();
   }
 
 private: // map
-  std::shared_ptr<Tile> &get_tile(const DPnt &c) const {
+  std::shared_ptr<Tile> &tile(const DPnt2D &c) const {
     return  _tiles[(c.y >> TILE_SIZE_BITS) * TILE_NM +
                    (c.x >> TILE_SIZE_BITS)];
   }
@@ -76,7 +72,7 @@ private: // types
       std::fill(_cells.begin(), _cells.end(), dflt);
     }
 
-    std::shared_ptr<GridCell> &get_cell(const DPnt& cell_coord) const {
+    std::shared_ptr<GridCell> &cell(const DPnt2D& cell_coord) const {
       return _cells[(cell_coord.x & TILE_COORD_MASK) * TILE_SIZE +
                     (cell_coord.y & TILE_COORD_MASK)];
     }
