@@ -15,25 +15,23 @@ public:
           int width = 1000, int height = 1000) :
     GridMap(prototype, width, height), _cells(height) {
     for (auto &row : _cells) {
+      row.reserve(GridMap::width());
       for (int i = 0; i < GridMap::width(); i++) {
         row.push_back(prototype->clone());
       }
     }
   }
 
-  virtual GridCell &operator[] (const DPnt2D& coord) override {
-    assert(has_cell(coord));
+  virtual GridCell &operator[] (const DPnt2D& c) override {
+    assert(has_cell(c));
+    DPnt2D coord = outer2internal(c);
     return *_cells[coord.y][coord.x];
   }
 
-  virtual const GridCell &operator[](const DPnt2D& coord) const override {
-    assert(has_cell(coord));
+  virtual const GridCell &operator[](const DPnt2D& c) const override {
+    assert(has_cell(c));
+    DPnt2D coord = outer2internal(c);
     return *_cells[coord.y][coord.x];
-  }
-
-  virtual bool has_cell(const DiscretePoint2D& cell_coord) const {
-    return 0 <= cell_coord.x && cell_coord.y < width() &&
-           0 <= cell_coord.y && cell_coord.y < height();
   }
 
 private: // fields

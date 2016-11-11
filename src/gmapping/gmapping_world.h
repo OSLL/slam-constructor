@@ -9,16 +9,16 @@
 #include "../core/laser_scan_grid_world.h"
 #include "../core/maps/grid_cell.h"
 #include "../core/maps/grid_cell_strategy.h"
-#include "../core/maps/lazy_layered_grid_map.h"
+#include "../core/maps/lazy_tiled_grid_map.h"
 #include "../core/gradient_walker_scan_matcher.h"
 
 #include "gmapping_grid_cell.h"
 #include "gmapping_cost_estimator.h"
 
 class GmappingWorld : public Particle,
-                      public LaserScanGridWorld<LazyLayeredGridMap> {
+                      public LaserScanGridWorld<UnboundedLazyTiledGridMap> {
 public:
-  using MapType = LazyLayeredGridMap;
+  using MapType = UnboundedLazyTiledGridMap;
 public:
 
   GmappingWorld(std::shared_ptr<GridCellStrategy> gcs)

@@ -42,8 +42,14 @@ public:
   // TODO: mv (!!), cpy ctors
   int x, y;
 
+  DiscretePoint2D &operator+=(const DiscretePoint2D &p) {
+    x += p.x;
+    y += p.y;
+    return *this;
+  }
+
   DiscretePoint2D operator+(const DiscretePoint2D &p) const {
-    return DiscretePoint2D(x + p.x, y + p.y);
+    return DiscretePoint2D{*this} += p;
   }
 
   DiscretePoint2D operator-(const DiscretePoint2D &p) const {

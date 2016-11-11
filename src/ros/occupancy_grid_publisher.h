@@ -25,15 +25,18 @@ public: // method
     map_msg.info.resolution = map.scale();
     // move map to the middle
     nav_msgs::MapMetaData &info = map_msg.info;
-    info.origin.position.x = -info.resolution * info.height / 2;
-    info.origin.position.y = -info.resolution * info.width  / 2;
+    DiscretePoint2D origin = map.origin();
+    info.origin.position.x = -info.resolution * origin.x;
+    info.origin.position.y = -info.resolution * origin.y;
     info.origin.position.z = 0;
 
     map_msg.data.reserve(info.height * info.width);
     DiscretePoint2D pnt;
-    for (pnt.y = 0; pnt.y < map.height(); ++pnt.y) {
-      for (pnt.x = 0; pnt.x < map.width(); ++pnt.x) {
-        double value = (double)map[pnt];
+    DiscretePoint2D end_of_map = DiscretePoint2D(info.width,
+                                                 info.height) - origin;
+    for (pnt.y = -origin.y; pnt.y < end_of_map.y; ++pnt.y) {
+      for (pnt.x = -origin.x; pnt.x < end_of_map.x; ++pnt.x) {
+        double value = (double)map[map.abs2internal(pnt)];
         int cell_value = value == -1 ? -1 : value * 100;
         map_msg.data.push_back(cell_value);
       }
