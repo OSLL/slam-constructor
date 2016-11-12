@@ -13,12 +13,38 @@ template <typename Map>
 class LaserScanGridWorld : public World<TransformedLaserScan, Map> {
 public: //types
   using MapType = Map;
+  using ScanType = TransformedLaserScan;
   using DPoint = DiscretePoint2D;
+  using ScanMatcherObsPtr = std::shared_ptr<GridScanMatcherObserver>;
 public: // methods
 
   LaserScanGridWorld(std::shared_ptr<GridCellStrategy> gcs,
                     size_t scan_margin = 0) :
     _map(gcs->cell_prototype()), _scan_margin(scan_margin) {}
+
+
+  virtual std::shared_ptr<GridScanMatcher> scan_matcher() { return nullptr; }
+
+  void handle_sensor_data(TransformedLaserScan &scan) override {
+    this->update_robot_pose(scan.pose_delta);
+    handle_observation(scan);
+
+    this->notify_with_pose(this->pose());
+    this->notify_with_map(map());
+  }
+
+  void add_scan_matcher_observer(ScanMatcherObsPtr obs) {
+    auto sm = scan_matcher();
+    if (sm) { sm->subscribe(obs); }
+  }
+
+  void remove_scan_matcher_observer(ScanMatcherObsPtr obs) {
+    auto sm = scan_matcher();
+    if (sm) { sm->unsubscribe(obs); }
+  }
+
+
+protected:
 
   virtual void handle_observation(TransformedLaserScan &scan) {
     const RobotPose& pose = World<TransformedLaserScan, MapType>::pose();

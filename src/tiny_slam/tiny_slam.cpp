@@ -14,7 +14,7 @@
 #include "../core/maps/area_occupancy_estimator.h"
 #include "../core/maps/const_occupancy_estimator.h"
 #include "../core/maps/grid_cell_strategy.h"
-#include "tiny_fascade.h"
+
 #include "tiny_world.h"
 #include "tiny_grid_cell.h"
 
@@ -62,24 +62,23 @@ bool init_skip_exceeding_lsr() {
 }
 
 using ObservT = sensor_msgs::LaserScan;
-using TinySlamMap = TinySlamFascade::MapType;
+using TinySlamMap = TinyWorld::MapType;
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "tinySLAM");
 
   // init tiny slam
   TinyWorldParams params;
-  std::shared_ptr<ScanCostEstimator> cost_est{new TinyScanCostEstimator()};
-  std::shared_ptr<GridCellStrategy> gcs{new GridCellStrategy{
-    init_cell_prototype(params), cost_est, init_occ_estimator()}};
-  std::shared_ptr<TinySlamFascade> slam{new TinySlamFascade(gcs,
-    params)};
+  auto cost_est = std::make_shared<TinyScanCostEstimator>();
+  auto gcs = std::make_shared<GridCellStrategy>(
+    init_cell_prototype(params), cost_est, init_occ_estimator());
+  auto slam = std::make_shared<TinyWorld>(gcs, params);
 
   // connect the slam to a ros-topic based data provider
   ros::NodeHandle nh;
   TopicWithTransform<ObservT> scan_provider(nh, "laser_scan", "odom_combined");
-  std::shared_ptr<LaserScanObserver> scan_obs{
-    new LaserScanObserver{slam, init_skip_exceeding_lsr()}};
+  auto scan_obs = std::make_shared<LaserScanObserver>(slam,
+    init_skip_exceeding_lsr());
   scan_provider.subscribe(scan_obs);
 
   auto map_publisher = std::make_shared<OccupancyGridPublisher<TinySlamMap>>(

@@ -90,23 +90,10 @@ struct Occupancy {
   }
 };
 
-// TODO: try to simplify template params
-template <typename ObservationType, typename MapType>
-class World {
+template <typename SensorData>
+class SensorDataObserver {
 public:
-  // data-in
-  virtual void update_robot_pose(const RobotPoseDelta& delta) {
-    _pose += delta;
-  }
-
-  virtual void handle_observation(ObservationType&) = 0;
-
-  // data-out
-  virtual const World<ObservationType, MapType>& world() const { return *this; }
-  virtual const RobotPose& pose() const { return _pose; }
-  virtual const MapType& map() const = 0;
-private:
-  RobotPose _pose;
+  virtual void handle_sensor_data(SensorData &) = 0;
 };
 
 class WorldPoseObserver {
@@ -154,6 +141,26 @@ protected: // methods
 private:
   std::vector<std::weak_ptr<WorldMapObserver<MapType>>> _world_map_observers;
   std::vector<std::weak_ptr<WorldPoseObserver>> _world_pose_observers;
+};
+
+// TODO: try to simplify template params
+template <typename ObservationType, typename MapType>
+class World : public WorldObservable<MapType>
+            , public SensorDataObserver<ObservationType> {
+public:
+  // data-in
+  virtual void update_robot_pose(const RobotPoseDelta& delta) {
+    _pose += delta;
+  }
+
+  // data-out
+  virtual const World<ObservationType, MapType>& world() const { return *this; }
+  virtual const RobotPose& pose() const { return _pose; }
+  virtual const MapType& map() const = 0;
+protected:
+  virtual void handle_observation(ObservationType&) = 0;
+private:
+  RobotPose _pose;
 };
 
 #endif

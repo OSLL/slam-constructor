@@ -8,16 +8,16 @@
 #include <cassert>
 #include <iostream>
 
-#include "../core/slam_fascade.h"
+#include "../core/state_data.h"
 #include "../core/sensor_data.h"
 #include "topic_with_transform.h"
 
 class LaserScanObserver : public TopicObserver<sensor_msgs::LaserScan> {
   using ScanPtr = boost::shared_ptr<sensor_msgs::LaserScan>;
-  using SlamPtr = std::shared_ptr<SlamFascade<TransformedLaserScan>>;
+  using DstPtr = std::shared_ptr<SensorDataObserver<TransformedLaserScan>>;
 public: //methods
 
-  LaserScanObserver(SlamPtr slam, bool skip_max_vals = false):
+  LaserScanObserver(DstPtr slam, bool skip_max_vals = false):
     _slam(slam), _skip_max_vals(skip_max_vals),
     _cache(std::make_shared<TrigonometricCache>()) {}
 
@@ -59,7 +59,7 @@ public: //methods
   }
 
 private: // fields
-  std::shared_ptr<SlamFascade<TransformedLaserScan>> _slam;
+  DstPtr _slam;
   bool _skip_max_vals;
   RobotPose _prev_pose;
   std::shared_ptr<TrigonometricCache> _cache;
