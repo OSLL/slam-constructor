@@ -8,7 +8,7 @@
 #include <tf/transform_broadcaster.h>
 
 #include "topic_with_transform.h"
-#include "../core/state_data.h"
+#include "../core/world.h"
 
 template <typename ObservationType>
 class PoseCorrectionTfPublisher : public TopicObserver<ObservationType>,

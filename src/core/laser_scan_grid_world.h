@@ -5,7 +5,7 @@
 #include <utility>
 
 #include "sensor_data.h"
-#include "state_data.h"
+#include "world.h"
 #include "maps/grid_cell_strategy.h"
 #include "maps/grid_map.h"
 

@@ -9,6 +9,8 @@
 #include <iostream>
 
 #include "../core/state_data.h"
+#include "../core/robot_pose.h"
+#include "../core/world.h"
 #include "../core/sensor_data.h"
 #include "topic_with_transform.h"
 

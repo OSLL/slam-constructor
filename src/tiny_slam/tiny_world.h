@@ -5,7 +5,7 @@
 #include <cmath>
 #include <memory>
 
-#include "../core/state_data.h"
+#include "../core/world.h"
 #include "../core/sensor_data.h"
 #include "../core/laser_scan_grid_world.h"
 #include "../core/maps/grid_cell_strategy.h"

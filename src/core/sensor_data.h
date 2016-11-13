@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 #include "state_data.h"
+#include "robot_pose.h"
 #include "geometry_utils.h"
 
 struct ScanPoint {
