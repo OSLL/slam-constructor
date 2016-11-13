@@ -9,17 +9,23 @@ template <typename SensorData>
 class SensorDataObserver {
 public:
   virtual void handle_sensor_data(SensorData &) = 0;
+  // No virtual dtor, since a descendant is not suppoused to be
+  // destroyed via a pointer to the class
 };
 
 class WorldPoseObserver {
 public:
   virtual void on_pose_update(const RobotPose &rs) = 0;
+  // No virtual dtor, since a descendant is not suppoused to be
+  // destroyed via a pointer to the class
 };
 
 template<typename MapType>
 class WorldMapObserver {
 public:
   virtual void on_map_update(const MapType &map) = 0;
+  // No virtual dtor, since a descendant is not suppoused to be
+  // destroyed via a pointer to the class
 };
 
 template<typename MapType>

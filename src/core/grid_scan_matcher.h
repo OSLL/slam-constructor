@@ -29,12 +29,14 @@ public:
                                     const TransformedLaserScan &scan,
                                     const GridMap &map,
                                     double min_cost) = 0;
+  virtual ~ScanCostEstimator() = default;
 };
 
 class GridScanMatcher {
 public:
   GridScanMatcher(std::shared_ptr<ScanCostEstimator> estimator) :
     _cost_estimator(estimator) {}
+  virtual ~GridScanMatcher() = default;
 
   virtual double process_scan(const RobotPose &init_pose,
                               const TransformedLaserScan &scan,

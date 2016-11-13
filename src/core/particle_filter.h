@@ -10,6 +10,8 @@
 class Particle {
 public:
   Particle(): _weight(1.0) {}
+  virtual ~Particle() = default;
+
   double weight() const { return _weight; }
   void set_weight(double w) { _weight = w; }
 
@@ -22,6 +24,7 @@ template <typename ParticleT>
 class ParticleFactory {
 public:
   virtual std::shared_ptr<ParticleT> create_particle() = 0;
+  virtual ~ParticleFactory() = default;
 };
 
 template <typename ParticlePtr>
