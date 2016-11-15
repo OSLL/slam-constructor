@@ -12,8 +12,8 @@ class PlainGridMap : public GridMap {
 public:
   // TODO: cp, mv ctors, dtor
   PlainGridMap(std::shared_ptr<GridCell> prototype,
-          int width = 1000, int height = 1000) :
-    GridMap(prototype, width, height), _cells(height) {
+               const GridMapParams& params = {1000,1000,0.1}) :
+    GridMap(prototype, params), _cells(params.height) {
     for (auto &row : _cells) {
       row.reserve(GridMap::width());
       for (int i = 0; i < GridMap::width(); i++) {

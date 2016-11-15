@@ -21,8 +21,9 @@ public:
   using MapType = UnboundedLazyTiledGridMap;
 public:
 
-  GmappingWorld(std::shared_ptr<GridCellStrategy> gcs)
-    : LaserScanGridWorld(gcs)
+  GmappingWorld(std::shared_ptr<GridCellStrategy> gcs,
+                const GridMapParams& params)
+    : LaserScanGridWorld(gcs, params)
     , _matcher{std::make_shared<GmappingCostEstimator>()}
     , _rnd_engine(std::random_device{}()) {
     init_pose_delta();

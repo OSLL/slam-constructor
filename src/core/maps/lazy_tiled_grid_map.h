@@ -23,8 +23,12 @@ protected:
 protected:
   struct Tile;
 public:
-  LazyTiledGridMap(std::shared_ptr<GridCell> prototype, unsigned tiles_nm = 9)
-    : GridMap{prototype, TILE_SIZE * tiles_nm, TILE_SIZE * tiles_nm}
+  LazyTiledGridMap(std::shared_ptr<GridCell> prototype,
+                   const GridMapParams& params = {1000,1000,0.1},
+                   unsigned tiles_nm = 9
+                   )
+    : GridMap{prototype, {(int)(TILE_SIZE * tiles_nm),
+                          (int)(TILE_SIZE * tiles_nm), params.meters_per_cell}}
     , _unknown_cell{prototype->clone()}
     , _unknown_tile{std::make_shared<Tile>(_unknown_cell)}
     , _tiles_nm_x{tiles_nm}, _tiles_nm_y{tiles_nm}
@@ -104,8 +108,9 @@ protected: // fields
 
 class UnboundedLazyTiledGridMap : public LazyTiledGridMap {
 public:
-  UnboundedLazyTiledGridMap(std::shared_ptr<GridCell> prototype)
-    : LazyTiledGridMap{prototype, 0}
+  UnboundedLazyTiledGridMap(std::shared_ptr<GridCell> prototype,
+      const GridMapParams& params = {1000,1000,0.1})
+    : LazyTiledGridMap{prototype, params, 0}
     , _origin{0, 0} {}
 
   GridCell &operator[](const DPnt2D& c) override {

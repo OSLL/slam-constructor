@@ -61,6 +61,27 @@ bool init_skip_exceeding_lsr() {
   return param_value;
 }
 
+TinyWorldParams init_common_world_params() {
+  double sig_XY, sig_T, width;
+  int lim_bad, lim_totl;
+  ros::param::param<double>("~scmtch_sigma_XY_MonteCarlo", sig_XY, 0.2);
+  ros::param::param<double>("~scmtch_sigma_theta_MonteCarlo", sig_T, 0.1);
+  ros::param::param<int>("~scmtch_limit_of_bad_attempts", lim_bad, 20);
+  ros::param::param<int>("~scmtch_limit_of_total_attempts", lim_totl, 100);
+  ros::param::param<double>("~hole_width", width,1.5);
+
+  return TinyWorldParams(sig_XY, sig_T, lim_bad, lim_totl, width);
+}
+
+GridMapParams init_grid_map_params() {
+  GridMapParams params;
+  ros::param::param<int>("~map_height_in_meters", params.height, 1000);
+  ros::param::param<int>("~map_width_in_meters", params.width, 1000);
+  ros::param::param<double>("~map_meters_per_cell", params.meters_per_cell,
+                                                                         0.1);
+  return params;
+}
+
 using ObservT = sensor_msgs::LaserScan;
 using TinySlamMap = TinyWorld::MapType;
 
@@ -68,11 +89,12 @@ int main(int argc, char** argv) {
   ros::init(argc, argv, "tinySLAM");
 
   // init tiny slam
-  TinyWorldParams params;
+  TinyWorldParams params = init_common_world_params();
+  GridMapParams map_params = init_grid_map_params();
   auto cost_est = std::make_shared<TinyScanCostEstimator>();
   auto gcs = std::make_shared<GridCellStrategy>(
     init_cell_prototype(params), cost_est, init_occ_estimator());
-  auto slam = std::make_shared<TinyWorld>(gcs, params);
+  auto slam = std::make_shared<TinyWorld>(gcs, params, map_params);
 
   // connect the slam to a ros-topic based data provider
   ros::NodeHandle nh;

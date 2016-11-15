@@ -12,6 +12,15 @@
 #include "../ros/occupancy_grid_publisher.h"
 #include "gmapping_particle_filter.h"
 
+GridMapParams init_grid_map_params() {
+  GridMapParams params;
+  ros::param::param<int>("~map_height_in_meters", params.height, 1000);
+  ros::param::param<int>("~map_width_in_meters", params.width, 1000);
+  ros::param::param<double>("~map_meters_per_cell", params.meters_per_cell,
+                                                                         0.1);
+  return params;
+}
+
 
 unsigned init_particles_nm() {
   int particles_nm;
@@ -32,6 +41,7 @@ using GmappingMap = GmappingWorld::MapType;
 int main(int argc, char** argv) {
   ros::init(argc, argv, "gMapping");
 
+  GridMapParams map_params = init_grid_map_params();
   // TODO: setup CostEstimator and OccEstimator
   auto gcs = std::make_shared<GridCellStrategy>(
     std::make_shared<GmappingBaseCell>(),
@@ -39,7 +49,7 @@ int main(int argc, char** argv) {
     std::shared_ptr<CellOccupancyEstimator>(nullptr)
   );
   auto slam = std::make_shared<GmappingParticleFilter>(
-    gcs, init_particles_nm());
+    gcs, map_params, init_particles_nm());
 
   ros::NodeHandle nh;
   TopicWithTransform<sensor_msgs::LaserScan> scan_provider{nh,
