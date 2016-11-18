@@ -82,6 +82,16 @@ GridMapParams init_grid_map_params() {
   return params;
 }
 
+void init_constants_for_ros(double &ros_tf_buffer_size,
+                            double &ros_map_rate,
+                            int &ros_filter_queue,
+                            int &ros_subscr_queue) {
+  ros::param::param<double>("~ros_tf_buffer_duration",ros_tf_buffer_size,5.0);
+  ros::param::param<double>("~ros_rviz_map_publishing_rate", ros_map_rate, 5.0);
+  ros::param::param<int>("~ros_filter_queue_size",ros_filter_queue,1000);
+  ros::param::param<int>("~ros_subscribers_queue_size",ros_subscr_queue,1000);
+}
+
 using ObservT = sensor_msgs::LaserScan;
 using TinySlamMap = TinyWorld::MapType;
 
@@ -98,13 +108,18 @@ int main(int argc, char** argv) {
 
   // connect the slam to a ros-topic based data provider
   ros::NodeHandle nh;
-  TopicWithTransform<ObservT> scan_provider(nh, "laser_scan", "odom_combined");
+  double ros_map_publishing_rate, ros_tf_buffer_size;
+  int ros_filter_queue, ros_subscr_queue;
+  init_constants_for_ros(ros_tf_buffer_size, ros_map_publishing_rate,
+                         ros_filter_queue, ros_subscr_queue);
+  TopicWithTransform<ObservT> scan_provider(nh, "laser_scan", "odom_combined",
+      ros_tf_buffer_size, ros_filter_queue, ros_subscr_queue);
   auto scan_obs = std::make_shared<LaserScanObserver>(slam,
     init_skip_exceeding_lsr());
   scan_provider.subscribe(scan_obs);
 
   auto map_publisher = std::make_shared<OccupancyGridPublisher<TinySlamMap>>(
-    nh.advertise<nav_msgs::OccupancyGrid>("/map", 5));
+    nh.advertise<nav_msgs::OccupancyGrid>("/map", 5),ros_map_publishing_rate);
   slam->subscribe_map(map_publisher);
 
   auto pose_publisher = std::make_shared<PoseCorrectionTfPublisher<ObservT>>();

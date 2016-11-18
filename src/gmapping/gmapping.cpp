@@ -21,6 +21,15 @@ GridMapParams init_grid_map_params() {
   return params;
 }
 
+void init_constants_for_ros(double &ros_tf_buffer_size,
+                            double &ros_map_rate,
+                            int &ros_filter_queue,
+                            int &ros_subscr_queue) {
+  ros::param::param<double>("~ros_tf_buffer_duration",ros_tf_buffer_size,5.0);
+  ros::param::param<double>("~ros_rviz_map_publishing_rate", ros_map_rate, 5.0);
+  ros::param::param<int>("~ros_filter_queue_size",ros_filter_queue,1000);
+  ros::param::param<int>("~ros_subscribers_queue_size",ros_subscr_queue,1000);
+}
 
 unsigned init_particles_nm() {
   int particles_nm;
@@ -52,14 +61,19 @@ int main(int argc, char** argv) {
     gcs, map_params, init_particles_nm());
 
   ros::NodeHandle nh;
+  double ros_map_publishing_rate, ros_tf_buffer_size;
+  int ros_filter_queue, ros_subscr_queue;
+  init_constants_for_ros(ros_tf_buffer_size, ros_map_publishing_rate,
+                         ros_filter_queue, ros_subscr_queue);
   TopicWithTransform<sensor_msgs::LaserScan> scan_provider{nh,
-      "laser_scan", "odom_combined"};
+      "laser_scan", "odom_combined", ros_tf_buffer_size, ros_filter_queue,
+      ros_subscr_queue};
   // TODO: setup scan skip policy via param
   auto scan_obs = std::make_shared<LaserScanObserver>(slam);
   scan_provider.subscribe(scan_obs);
 
   auto map_publisher = std::make_shared<OccupancyGridPublisher<GmappingMap>>(
-    nh.advertise<nav_msgs::OccupancyGrid>("/map", 5));
+    nh.advertise<nav_msgs::OccupancyGrid>("/map", 5),ros_map_publishing_rate);
   slam->subscribe_map(map_publisher);
 
   using PosePublT = PoseCorrectionTfPublisher<ObservT>;

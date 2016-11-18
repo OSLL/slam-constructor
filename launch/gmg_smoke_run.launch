@@ -10,6 +10,12 @@
     <remap from="laser_scan" to="/base_scan" />
     <param name="rbpf_particles_nm" value="30" />
     <param name="async_correction" value="false" />
+
+    <!-- Internal constants for ros-->
+    <param name="ros_rviz_map_publishing_rate" value="5.0" />
+    <param name="ros_tf_buffer_duration" value="5.0" /> <!-- in seconds-->
+    <param name="ros_filter_queue_size" value="1000" />
+    <param name="ros_subscribers_queue_size" value="1000" />
   </node>
 
   <node name="player" pkg="rosbag" type="play"

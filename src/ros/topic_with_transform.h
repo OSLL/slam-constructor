@@ -29,12 +29,15 @@ public: // methods
   // TODO: copy, move ctrs, dtor
   TopicWithTransform(ros::NodeHandle nh,
                      const std::string& topic_name,
-                     const std::string& target_frame):
+                     const std::string& target_frame,
+                     const double buffer_duration = 5.0,
+                     const int tf_filter_queue_size = 1000,
+                     const int subscribers_queue_size = 1000):
     _target_frame{target_frame},
-    _subscr{nh, topic_name, SUBSCR_QUEUE_SZ},
-    _tf_lsnr{ros::Duration(5.0)},
+    _subscr{nh, topic_name, (uint32_t)subscribers_queue_size},
+    _tf_lsnr{ros::Duration(buffer_duration)},
     _msg_flt{new tf::MessageFilter<MsgType>{
-      _subscr, _tf_lsnr, _target_frame, FILTER_QUEUE_SZ}} {
+      _subscr, _tf_lsnr, _target_frame, (uint32_t)tf_filter_queue_size}} {
       _msg_flt->registerCallback(&TopicWithTransform::transformed_msg_cb,
                                   this);
   }
@@ -42,9 +45,6 @@ public: // methods
   void subscribe(std::shared_ptr<TopicObserver<MsgType>> obs) {
     _observers.push_back(obs);
   }
-private: // consts
-  const uint32_t SUBSCR_QUEUE_SZ = 10000; // elems
-  const uint32_t FILTER_QUEUE_SZ = 10000; // elems
 private: // methods
   void transformed_msg_cb(const boost::shared_ptr<MsgType> msg) {
     tf::StampedTransform transform;
