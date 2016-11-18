@@ -8,8 +8,7 @@
 #include "../core/sensor_data.h"
 #include "../ros/topic_with_transform.h"
 #include "../ros/laser_scan_observer.h"
-#include "../ros/pose_correction_tf_publisher.h"
-#include "../ros/occupancy_grid_publisher.h"
+#include "../ros/init_utils.h"
 #include "gmapping_particle_filter.h"
 
 GridMapParams init_grid_map_params() {
@@ -38,12 +37,6 @@ unsigned init_particles_nm() {
   return particles_nm;
 }
 
-bool is_async_correction() {
-  bool async_correction;
-  ros::param::param<bool>("~async_correction", async_correction, false);
-  return async_correction;
-}
-
 using ObservT = sensor_msgs::LaserScan;
 using GmappingMap = GmappingWorld::MapType;
 
@@ -65,21 +58,20 @@ int main(int argc, char** argv) {
   int ros_filter_queue, ros_subscr_queue;
   init_constants_for_ros(ros_tf_buffer_size, ros_map_publishing_rate,
                          ros_filter_queue, ros_subscr_queue);
-  TopicWithTransform<sensor_msgs::LaserScan> scan_provider{nh,
-      "laser_scan", "odom_combined", ros_tf_buffer_size, ros_filter_queue,
-      ros_subscr_queue};
+  auto scan_provider = std::make_unique<TopicWithTransform<ObservT>>(
+    nh, "laser_scan", tf_odom_frame_id(), ros_tf_buffer_size,
+    ros_filter_queue, ros_subscr_queue
+  );
   // TODO: setup scan skip policy via param
-  auto scan_obs = std::make_shared<LaserScanObserver>(slam);
-  scan_provider.subscribe(scan_obs);
+  auto scan_obs_pin = std::make_shared<LaserScanObserver>(
+    slam, init_skip_exceeding_lsr());
+  scan_provider->subscribe(scan_obs_pin);
 
-  auto map_publisher = std::make_shared<OccupancyGridPublisher<GmappingMap>>(
-    nh.advertise<nav_msgs::OccupancyGrid>("/map", 5),ros_map_publishing_rate);
-  slam->subscribe_map(map_publisher);
+  auto occup_grid_pub_pin = create_occupancy_grid_publisher<GmappingMap>(
+    slam.get(), nh, ros_map_publishing_rate);
 
-  using PosePublT = PoseCorrectionTfPublisher<ObservT>;
-  auto pose_publisher = std::make_shared<PosePublT>(is_async_correction());
-  scan_provider.subscribe(pose_publisher);
-  slam->subscribe_pose(pose_publisher);
+  auto pose_pub_pin = create_pose_correction_tf_publisher<ObservT, GmappingMap>(
+    slam.get(), scan_provider.get());
 
   ros::spin();
 }

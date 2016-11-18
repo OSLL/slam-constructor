@@ -14,7 +14,11 @@ template <typename ObservationType>
 class PoseCorrectionTfPublisher : public TopicObserver<ObservationType>,
                                   public WorldPoseObserver {
 public: //methods
-  PoseCorrectionTfPublisher(bool is_async = false) :
+  PoseCorrectionTfPublisher(const std::string &tf_map_frame_id,
+                            const std::string &tf_odom_frame_id,
+                            bool is_async = false) :
+    _tf_map_frame_id{tf_map_frame_id},
+    _tf_odom_frame_id{tf_odom_frame_id},
     _last_odom2base{tf::createQuaternionFromRPY(0, 0, 0)},
     _map2odom{tf::createQuaternionFromRPY(0, 0, 0)} {
     if (!is_async) {
@@ -55,11 +59,12 @@ private: //methods
   void publish_map_to_odom() {
     _map2odom_mutex.lock();
     _tf_brcst.sendTransform(
-      tf::StampedTransform{_map2odom, ros::Time::now(),
-                           "map","odom_combined"});
+     tf::StampedTransform{_map2odom, ros::Time::now(),
+       _tf_map_frame_id, _tf_odom_frame_id});
     _map2odom_mutex.unlock();
   }
 private: // fields
+  std::string _tf_map_frame_id, _tf_odom_frame_id;
   tf::TransformBroadcaster _tf_brcst;
   tf::Transform _last_odom2base;
   tf::Transform _map2odom;

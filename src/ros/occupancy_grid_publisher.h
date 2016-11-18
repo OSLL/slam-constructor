@@ -10,8 +10,11 @@
 template <typename GridMapType>
 class OccupancyGridPublisher : public WorldMapObserver<GridMapType> {
 public: // method
-  OccupancyGridPublisher(ros::Publisher pub, double publ_interval_secs = 5.0):
-    _map_pub{pub}, _publishing_interval{publ_interval_secs} {}
+  OccupancyGridPublisher(ros::Publisher pub,
+                         const std::string &tf_map_frame_id,
+                         double publ_interval_secs = 5.0):
+    _map_pub{pub}, _tf_map_frame_id{tf_map_frame_id},
+    _publishing_interval{publ_interval_secs} {}
 
   virtual void on_map_update(const GridMapType &map) override {
     if ((ros::Time::now() - _last_pub_time) < _publishing_interval) {
@@ -19,6 +22,7 @@ public: // method
     }
 
     nav_msgs::OccupancyGrid map_msg;
+    map_msg.header.frame_id = _tf_map_frame_id;
     map_msg.info.map_load_time = ros::Time::now();
     map_msg.info.width = map.width();
     map_msg.info.height = map.height();
@@ -48,6 +52,7 @@ public: // method
 
 private: // fields
   ros::Publisher _map_pub;
+  std::string _tf_map_frame_id;
   ros::Time _last_pub_time;
   ros::Duration _publishing_interval;
 };
