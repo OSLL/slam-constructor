@@ -7,6 +7,14 @@
 #define EQ_DOUBLE(a, b)                         \
   (std::abs((a) - (b)) < 0.0001)
 
+inline double QUAD(double x) {
+  return x*x;
+}
+inline double normal_variation(double dx, double dy, double dz = 0,
+                                                             double sig = 1) {
+    return std::exp(-0.5 * (QUAD(dx) + QUAD(dy) + QUAD(dz))/QUAD(sig));
+  }
+
 struct Rectangle {
   Rectangle() : Rectangle(0, 0, 0, 0) {}
   Rectangle(double b, double t, double l, double r) :

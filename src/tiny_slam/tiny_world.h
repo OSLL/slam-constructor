@@ -14,6 +14,7 @@
 #include "../core/maps/grid_cell.h"
 
 #include "tiny_scan_matcher.h"
+#include "../core/olson_scan_matcher.h"
 
 struct TinyWorldParams {
   double localized_scan_quality, raw_scan_quality;
@@ -115,7 +116,7 @@ public:
 private:
   std::shared_ptr<GridCellStrategy> _gcs;
   const TinyWorldParams _params;
-  std::shared_ptr<TinyScanMatcher> _scan_matcher;
+  std::shared_ptr<GridScanMatcher> _scan_matcher;
 
   // a context set up for each map update with a scan point
   mutable MapUpdateCtx _map_update_ctx;
