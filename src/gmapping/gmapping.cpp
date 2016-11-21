@@ -1,15 +1,16 @@
-#include <ros/ros.h>
-#include <sensor_msgs/LaserScan.h>
 #include <memory>
 #include <cassert>
+
+#include <ros/ros.h>
+#include <sensor_msgs/LaserScan.h>
+#include <nav_msgs/OccupancyGrid.h>
 
 #include "../core/sensor_data.h"
 #include "../ros/topic_with_transform.h"
 #include "../ros/laser_scan_observer.h"
-#include "../ros/pose_correction_tf_publisher.h"
-#include "../ros/occupancy_grid_publisher.h"
-#include "gmapping_fascade.h"
-#include <nav_msgs/OccupancyGrid.h>
+#include "../ros/init_utils.h"
+
+#include "gmapping_particle_filter.h"
 
 unsigned init_particles_nm() {
   int particles_nm;
@@ -18,42 +19,35 @@ unsigned init_particles_nm() {
   return particles_nm;
 }
 
-bool is_async_correction() {
-  bool async_correction;
-  ros::param::param<bool>("~async_correction", async_correction, false);
-  return async_correction;
-}
-
 using ObservT = sensor_msgs::LaserScan;
-using GmappingMap = GmappingSlamFascade::MapType;
+using GmappingMap = GmappingWorld::MapType;
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "gMapping");
 
   // TODO: setup CostEstimator and OccEstimator
-  std::shared_ptr<GridCellStrategy> gcs{new GridCellStrategy{
+  auto gcs = std::make_shared<GridCellStrategy>(
     std::make_shared<GmappingBaseCell>(),
     std::shared_ptr<ScanCostEstimator>(nullptr),
     std::shared_ptr<CellOccupancyEstimator>(nullptr)
-  }};
-  std::shared_ptr<GmappingSlamFascade> slam{
-    new GmappingSlamFascade(gcs, init_particles_nm())};
+  );
+  auto slam = std::make_shared<GmappingParticleFilter>(
+    gcs, init_particles_nm());
 
   ros::NodeHandle nh;
-  TopicWithTransform<sensor_msgs::LaserScan> scan_provider{nh,
-      "laser_scan", "odom_combined"};
+  auto scan_provider = std::make_unique<TopicWithTransform<ObservT>>(
+    nh, "laser_scan", tf_odom_frame_id()
+  );
   // TODO: setup scan skip policy via param
-  std::shared_ptr<LaserScanObserver> scan_obs{new LaserScanObserver{slam}};
-  scan_provider.subscribe(scan_obs);
+  auto scan_obs_pin = std::make_shared<LaserScanObserver>(
+    slam, init_skip_exceeding_lsr());
+  scan_provider->subscribe(scan_obs_pin);
 
-  auto map_publisher = std::make_shared<OccupancyGridPublisher<GmappingMap>>(
-    nh.advertise<nav_msgs::OccupancyGrid>("/map", 5));
-  slam->subscribe_map(map_publisher);
+  auto occup_grid_pub_pin = create_occupancy_grid_publisher<GmappingMap>(
+    slam.get(), nh);
 
-  using PosePublT = PoseCorrectionTfPublisher<ObservT>;
-  auto pose_publisher = std::make_shared<PosePublT>(is_async_correction());
-  scan_provider.subscribe(pose_publisher);
-  slam->subscribe_pose(pose_publisher);
+  auto pose_pub_pin = create_pose_correction_tf_publisher<ObservT, GmappingMap>(
+    slam.get(), scan_provider.get());
 
   ros::spin();
 }

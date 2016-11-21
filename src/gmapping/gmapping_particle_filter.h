@@ -7,27 +7,47 @@
 #include <iostream>
 #include <iomanip>
 
-#include "../core/state_data.h"
+#include "../core/world.h"
 #include "../core/particle_filter.h"
 #include "gmapping_world.h"
 
-// TODO: add restriction on particle type
-template <typename ObservationType>
-class GmappingParticleFilter :
-  public World<ObservationType, GmappingWorld::MapType> {
+class GmappingParticleFactory : public ParticleFactory<GmappingWorld> {
+private:
+  using GcsPtr = std::shared_ptr<GridCellStrategy>;
 public:
-  using WorldT = World<ObservationType, GmappingWorld::MapType>;
+  GmappingParticleFactory(GcsPtr gcs) : _gcs(gcs) {}
+
+  virtual std::shared_ptr<GmappingWorld> create_particle() {
+    return std::make_shared<GmappingWorld>(_gcs);
+  }
+private:
+  GcsPtr _gcs;
+};
+
+// TODO: add restriction on particle type
+class GmappingParticleFilter :
+  public World<TransformedLaserScan, GmappingWorld::MapType> {
+public:
+  using WorldT = World<TransformedLaserScan, GmappingWorld::MapType>;
 public: // methods
-  GmappingParticleFilter(
-    std::shared_ptr<ParticleFactory<GmappingWorld>> part_fctr,
-    unsigned n = 1): _pf(part_fctr, n) {
+
+  GmappingParticleFilter(std::shared_ptr<GridCellStrategy> gcs, unsigned n = 1):
+    _pf(std::make_shared<GmappingParticleFactory>(gcs), n) {
 
     for (auto &p : _pf.particles()) {
       p->sample();
     }
   }
 
-  virtual void update_robot_pose(const RobotPoseDelta& delta) override {
+  void handle_sensor_data(TransformedLaserScan &scan) override {
+    for (auto &world : _pf.particles()) {
+      world->handle_sensor_data(scan);
+    }
+    notify_with_pose(pose());
+    notify_with_map(map());
+  }
+
+  void update_robot_pose(const RobotPoseDelta& delta) override {
     for (auto &world : _pf.particles()) {
       world->update_robot_pose(delta);
     }
@@ -40,7 +60,24 @@ public: // methods
     }
   }
 
-  virtual void handle_observation(ObservationType &obs) override {
+  const WorldT& world() const override {
+    double max_weight = 0.0;
+    std::shared_ptr<WorldT> world(nullptr);
+    for (auto &p : _pf.particles()) {
+      if (p->weight() < max_weight) { continue; }
+
+      max_weight = p->weight();
+      world = p;
+    }
+    return *world;
+  }
+
+  const RobotPose& pose() const override { return world().pose(); }
+  const GmappingWorld::MapType& map() const override { return world().map(); }
+
+protected:
+
+  void handle_observation(TransformedLaserScan &obs) override {
     for (auto &world : _pf.particles()) {
       world->handle_observation(obs);
     }
@@ -55,20 +92,6 @@ public: // methods
     */
   }
 
-  virtual const WorldT& world() const {
-    double max_weight = 0.0;
-    std::shared_ptr<WorldT> world(nullptr);
-    for (auto &p : _pf.particles()) {
-      if (p->weight() < max_weight) { continue; }
-
-      max_weight = p->weight();
-      world = p;
-    }
-    return *world;
-  }
-
-  virtual const RobotPose& pose() const { return world().pose(); }
-  virtual const GmappingWorld::MapType& map() const { return world().map(); }
 private: // fields
   ParticleFilter<GmappingWorld> _pf;
   RobotPoseDelta _traversed_since_last_resample;

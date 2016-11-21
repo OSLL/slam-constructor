@@ -15,7 +15,7 @@ public:
 public:
   // TODO: cp, mv ctors, dtor
   GridMap(std::shared_ptr<GridCell> prototype,
-          int width, int height):
+          unsigned width, unsigned height):
     // TODO: replace hardcoded value with params
     _width(width), _height(height), _m_per_cell(0.1),
     _cell_prototype(prototype) {}
@@ -26,6 +26,7 @@ public:
   GridMap& operator=(GridMap &&gm) = default;
   virtual ~GridMap() = default;
 
+  // TODO: change return type to unsigned
   int width() const { return _width; }
   int height() const { return _height; }
   double scale() const { return _m_per_cell; }
@@ -40,26 +41,54 @@ public:
   }
 
   DiscretePoint2D world_to_cell(double x, double y) const {
-    int cell_x = std::floor(_width /2 + x/_m_per_cell);
-    int cell_y = std::floor(_height/2 + y/_m_per_cell);
-
-    return DiscretePoint2D(cell_x, cell_y);
+    int cell_x = std::floor(x/_m_per_cell);
+    int cell_y = std::floor(y/_m_per_cell);
+    return abs2internal({cell_x, cell_y});
   }
 
-  Rectangle world_cell_bounds(const DiscretePoint2D &cell_coord) const {
-    assert(has_cell(cell_coord));
+  Rectangle world_cell_bounds(const DiscretePoint2D &c) const {
+    assert(has_cell(c));
+
+    DiscretePoint2D cell_coord = outer2internal(c);
     Rectangle bounds;
-    bounds.bot = (cell_coord.y + _height/2) * _m_per_cell;
+    bounds.bot = cell_coord.y * _m_per_cell;
     bounds.top = bounds.bot + _m_per_cell;
-    bounds.left = (cell_coord.x + _width/2) * _m_per_cell;
+    bounds.left = cell_coord.x * _m_per_cell;
     bounds.right = bounds.left + _m_per_cell;
     return bounds;
   }
 
+  // Absolute cell coord (world frame) to cell coord on the grid
+  virtual DiscretePoint2D abs2internal(const DiscretePoint2D &coord) const {
+    return coord + origin();
+  }
+
+  virtual DiscretePoint2D origin() const {
+    static DiscretePoint2D origin{(int)_width / 2, (int)_height / 2};
+    return origin;
+  }
+
+  virtual bool has_cell(const DiscretePoint2D& c) const {
+    DiscretePoint2D cell_coord = outer2internal(c);
+    return 0 <= cell_coord.x && cell_coord.x < width() &&
+           0 <= cell_coord.y && cell_coord.y < height();
+
+  }
+
   virtual GridCell &operator[](const DPnt2D& coord) = 0;
   virtual const GridCell &operator[](const DPnt2D& coord) const = 0;
-  virtual bool has_cell(const DiscretePoint2D& cell_coord) const = 0;
 
+protected:
+
+  // A cell coordinate determined outside of the map to the coord on the grid
+  // Motivation: grid's structure changes after a abs2internal coord return
+  //             can spoil the returned coord.
+  virtual DiscretePoint2D outer2internal(const DiscretePoint2D &coord) const {
+    return coord;
+  }
+
+  void set_height(unsigned h) { _height = h; }
+  void set_width(unsigned w) { _width = w; }
 private: // fields
   int _width, _height;
   double _m_per_cell;

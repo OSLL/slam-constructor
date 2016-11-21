@@ -5,7 +5,7 @@
 #include <cmath>
 #include <memory>
 
-#include "../core/state_data.h"
+#include "../core/world.h"
 #include "../core/sensor_data.h"
 #include "../core/laser_scan_grid_world.h"
 #include "../core/maps/grid_cell_strategy.h"
@@ -41,6 +41,12 @@ public:
                                       SIG_XY, SIG_TH)),
     _map_update_ctx(_gcs->occupancy_est()) {}
 
+  std::shared_ptr<GridScanMatcher> scan_matcher() override {
+    return _scan_matcher;
+  }
+
+protected:
+
   virtual void handle_observation(TransformedLaserScan &scan) override {
     _scan_matcher->reset_state();
 
@@ -51,11 +57,6 @@ public:
     scan.quality = pose_delta ? _params.localized_scan_quality :
                                 _params.raw_scan_quality;
     LaserScanGridWorld::handle_observation(scan);
-  }
-
-
-  std::shared_ptr<GridScanMatcher> scan_matcher() {
-    return _scan_matcher;
   }
 
   virtual void handle_scan_point(bool is_occ, double scan_quality,

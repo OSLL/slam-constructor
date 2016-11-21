@@ -1,0 +1,39 @@
+<launch>
+  <machine name="local" address="localhost" default="true" />
+
+  <param name="use_sim_time" value="true"/>
+  <arg name="dataset" default="" />
+  <arg name="rate" default="1.0" />
+
+  <node name="gMappingSlam" pkg="slam_fmwk" type="gmapping"
+        cwd="node" required="true" output="screen">
+    <remap from="laser_scan" to="/base_scan" />
+    <param name="rbpf_particles_nm" value="1" />
+    <param name="async_correction" value="true" />
+
+    <param name="tf_map_frame_id" value="map" />
+    <param name="tf_odom_frame_id" value="odom_combined" />
+  </node>
+
+  <node name="bag_adapter" pkg="slam_fmwk"
+        type="wg_pr2_bag_adapter" required="true" output="screen">
+    <param name="tf_map_frame_id" value="map" />
+    <param name="tf_odom_frame_id" value="odom_combined" />
+
+    <remap from="provided_grid_orig" to="/map_bag" />
+    <remap from="provided_grid" to="/ground_truth_map" />
+
+    <remap from="tf_in" to="/tf_bag" />
+    <remap from="tf_out" to="/tf" />
+  </node>
+
+  <node name="player" pkg="rosbag" type="play"
+        args="--clock --rate $(arg rate) $(arg path)" >
+     <remap from="/map" to="/map_bag" />
+     <remap from="/tf" to="/tf_bag" />
+  </node>
+
+  <node name="rviz" pkg="rviz" type="rviz" respawn="true"
+        args="-d $(find slam_fmwk)/rviz/wg_pr2.rviz" />
+
+</launch>

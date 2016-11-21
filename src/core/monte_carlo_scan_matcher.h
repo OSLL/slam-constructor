@@ -5,7 +5,7 @@
 #include <limits>
 #include <memory>
 
-#include "state_data.h"
+#include "robot_pose.h"
 #include "sensor_data.h"
 #include "grid_scan_matcher.h"
 
