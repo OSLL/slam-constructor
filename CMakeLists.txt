@@ -130,7 +130,9 @@ include_directories(
 
 add_executable(wg_pr2_bag_adapter src/ros/wg_pr2_bag_adapter.cpp)
 add_executable(gmapping src/gmapping/gmapping.cpp)
-add_executable(tiny_slam src/tiny_slam/tiny_slam.cpp)
+add_executable(tiny_slam src/tiny_slam/tiny_slam.cpp
+                         src/core/Hough_scan_matcher/hough.cpp
+                         src/core/Hough_scan_matcher/hough_scan_matcher.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above

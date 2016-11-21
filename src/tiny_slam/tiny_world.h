@@ -14,6 +14,7 @@
 #include "../core/maps/grid_cell.h"
 
 #include "tiny_scan_matcher.h"
+#include "../core/Hough_scan_matcher/hough_scan_matcher.h"
 
 struct TinyWorldParams {
   double localized_scan_quality, raw_scan_quality;
@@ -35,9 +36,10 @@ public:
   TinyWorld(std::shared_ptr<GridCellStrategy> gcs,
             const TinyWorldParams &params) :
     LaserScanGridWorld(gcs), _gcs(gcs), _params(params),
-    _scan_matcher(new TinyScanMatcher(_gcs->cost_est(),
-                                      BAD_LMT, TOT_LMT,
-                                      SIG_XY, SIG_TH)),
+    //_scan_matcher(new TinyScanMatcher(_gcs->cost_est(),
+    //                                  BAD_LMT, TOT_LMT,
+    //                                  SIG_XY, SIG_TH)),
+    _scan_matcher(new HoughScanMatcher(_gcs->cost_est())),
     _map_update_ctx(_gcs->occupancy_est()) {}
 
   std::shared_ptr<GridScanMatcher> scan_matcher() override {
@@ -90,14 +92,14 @@ protected:
     if (!_map_update_ctx.blur_is_enabled) { return dst; }
 
     // perform wall blur
-    const double hole_dist_sq = _map_update_ctx.hole_dist_sq;
-    const double obst_dist_sq = _map_update_ctx.obst_dist_sq;
-    const double dist_sq = pt.dist_sq(_map_update_ctx.obst_pt);
+    //const double hole_dist_sq = _map_update_ctx.hole_dist_sq;
+    //const double obst_dist_sq = _map_update_ctx.obst_dist_sq;
+    //const double dist_sq = pt.dist_sq(_map_update_ctx.obst_pt);
 
-    if (dist_sq < hole_dist_sq && hole_dist_sq < obst_dist_sq) {
-      double prob_scale = 1.0 - dist_sq / hole_dist_sq;
-      dst.occupancy.prob_occ = prob_scale * _map_update_ctx.base_occupied_prob;
-    }
+    //if (dist_sq < hole_dist_sq && hole_dist_sq < obst_dist_sq) {
+    //  double prob_scale = 1.0 - dist_sq / hole_dist_sq;
+    //  dst.occupancy.prob_occ = prob_scale * _map_update_ctx.base_occupied_prob;
+    //}
     return dst;
   }
 
@@ -116,7 +118,8 @@ protected:
 private:
   std::shared_ptr<GridCellStrategy> _gcs;
   const TinyWorldParams _params;
-  std::shared_ptr<TinyScanMatcher> _scan_matcher;
+  //std::shared_ptr<TinyScanMatcher> _scan_matcher;
+  std::shared_ptr<GridScanMatcher> _scan_matcher;
 
   // a context set up for each map update with a scan point
   mutable MapUpdateCtx _map_update_ctx;
