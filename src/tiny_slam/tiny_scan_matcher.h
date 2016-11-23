@@ -6,14 +6,24 @@
 #include "../core/monte_carlo_scan_matcher.h"
 #include "tiny_scan_cost_estimator.h"
 
+struct TinySMParams {
+  const double Sig_XY;
+  const double Sig_TH;
+  const unsigned Bad_Lmt;
+  const unsigned Tot_Lmt;
+  TinySMParams(double sig_xy, double sig_th,
+               unsigned bad_lmt, unsigned tot_lmt)
+    : Sig_XY(sig_xy), Sig_TH(sig_th)
+    , Bad_Lmt(bad_lmt), Tot_Lmt(tot_lmt) {}
+};
+
 class TinyScanMatcher : public MonteCarloScanMatcher {
 private:
   using ScePtr = std::shared_ptr<ScanCostEstimator>;
 public:
-  TinyScanMatcher(ScePtr cost_estimator, unsigned bad_iter, unsigned max_iter,
-                  double sigma_coord, double sigma_angle):
-   MonteCarloScanMatcher(cost_estimator, bad_iter, max_iter),
-    _sigma_coord(sigma_coord), _sigma_angle(sigma_angle),
+  TinyScanMatcher(ScePtr cost_estimator, const TinySMParams& params):
+   MonteCarloScanMatcher(cost_estimator, params.Bad_Lmt, params.Tot_Lmt),
+    _sigma_coord(params.Sig_XY), _sigma_angle(params.Sig_TH),
     _curr_sigma_coord(_sigma_coord), _curr_sigma_angle(_sigma_angle) {}
 
   virtual void reset_state() override {

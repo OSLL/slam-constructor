@@ -19,7 +19,7 @@
 
 std::shared_ptr<GridCell> init_cell_prototype(TinyWorldParams &params) {
   std::string cell_type;
-  ros::param::param<std::string>("~cell_type", cell_type, "avg");
+  ros::param::param<std::string>("~slam/cell/type", cell_type, "avg");
 
   if (cell_type == "base") {
     params.localized_scan_quality = 0.2;
@@ -37,12 +37,13 @@ std::shared_ptr<GridCell> init_cell_prototype(TinyWorldParams &params) {
 
 std::shared_ptr<CellOccupancyEstimator> init_occ_estimator() {
   double occ_prob, empty_prob;
-  ros::param::param<double>("~base_occupied_prob", occ_prob, 0.95);
-  ros::param::param<double>("~base_empty_prob", empty_prob, 0.01);
+  ros::param::param<double>("~slam/cell/base_occupied_prob", occ_prob, 0.95);
+  ros::param::param<double>("~slam/cell/base_empty_prob", empty_prob, 0.01);
 
   using OccEstPtr = std::shared_ptr<CellOccupancyEstimator>;
   std::string est_type;
-  ros::param::param<std::string>("~occupancy_estimator", est_type, "const");
+  ros::param::param<std::string>("~slam/occupancy_estimator/type",
+                                 est_type, "const");
 
   if (est_type == "const") {
     return OccEstPtr{new ConstOccupancyEstimator(occ_prob, empty_prob)};
@@ -55,6 +56,20 @@ std::shared_ptr<CellOccupancyEstimator> init_occ_estimator() {
 }
 
 
+TinyWorldParams init_common_world_params() {
+  double sig_XY, sig_T, width;
+  int lim_bad, lim_totl;
+  ros::param::param<double>("~slam/scmtch/MC/sigma_XY", sig_XY, 0.2);
+  ros::param::param<double>("~slam/scmtch/MC/sigma_theta", sig_T, 0.1);
+  ros::param::param<int>("~slam/scmtch/MC/limit_of_bad_attempts", lim_bad, 20);
+  ros::param::param<int>("~slam/scmtch/MC/limit_of_total_attempts",
+                         lim_totl, 100);
+  ros::param::param<double>("~hole_width", width,1.5);
+
+  return TinyWorldParams({sig_XY, sig_T, unsigned(lim_bad), unsigned(lim_totl)},
+                         width);
+}
+
 using ObservT = sensor_msgs::LaserScan;
 using TinySlamMap = TinyWorld::MapType;
 
@@ -62,23 +77,29 @@ int main(int argc, char** argv) {
   ros::init(argc, argv, "tinySLAM");
 
   // init tiny slam
-  TinyWorldParams params;
+  TinyWorldParams params = init_common_world_params();
+  GridMapParams map_params = init_grid_map_params();
   auto cost_est = std::make_shared<TinyScanCostEstimator>();
   auto gcs = std::make_shared<GridCellStrategy>(
     init_cell_prototype(params), cost_est, init_occ_estimator());
-  auto slam = std::make_shared<TinyWorld>(gcs, params);
+  auto slam = std::make_shared<TinyWorld>(gcs, params, map_params);
 
   // connect the slam to a ros-topic based data provider
   ros::NodeHandle nh;
+  double ros_map_publishing_rate, ros_tf_buffer_size;
+  int ros_filter_queue, ros_subscr_queue;
+  init_constants_for_ros(ros_tf_buffer_size, ros_map_publishing_rate,
+                         ros_filter_queue, ros_subscr_queue);
   auto scan_provider = std::make_unique<TopicWithTransform<ObservT>>(
-    nh, "laser_scan", tf_odom_frame_id()
+    nh, "laser_scan", tf_odom_frame_id(), ros_tf_buffer_size,
+    ros_filter_queue, ros_subscr_queue
   );
   auto scan_obs = std::make_shared<LaserScanObserver>(
     slam, init_skip_exceeding_lsr());
   scan_provider->subscribe(scan_obs);
 
   auto occup_grid_pub_pin = create_occupancy_grid_publisher<TinySlamMap>(
-    slam.get(), nh);
+    slam.get(), nh, ros_map_publishing_rate);
 
   auto pose_pub_pin = create_pose_correction_tf_publisher<ObservT, TinySlamMap>(
     slam.get(), scan_provider.get());

@@ -15,19 +15,58 @@
 #include "gmapping_grid_cell.h"
 #include "gmapping_cost_estimator.h"
 
+struct NDP {
+  const double x0;
+  const double sigma;
+
+  NDP(const double x0, const double sigma) : x0(x0), sigma(sigma) {}
+};
+
+struct GMappingParams {
+  const NDP sample_xy;
+  const NDP sample_th;
+  const NDP init_pd_xy;
+  const NDP init_pd_th;
+
+  GMappingParams(const NDP& sample_xy, const NDP& sample_th,
+                 const NDP& init_pd_xy, const NDP& init_pd_th)
+    : sample_xy(sample_xy), sample_th(sample_th)
+    , init_pd_xy(init_pd_xy), init_pd_th(init_pd_th) {}
+  GMappingParams(const double x0_sample_xy, const double sigma_sample_xy,
+                 const double x0_sample_th, const double sigma_sample_th,
+                 const double x0_init_pd_xy, const double sigma_init_pd_xy,
+                 const double x0_init_pd_th, const double sigma_init_pd_th)
+    : sample_xy(x0_sample_xy, sigma_sample_xy)
+    , sample_th(x0_sample_th, sigma_sample_th)
+    , init_pd_xy(x0_init_pd_xy, sigma_init_pd_xy)
+    , init_pd_th(x0_init_pd_th, sigma_init_pd_th) {}
+};
+
 class GmappingWorld : public Particle,
                       public LaserScanGridWorld<UnboundedLazyTiledGridMap> {
 public:
   using MapType = UnboundedLazyTiledGridMap;
 public:
 
-  GmappingWorld(std::shared_ptr<GridCellStrategy> gcs)
-    : LaserScanGridWorld(gcs)
+  GmappingWorld(std::shared_ptr<GridCellStrategy> gcs,
+                const GridMapParams& params,
+                const GMappingParams& gparams)
+    : LaserScanGridWorld(gcs, params)
     , _matcher{std::make_shared<GmappingCostEstimator>()}
-    , _rnd_engine(std::random_device{}()) {
+    , _rnd_engine(std::random_device{}())
+    , _gprms(gparams){
     init_pose_delta();
   }
 
+  GmappingWorld operator = (const GmappingWorld& gw) {
+    _matcher = gw._matcher;
+    _pose_delta = gw._pose_delta;
+    dist_sq_lim = gw.dist_sq_lim;
+    ang_lim = gw.ang_lim;
+    _scan_is_first = gw._scan_is_first;
+    _rnd_engine = gw._rnd_engine;
+    return *this;
+  }
   virtual void update_robot_pose(const RobotPoseDelta& delta) {
     _pose_delta += delta;
     LaserScanGridWorld<MapType>::update_robot_pose(delta);
@@ -57,8 +96,10 @@ public:
   }
 
   virtual void sample() override {
-    std::normal_distribution<> d_coord(0.0, 0.1);
-    std::normal_distribution<> d_angle(0.0, 0.03);
+    std::normal_distribution<> d_coord(_gprms.sample_xy.x0,
+                                       _gprms.sample_xy.sigma);
+    std::normal_distribution<> d_angle(_gprms.sample_th.x0,
+                                       _gprms.sample_th.sigma);
 
     RobotPoseDelta norm_dlt(d_coord(_rnd_engine), d_coord(_rnd_engine),
                             d_angle(_rnd_engine));
@@ -67,8 +108,10 @@ public:
 
 private:
   void init_pose_delta() {
-    std::uniform_real_distribution<> d_coord(0.6, 0.8);
-    std::uniform_real_distribution<> d_angle(0.3, 0.4);
+    std::uniform_real_distribution<> d_coord(_gprms.init_pd_xy.x0,
+                                             _gprms.init_pd_xy.sigma);
+    std::uniform_real_distribution<> d_angle(_gprms.init_pd_th.x0,
+                                             _gprms.init_pd_th.sigma);
     dist_sq_lim = d_coord(_rnd_engine);
     ang_lim = d_angle(_rnd_engine);
     _pose_delta.reset();
@@ -79,6 +122,7 @@ private:
   double dist_sq_lim, ang_lim;
   bool _scan_is_first = true;
   std::mt19937 _rnd_engine;
+  const GMappingParams _gprms;
 };
 
 #endif

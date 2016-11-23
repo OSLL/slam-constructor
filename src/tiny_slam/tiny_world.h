@@ -17,27 +17,23 @@
 
 struct TinyWorldParams {
   double localized_scan_quality, raw_scan_quality;
+  const TinySMParams Tiny_SM_Params;
+  const double Hole_Width;
+
+  TinyWorldParams(const TinySMParams& tiny_sm_params, double hole_width) :
+    Tiny_SM_Params(tiny_sm_params), Hole_Width(hole_width) {}
 };
 
 class TinyWorld : public LaserScanGridWorld<PlainGridMap> {
-private: // internal params
-  // Scan matcher
-  const double SIG_XY = 0.2;
-  const double SIG_TH = 0.1;
-  const double BAD_LMT = 20;
-  const double TOT_LMT = BAD_LMT * 5;
-
-  const double HOLE_WIDTH = 1.5;
 public:
   using Point = DiscretePoint2D;
 public:
 
   TinyWorld(std::shared_ptr<GridCellStrategy> gcs,
-            const TinyWorldParams &params) :
-    LaserScanGridWorld(gcs), _gcs(gcs), _params(params),
-    _scan_matcher(new TinyScanMatcher(_gcs->cost_est(),
-                                      BAD_LMT, TOT_LMT,
-                                      SIG_XY, SIG_TH)),
+            const TinyWorldParams &params,
+            const GridMapParams &map_params) :
+    LaserScanGridWorld(gcs, map_params), _gcs(gcs), _params(params),
+    _scan_matcher(new TinyScanMatcher(_gcs->cost_est(),params.Tiny_SM_Params)),
     _map_update_ctx(_gcs->occupancy_est()) {}
 
   std::shared_ptr<GridScanMatcher> scan_matcher() override {
@@ -68,7 +64,8 @@ protected:
     DPoint obst_pt = map.world_to_cell(beam.end);
 
     _map_update_ctx.obst_dist_sq = robot_pt.dist_sq(obst_pt);
-    _map_update_ctx.hole_dist_sq = std::pow(HOLE_WIDTH / map.cell_scale(), 2);
+    double hole_dist = _params.Hole_Width / map.cell_scale();
+    _map_update_ctx.hole_dist_sq = std::pow(hole_dist, 2);
     _map_update_ctx.obst_pt = obst_pt;
 
     LaserScanGridWorld::handle_scan_point(is_occ, scan_quality, beam);

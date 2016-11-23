@@ -9,16 +9,27 @@
 #include "grid_cell.h"
 #include "../geometry_utils.h"
 
+struct GridMapParams {
+  int width, height; // width & height in meters
+  double meters_per_cell;
+};
+
+struct MapValues {
+  static constexpr int width = 1000;
+  static constexpr int height = 1000;
+  static constexpr double meters_per_cell = 0.1;
+  static constexpr GridMapParams gmp{width, height, meters_per_cell};
+};
+
 class GridMap {
 public:
   using DPnt2D = DiscretePoint2D;
 public:
   // TODO: cp, mv ctors, dtor
   GridMap(std::shared_ptr<GridCell> prototype,
-          unsigned width, unsigned height):
-    // TODO: replace hardcoded value with params
-    _width(width), _height(height), _m_per_cell(0.1),
-    _cell_prototype(prototype) {}
+          const GridMapParams& params = MapValues::gmp) :
+    _width(params.width), _height(params.height),
+    _m_per_cell(params.meters_per_cell), _cell_prototype(prototype) {}
 
   GridMap(GridMap &gm) = default;
   GridMap& operator=(GridMap &gm) = default;

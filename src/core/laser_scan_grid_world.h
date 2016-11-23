@@ -19,8 +19,9 @@ public: //types
 public: // methods
 
   LaserScanGridWorld(std::shared_ptr<GridCellStrategy> gcs,
-                    size_t scan_margin = 0) :
-    _map(gcs->cell_prototype()), _scan_margin(scan_margin) {}
+                     const GridMapParams& params,
+                     size_t scan_margin = 0) :
+    _map(gcs->cell_prototype(), params), _scan_margin(scan_margin) {}
 
 
   virtual std::shared_ptr<GridScanMatcher> scan_matcher() { return nullptr; }
