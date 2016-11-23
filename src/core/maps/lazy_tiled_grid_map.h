@@ -17,21 +17,20 @@
 
 class LazyTiledGridMap : public GridMap {
 protected:
-  static constexpr unsigned TILE_SIZE_BITS = 7;
-  static constexpr unsigned TILE_SIZE = 1 << TILE_SIZE_BITS;
-  static constexpr unsigned TILE_COORD_MASK = TILE_SIZE - 1;
+  static constexpr unsigned Tile_Size_Bits = 7;
+  static constexpr unsigned Tile_Size = 1 << Tile_Size_Bits;
+  static constexpr unsigned Tile_Coord_Mask = Tile_Size - 1;
 protected:
   struct Tile;
 public:
   LazyTiledGridMap(std::shared_ptr<GridCell> prototype,
-                   const GridMapParams& params = {1000,1000,0.1},
-                   unsigned tiles_nm = 9
+                   const GridMapParams& params = MapValues::gmp
                    )
-    : GridMap{prototype, {(int)(TILE_SIZE * tiles_nm),
-                          (int)(TILE_SIZE * tiles_nm), params.meters_per_cell}}
+    : GridMap{prototype, params}
     , _unknown_cell{prototype->clone()}
     , _unknown_tile{std::make_shared<Tile>(_unknown_cell)}
-    , _tiles_nm_x{tiles_nm}, _tiles_nm_y{tiles_nm}
+    , _tiles_nm_x{params.width/Tile_Size + (params.width%Tile_Size ? 1u : 0u)}
+    , _tiles_nm_y{params.height/Tile_Size + (params.height%Tile_Size ? 1u : 0u)}
     , _tiles{_tiles_nm_x * _tiles_nm_y, _unknown_tile} {}
 
   GridCell &operator[](const DPnt2D& c) override {
@@ -65,9 +64,9 @@ protected: // methods & types
     assert(min <= max);
     unsigned prepend_nm = 0, append_nm = 0;
     if (val < min) {
-      prepend_nm = 1 + ((min - val) >> TILE_SIZE_BITS);
+      prepend_nm = 1 + ((min - val) >> Tile_Size_Bits);
     } else if (max <= val) {
-      append_nm = 1 + ((val - max) >> TILE_SIZE_BITS);
+      append_nm = 1 + ((val - max) >> Tile_Size_Bits);
     }
     return std::make_tuple(prepend_nm, append_nm);
   }
@@ -83,17 +82,17 @@ protected: // methods & types
     }
 
     const std::shared_ptr<GridCell> &cell(const DPnt2D& cell_coord) const {
-      return _cells[(cell_coord.x & TILE_COORD_MASK) * TILE_SIZE +
-                    (cell_coord.y & TILE_COORD_MASK)];
+      return _cells[(cell_coord.x & Tile_Coord_Mask) * Tile_Size +
+                    (cell_coord.y & Tile_Coord_Mask)];
     }
   private:
-    std::array<std::shared_ptr<GridCell>, TILE_SIZE*TILE_SIZE> _cells;
+    std::array<std::shared_ptr<GridCell>, Tile_Size*Tile_Size> _cells;
   };
 
 private: // methods
   std::shared_ptr<Tile> &tile(const DPnt2D &c) const {
-    return  _tiles[(c.y >> TILE_SIZE_BITS) * _tiles_nm_x +
-                   (c.x >> TILE_SIZE_BITS)];
+    return  _tiles[(c.y >> Tile_Size_Bits) * _tiles_nm_x +
+                   (c.x >> Tile_Size_Bits)];
   }
 
 private: // fields
@@ -109,8 +108,8 @@ protected: // fields
 class UnboundedLazyTiledGridMap : public LazyTiledGridMap {
 public:
   UnboundedLazyTiledGridMap(std::shared_ptr<GridCell> prototype,
-      const GridMapParams& params = {1000,1000,0.1})
-    : LazyTiledGridMap{prototype, params, 0}
+      const GridMapParams& params = MapValues::gmp)
+    : LazyTiledGridMap{prototype, params}
     , _origin{0, 0} {}
 
   GridCell &operator[](const DPnt2D& c) override {
@@ -163,9 +162,9 @@ protected:
     _tiles_nm_x = new_tiles_nm_x;
     _tiles_nm_y = new_tiles_nm_y;
     std::swap(_tiles, new_tiles);
-    set_height(_tiles_nm_y * TILE_SIZE);
-    set_width(_tiles_nm_x * TILE_SIZE);
-    _origin += DPnt2D(prep_x * TILE_SIZE, prep_y * TILE_SIZE);
+    set_height(_tiles_nm_y * Tile_Size);
+    set_width(_tiles_nm_x * Tile_Size);
+    _origin += DPnt2D(prep_x * Tile_Size, prep_y * Tile_Size);
 
     assert(has_cell(c));
     return true;

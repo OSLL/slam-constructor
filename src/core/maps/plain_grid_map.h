@@ -12,7 +12,7 @@ class PlainGridMap : public GridMap {
 public:
   // TODO: cp, mv ctors, dtor
   PlainGridMap(std::shared_ptr<GridCell> prototype,
-               const GridMapParams& params = {1000,1000,0.1}) :
+               const GridMapParams& params = MapValues::gmp) :
     GridMap(prototype, params), _cells(params.height) {
     for (auto &row : _cells) {
       row.reserve(GridMap::width());

@@ -14,13 +14,20 @@ struct GridMapParams {
   double meters_per_cell;
 };
 
+struct MapValues {
+  static constexpr int width = 1000;
+  static constexpr int height = 1000;
+  static constexpr double meters_per_cell = 0.1;
+  static constexpr GridMapParams gmp{width, height, meters_per_cell};
+};
+
 class GridMap {
 public:
   using DPnt2D = DiscretePoint2D;
 public:
   // TODO: cp, mv ctors, dtor
   GridMap(std::shared_ptr<GridCell> prototype,
-          const GridMapParams& params = {1000,1000,0.1}):
+          const GridMapParams& params = MapValues::gmp) :
     _width(params.width), _height(params.height),
     _m_per_cell(params.meters_per_cell), _cell_prototype(prototype) {}
 

@@ -31,13 +31,13 @@ public: // methods
                      const std::string& topic_name,
                      const std::string& target_frame,
                      const double buffer_duration = 5.0,
-                     const int tf_filter_queue_size = 1000,
-                     const int subscribers_queue_size = 1000):
+                     const uint32_t tf_filter_queue_size = 1000,
+                     const uint32_t subscribers_queue_size = 1000):
     _target_frame{target_frame},
-    _subscr{nh, topic_name, (uint32_t)subscribers_queue_size},
+    _subscr{nh, topic_name, subscribers_queue_size},
     _tf_lsnr{ros::Duration(buffer_duration)},
     _msg_flt{new tf::MessageFilter<MsgType>{
-      _subscr, _tf_lsnr, _target_frame, (uint32_t)tf_filter_queue_size}} {
+      _subscr, _tf_lsnr, _target_frame, tf_filter_queue_size}} {
       _msg_flt->registerCallback(&TopicWithTransform::transformed_msg_cb,
                                   this);
   }

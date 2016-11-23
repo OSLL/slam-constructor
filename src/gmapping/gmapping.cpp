@@ -11,30 +11,38 @@
 #include "../ros/init_utils.h"
 #include "gmapping_particle_filter.h"
 
-GridMapParams init_grid_map_params() {
-  GridMapParams params;
-  ros::param::param<int>("~map_height_in_meters", params.height, 1000);
-  ros::param::param<int>("~map_width_in_meters", params.width, 1000);
-  ros::param::param<double>("~map_meters_per_cell", params.meters_per_cell,
-                                                                         0.1);
-  return params;
-}
-
-void init_constants_for_ros(double &ros_tf_buffer_size,
-                            double &ros_map_rate,
-                            int &ros_filter_queue,
-                            int &ros_subscr_queue) {
-  ros::param::param<double>("~ros_tf_buffer_duration",ros_tf_buffer_size,5.0);
-  ros::param::param<double>("~ros_rviz_map_publishing_rate", ros_map_rate, 5.0);
-  ros::param::param<int>("~ros_filter_queue_size",ros_filter_queue,1000);
-  ros::param::param<int>("~ros_subscribers_queue_size",ros_subscr_queue,1000);
-}
-
 unsigned init_particles_nm() {
   int particles_nm;
-  ros::param::param<int>("~rbpf_particles_nm", particles_nm, 30);
+  ros::param::param<int>("~slam/particles/amount", particles_nm, 30);
   assert(0 < particles_nm && "Particles number must be positive");
   return particles_nm;
+}
+
+GMappingParams init_gmapping_params() {
+  double x0_sample_xy, sigma_sample_xy,
+         x0_sample_th, sigma_sample_th,
+         x0_init_pd_xy, sigma_init_pd_xy,
+         x0_init_pd_th, sigma_init_pd_th;
+  ros::param::param<double>("slam/particles/sample/xy/x0",
+                                           x0_sample_xy, 0.0);
+  ros::param::param<double>("slam/particles/sample/xy/sigma",
+                                           sigma_sample_xy, 0.1);
+  ros::param::param<double>("slam/particles/sample/theta/x0",
+                                           x0_sample_th, 0.0);
+  ros::param::param<double>("slam/particles/sample/theta/sigma",
+                                           sigma_sample_th, 0.03);
+  ros::param::param<double>("slam/particles/init_pose_delta/xy/x0",
+                                           x0_init_pd_xy, 0.6);
+  ros::param::param<double>("slam/particles/init_pose_delta/xy/sigma",
+                                           sigma_init_pd_xy, 0.8);
+  ros::param::param<double>("slam/particles/init_pose_delta/theta/x0",
+                                           x0_init_pd_th, 0.3);
+  ros::param::param<double>("slam/particles/init_pose_delta/theta/sigma",
+                                           sigma_init_pd_th, 0.4);
+  return {x0_sample_xy, sigma_sample_xy,
+          x0_sample_th, sigma_sample_th,
+          x0_init_pd_xy, sigma_init_pd_xy,
+          x0_init_pd_th, sigma_init_pd_th};
 }
 
 using ObservT = sensor_msgs::LaserScan;
@@ -51,7 +59,7 @@ int main(int argc, char** argv) {
     std::shared_ptr<CellOccupancyEstimator>(nullptr)
   );
   auto slam = std::make_shared<GmappingParticleFilter>(
-    gcs, map_params, init_particles_nm());
+    gcs, map_params, init_gmapping_params(), init_particles_nm());
 
   ros::NodeHandle nh;
   double ros_map_publishing_rate, ros_tf_buffer_size;

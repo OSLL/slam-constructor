@@ -8,14 +8,30 @@
   <node name="gMappingSlam" pkg="slam_fmwk" type="gmapping"
         cwd="node" required="true" output="screen">
     <remap from="laser_scan" to="/base_scan" />
-    <param name="rbpf_particles_nm" value="30" />
-    <param name="async_correction" value="false" />
+    <param name="salm/particles/amount" value="30" />
+    <param name="ros/tf/async_correction" value="false" />
+
+    <!-- Map setup-->
+    <param name="slam/map/height_in_meters" value="128" />
+    <param name="slam/map/width_in_meters" value="128" />
+    <param name="slam/map/meters_per_cell" value="0.1" />
 
     <!-- Internal constants for ros-->
-    <param name="ros_rviz_map_publishing_rate" value="5.0" />
-    <param name="ros_tf_buffer_duration" value="5.0" /> <!-- in seconds-->
-    <param name="ros_filter_queue_size" value="1000" />
-    <param name="ros_subscribers_queue_size" value="1000" />
+    <param name="ros/rviz/map_publishing_rate" value="5.0" />
+    <param name="ros/tf/buffer_duration" value="5.0" /> <!-- in seconds-->
+    <param name="ros/filter_queue_size" value="1000" />
+    <param name="ros/subscribers_queue_size" value="1000" />
+
+    <!-- Params for particles init/sample stohastic strategy -->
+    <param name = "slam/particles/sample/xy/x0" value = "0.0" />
+    <param name = "slam/particles/sample/xy/sigma" value = "0.1" />
+    <param name = "slam/particles/sample/theta/x0" value = "0.0" />
+    <param name = "slam/particles/sample/theta/sigma" value = "0.03" />
+    <param name = "slam/particles/init_pose_delta/xy/x0" value = "0.6" />
+    <param name = "slam/particles/init_pose_delta/xy/sigma" value = "0.8" />
+    <param name = "slam/particles/init_pose_delta/theta/x0" value = "0.3" />
+    <param name = "slam/particles/init_pose_delta/theta/sigma" value = "0.4" />
+
   </node>
 
   <node name="player" pkg="rosbag" type="play"

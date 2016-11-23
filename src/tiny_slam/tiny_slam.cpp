@@ -19,7 +19,7 @@
 
 std::shared_ptr<GridCell> init_cell_prototype(TinyWorldParams &params) {
   std::string cell_type;
-  ros::param::param<std::string>("~cell_type", cell_type, "avg");
+  ros::param::param<std::string>("~slam/cell/type", cell_type, "avg");
 
   if (cell_type == "base") {
     params.localized_scan_quality = 0.2;
@@ -37,12 +37,13 @@ std::shared_ptr<GridCell> init_cell_prototype(TinyWorldParams &params) {
 
 std::shared_ptr<CellOccupancyEstimator> init_occ_estimator() {
   double occ_prob, empty_prob;
-  ros::param::param<double>("~base_occupied_prob", occ_prob, 0.95);
-  ros::param::param<double>("~base_empty_prob", empty_prob, 0.01);
+  ros::param::param<double>("~slam/cell/base_occupied_prob", occ_prob, 0.95);
+  ros::param::param<double>("~slam/cell/base_empty_prob", empty_prob, 0.01);
 
   using OccEstPtr = std::shared_ptr<CellOccupancyEstimator>;
   std::string est_type;
-  ros::param::param<std::string>("~occupancy_estimator", est_type, "const");
+  ros::param::param<std::string>("~slam/occupancy_estimator/type",
+                                 est_type, "const");
 
   if (est_type == "const") {
     return OccEstPtr{new ConstOccupancyEstimator(occ_prob, empty_prob)};
@@ -58,32 +59,15 @@ std::shared_ptr<CellOccupancyEstimator> init_occ_estimator() {
 TinyWorldParams init_common_world_params() {
   double sig_XY, sig_T, width;
   int lim_bad, lim_totl;
-  ros::param::param<double>("~scmtch_sigma_XY_MonteCarlo", sig_XY, 0.2);
-  ros::param::param<double>("~scmtch_sigma_theta_MonteCarlo", sig_T, 0.1);
-  ros::param::param<int>("~scmtch_limit_of_bad_attempts", lim_bad, 20);
-  ros::param::param<int>("~scmtch_limit_of_total_attempts", lim_totl, 100);
+  ros::param::param<double>("~slam/scmtch/MC/sigma_XY", sig_XY, 0.2);
+  ros::param::param<double>("~slam/scmtch/MC/sigma_theta", sig_T, 0.1);
+  ros::param::param<int>("~slam/scmtch/MC/limit_of_bad_attempts", lim_bad, 20);
+  ros::param::param<int>("~slam/scmtch/MC/limit_of_total_attempts",
+                         lim_totl, 100);
   ros::param::param<double>("~hole_width", width,1.5);
 
-  return TinyWorldParams(sig_XY, sig_T, lim_bad, lim_totl, width);
-}
-
-GridMapParams init_grid_map_params() {
-  GridMapParams params;
-  ros::param::param<int>("~map_height_in_meters", params.height, 1000);
-  ros::param::param<int>("~map_width_in_meters", params.width, 1000);
-  ros::param::param<double>("~map_meters_per_cell", params.meters_per_cell,
-                                                                         0.1);
-  return params;
-}
-
-void init_constants_for_ros(double &ros_tf_buffer_size,
-                            double &ros_map_rate,
-                            int &ros_filter_queue,
-                            int &ros_subscr_queue) {
-  ros::param::param<double>("~ros_tf_buffer_duration",ros_tf_buffer_size,5.0);
-  ros::param::param<double>("~ros_rviz_map_publishing_rate", ros_map_rate, 5.0);
-  ros::param::param<int>("~ros_filter_queue_size",ros_filter_queue,1000);
-  ros::param::param<int>("~ros_subscribers_queue_size",ros_subscr_queue,1000);
+  return TinyWorldParams({sig_XY, sig_T, unsigned(lim_bad), unsigned(lim_totl)},
+                         width);
 }
 
 using ObservT = sensor_msgs::LaserScan;

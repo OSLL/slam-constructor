@@ -15,15 +15,17 @@ class GmappingParticleFactory : public ParticleFactory<GmappingWorld> {
 private:
   using GcsPtr = std::shared_ptr<GridCellStrategy>;
 public:
-  GmappingParticleFactory(GcsPtr gcs, const GridMapParams& params) : _gcs(gcs),
-                                                          _map_params(params) {}
+  GmappingParticleFactory(GcsPtr gcs, const GridMapParams& params,
+                          const GMappingParams& gprms)
+    : _gcs(gcs), _map_params(params), _gprms(gprms) {}
 
   virtual std::shared_ptr<GmappingWorld> create_particle() {
-    return std::make_shared<GmappingWorld>(_gcs, _map_params);
+    return std::make_shared<GmappingWorld>(_gcs, _map_params, _gprms);
   }
 private:
   GcsPtr _gcs;
   GridMapParams _map_params;
+  const GMappingParams _gprms;
 };
 
 // TODO: add restriction on particle type
@@ -34,8 +36,9 @@ public:
 public: // methods
 
   GmappingParticleFilter(std::shared_ptr<GridCellStrategy> gcs,
-                         const GridMapParams& params, unsigned n = 1):
-    _pf(std::make_shared<GmappingParticleFactory>(gcs, params), n) {
+                         const GridMapParams& params,
+                         const GMappingParams& gprms, unsigned n = 1):
+    _pf(std::make_shared<GmappingParticleFactory>(gcs, params, gprms), n) {
 
     for (auto &p : _pf.particles()) {
       p->sample();
