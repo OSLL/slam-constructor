@@ -128,6 +128,7 @@ include_directories(
 
 ## Declare a C++ executable
 
+add_executable(wg_pr2_bag_adapter src/ros/wg_pr2_bag_adapter.cpp)
 add_executable(gmapping src/gmapping/gmapping.cpp)
 add_executable(tiny_slam src/tiny_slam/tiny_slam.cpp)
 
@@ -137,6 +138,7 @@ add_executable(tiny_slam src/tiny_slam/tiny_slam.cpp)
 
 ## Specify libraries to link a library or executable target against
 
+target_link_libraries(wg_pr2_bag_adapter ${catkin_LIBRARIES})
 target_link_libraries(gmapping ${catkin_LIBRARIES})
 target_link_libraries(tiny_slam ${catkin_LIBRARIES})
 
