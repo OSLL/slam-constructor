@@ -9,6 +9,7 @@
 #include "../ros/topic_with_transform.h"
 #include "../ros/laser_scan_observer.h"
 #include "../ros/init_utils.h"
+
 #include "gmapping_particle_filter.h"
 
 unsigned init_particles_nm() {
@@ -51,7 +52,6 @@ using GmappingMap = GmappingWorld::MapType;
 int main(int argc, char** argv) {
   ros::init(argc, argv, "gMapping");
 
-  GridMapParams map_params = init_grid_map_params();
   // TODO: setup CostEstimator and OccEstimator
   auto gcs = std::make_shared<GridCellStrategy>(
     std::make_shared<GmappingBaseCell>(),
@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
     std::shared_ptr<CellOccupancyEstimator>(nullptr)
   );
   auto slam = std::make_shared<GmappingParticleFilter>(
-    gcs, map_params, init_gmapping_params(), init_particles_nm());
+    gcs, init_grid_map_params(), init_gmapping_params(), init_particles_nm());
 
   ros::NodeHandle nh;
   double ros_map_publishing_rate, ros_tf_buffer_size;

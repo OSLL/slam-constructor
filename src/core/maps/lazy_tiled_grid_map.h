@@ -24,8 +24,7 @@ protected:
   struct Tile;
 public:
   LazyTiledGridMap(std::shared_ptr<GridCell> prototype,
-                   const GridMapParams& params = MapValues::gmp
-                   )
+                   const GridMapParams& params = MapValues::gmp)
     : GridMap{prototype, params}
     , _unknown_cell{prototype->clone()}
     , _unknown_tile{std::make_shared<Tile>(_unknown_cell)}
