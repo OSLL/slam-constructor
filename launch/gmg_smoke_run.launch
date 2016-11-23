@@ -8,7 +8,7 @@
   <node name="gMappingSlam" pkg="slam_fmwk" type="gmapping"
         cwd="node" required="true" output="screen">
     <remap from="laser_scan" to="/base_scan" />
-    <param name="salm/particles/amount" value="30" />
+    <param name="slam/particles/amount" value="30" />
     <param name="ros/tf/async_correction" value="false" />
 
     <!-- Map setup-->

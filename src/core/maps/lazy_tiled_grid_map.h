@@ -28,8 +28,8 @@ public:
     : GridMap{prototype, params}
     , _unknown_cell{prototype->clone()}
     , _unknown_tile{std::make_shared<Tile>(_unknown_cell)}
-    , _tiles_nm_x{params.width/Tile_Size + (params.width%Tile_Size ? 1u : 0u)}
-    , _tiles_nm_y{params.height/Tile_Size + (params.height%Tile_Size ? 1u : 0u)}
+    , _tiles_nm_x{(params.width + Tile_Size - 1) / Tile_Size}
+    , _tiles_nm_y{(params.height + Tile_Size - 1) / Tile_Size}
     , _tiles{_tiles_nm_x * _tiles_nm_y, _unknown_tile} {}
 
   GridCell &operator[](const DPnt2D& c) override {
