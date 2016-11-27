@@ -4,42 +4,12 @@
 #include <vector>
 #include <cmath>
 
-#define EQ_DOUBLE(a, b)                         \
-  (std::abs((a) - (b)) < 0.0001)
-
-struct Rectangle {
-  Rectangle() : Rectangle(0, 0, 0, 0) {}
-  Rectangle(double b, double t, double l, double r) :
-    bot(b), top(t), left(l), right(r) {}
-
-  bool does_contain(double x, double y) const {
-    return ((bot < y) && (y < top)) && ((left < x) && (x < right));
-  }
-
-  double area() const {
-    return (top - bot)*(right - left);
-  }
-
-  double bot, top, left, right;
-};
-
-struct Point2D {
-  Point2D(double x_par = 0, double y_par = 0) : x(x_par), y(y_par) {}
-  double dist_sq(const Point2D &pt) const {
-    return std::pow(x - pt.x, 2) + std::pow(y - pt.y, 2);
-  }
-  double x, y;
-};
-
-struct Beam {
-  Point2D beg, end;
-};
+#include "geometry_primitives.h"
 
 struct DiscretePoint2D {
 public:
   DiscretePoint2D(int x_coord = 0, int y_coord = 0):
     x{x_coord}, y{y_coord} {}
-  // TODO: mv (!!), cpy ctors
   int x, y;
 
   DiscretePoint2D &operator+=(const DiscretePoint2D &p) {

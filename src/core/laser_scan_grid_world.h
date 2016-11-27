@@ -62,15 +62,16 @@ protected:
       double y_world = pose.y + sp.range * s;
 
       handle_scan_point(sp.is_occupied, scan.quality,
-                        Beam{{pose.x, pose.y}, {x_world, y_world}});
+                        {{pose.x, pose.y}, {x_world, y_world}});
     }
   }
 
   virtual void handle_scan_point(bool is_occ, double scan_quality,
-                                 const Beam &beam) {
+                                 const Segment2D &beam) {
     auto &map = this->map();
-    auto pts = std::move(DiscreteLine2D{map.world_to_cell(beam.beg),
-                                        map.world_to_cell(beam.end)}.points());
+    auto pts = std::move(DiscreteLine2D{
+                           map.world_to_cell(beam.beg()),
+                           map.world_to_cell(beam.end())}.points());
     map[pts.back()] += sp2obs(pts.back(), is_occ, scan_quality, beam);
     pts.pop_back();
 
@@ -80,8 +81,8 @@ protected:
   }
 
   virtual AreaOccupancyObservation sp2obs(
-    const DPoint &, bool is_occ, double quality, const Beam &beam) const {
-    return AreaOccupancyObservation{{(double)is_occ, 1.0}, beam.end, quality};
+    const DPoint &, bool is_occ, double quality, const Segment2D &beam) const {
+    return AreaOccupancyObservation{{(double)is_occ, 1.0}, beam.end(), quality};
   }
 
   virtual const MapType& map() const { return _map; }

@@ -52,7 +52,7 @@ public: //methods
       }
       laser_scan.points.push_back(sp);
     }
-    assert(EQ_DOUBLE(angle, a_max));
+    assert(are_equal(angle, a_max));
 
     laser_scan.pose_delta = new_pose - _prev_pose;
     _prev_pose = new_pose;

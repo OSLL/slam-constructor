@@ -9,7 +9,7 @@ public:
   CellOccupancyEstimator(double base_occ_prob, double base_empty_prob):
     _base_occ_prob(base_occ_prob), _base_empty_prob(base_empty_prob) {}
   virtual ~CellOccupancyEstimator() = default;
-  virtual Occupancy estimate_occupancy(const Beam &beam,
+  virtual Occupancy estimate_occupancy(const Segment2D &beam,
                                        const Rectangle &cell_bnds,
                                        bool is_occ) = 0;
 protected:

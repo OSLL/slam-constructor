@@ -42,7 +42,7 @@ public:
 
 protected:
 
-  virtual void handle_observation(TransformedLaserScan &scan) override {
+  void handle_observation(TransformedLaserScan &scan) override {
     _scan_matcher->reset_state();
 
     RobotPoseDelta pose_delta;
@@ -54,14 +54,13 @@ protected:
     LaserScanGridWorld::handle_observation(scan);
   }
 
-  virtual void handle_scan_point(bool is_occ, double scan_quality,
-    const Beam &beam) override {
-
+  void handle_scan_point(bool is_occ, double scan_quality,
+                         const Segment2D &beam) override {
     auto &map = this->map();
     _map_update_ctx.blur_is_enabled = is_occ;
 
-    DPoint robot_pt = map.world_to_cell(beam.beg);
-    DPoint obst_pt = map.world_to_cell(beam.end);
+    DPoint robot_pt = map.world_to_cell(beam.beg());
+    DPoint obst_pt = map.world_to_cell(beam.end());
 
     _map_update_ctx.obst_dist_sq = robot_pt.dist_sq(obst_pt);
     double hole_dist = _params.Hole_Width / map.cell_scale();
@@ -71,8 +70,8 @@ protected:
     LaserScanGridWorld::handle_scan_point(is_occ, scan_quality, beam);
   }
 
-  virtual AreaOccupancyObservation sp2obs(
-    const DPoint &pt, bool is_occ, double quality, const Beam &beam) const {
+  AreaOccupancyObservation sp2obs(const DPoint &pt, bool is_occ, double quality,
+                                  const Segment2D &beam) const override {
     AreaOccupancyObservation dst;
     dst.quality = quality;
 

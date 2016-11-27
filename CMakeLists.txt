@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-SET(CMAKE_CXX_FLAGS "-std=c++14 -Wall -O3")
+SET(CMAKE_CXX_FLAGS "-std=c++14 -Wall -O3 -pthread")
 project(slam_fmwk)
 
 ## Find catkin macros and libraries
@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   message_filters
 )
+
+find_package(GTest)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -114,6 +116,7 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${GTEST_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -191,6 +194,9 @@ target_link_libraries(tiny_slam ${catkin_LIBRARIES})
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
+
+catkin_add_gtest(area_occupancy_estimator-test
+                 test/core/maps/area_occupancy_estimator_test.cpp)
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
