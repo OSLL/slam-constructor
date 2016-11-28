@@ -24,7 +24,7 @@ struct TinyWorldParams {
     Tiny_SM_Params(tiny_sm_params), Hole_Width(hole_width) {}
 };
 
-class TinyWorld : public LaserScanGridWorld<PlainGridMap> {
+class TinyWorld : public LaserScanGridWorld<UnboundedPlainGridMap> {
 public:
   using Point = DiscretePoint2D;
 public:
@@ -33,7 +33,7 @@ public:
             const TinyWorldParams &params,
             const GridMapParams &map_params) :
     LaserScanGridWorld(gcs, map_params), _gcs(gcs), _params(params),
-    _scan_matcher(new TinyScanMatcher(_gcs->cost_est(),params.Tiny_SM_Params)),
+    _scan_matcher(new TinyScanMatcher(_gcs->cost_est(), params.Tiny_SM_Params)),
     _map_update_ctx(_gcs->occupancy_est()) {}
 
   std::shared_ptr<GridScanMatcher> scan_matcher() override {

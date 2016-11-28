@@ -10,7 +10,7 @@
 #include "../geometry_utils.h"
 
 struct GridMapParams {
-  int width, height; // width & height in meters
+  int width, height; // in cells
   double meters_per_cell;
 };
 
@@ -54,7 +54,7 @@ public:
   DiscretePoint2D world_to_cell(double x, double y) const {
     int cell_x = std::floor(x/_m_per_cell);
     int cell_y = std::floor(y/_m_per_cell);
-    return abs2internal({cell_x, cell_y});
+    return world2internal({cell_x, cell_y});
   }
 
   Rectangle world_cell_bounds(const DiscretePoint2D &c) const {
@@ -70,7 +70,7 @@ public:
   }
 
   // Absolute cell coord (world frame) to cell coord on the grid
-  virtual DiscretePoint2D abs2internal(const DiscretePoint2D &coord) const {
+  virtual DiscretePoint2D world2internal(const DiscretePoint2D &coord) const {
     return coord + origin();
   }
 
@@ -92,7 +92,7 @@ public:
 protected:
 
   // A cell coordinate determined outside of the map to the coord on the grid
-  // Motivation: grid's structure changes after a abs2internal coord return
+  // Motivation: grid's structure changes after a world2internal coord return
   //             can spoil the returned coord.
   virtual DiscretePoint2D outer2internal(const DiscretePoint2D &coord) const {
     return coord;

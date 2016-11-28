@@ -60,12 +60,11 @@ create_occupancy_grid_publisher(WorldObservable<MapT> *slam,
 }
 
 GridMapParams init_grid_map_params() {
-  GridMapParams gmp;
-  ros::param::param<int>("~slam/map/height_in_meters", gmp.height, 1000);
-  ros::param::param<int>("~slam/map/width_in_meters", gmp.width, 1000);
-  ros::param::param<double>("~slam/map/meters_per_cell",
-                            gmp.meters_per_cell, 0.1);
-  return gmp;
+  double h, w, scale;
+  ros::param::param<double>("~slam/map/height_in_meters", h, 10);
+  ros::param::param<double>("~slam/map/width_in_meters", w, 10);
+  ros::param::param<double>("~slam/map/meters_per_cell", scale, 0.1);
+  return {(int)(w / scale + 0.5), (int)(h / scale + 0.5), scale};
 }
 
 void init_constants_for_ros(double &ros_tf_buffer_size,

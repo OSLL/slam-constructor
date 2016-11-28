@@ -40,7 +40,7 @@ public: // method
                                                  info.height) - origin;
     for (pnt.y = -origin.y; pnt.y < end_of_map.y; ++pnt.y) {
       for (pnt.x = -origin.x; pnt.x < end_of_map.x; ++pnt.x) {
-        double value = (double)map[map.abs2internal(pnt)];
+        double value = (double)map[map.world2internal(pnt)];
         int cell_value = value == -1 ? -1 : value * 100;
         map_msg.data.push_back(cell_value);
       }

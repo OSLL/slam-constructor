@@ -59,7 +59,8 @@ protected: // methods & types
   const std::shared_ptr<GridCell> unknown_cell() const { return _unknown_cell; }
   std::shared_ptr<Tile> unknown_tile() { return _unknown_tile; }
 
-  std::tuple<unsigned, unsigned> extra_tiles_nm(int min, int val, int max) {
+  std::tuple<unsigned, unsigned>
+  extra_tiles_nm(int min, int val, int max) const {
     assert(min <= max);
     unsigned prepend_nm = 0, append_nm = 0;
     if (val < min) {
@@ -128,7 +129,7 @@ public:
     return _origin;
   }
 
-  DiscretePoint2D abs2internal(const DiscretePoint2D &coord) const override {
+  DiscretePoint2D world2internal(const DiscretePoint2D &coord) const override {
     return coord;
   }
 
