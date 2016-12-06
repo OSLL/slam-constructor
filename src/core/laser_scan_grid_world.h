@@ -69,9 +69,7 @@ protected:
   virtual void handle_scan_point(bool is_occ, double scan_quality,
                                  const Segment2D &beam) {
     auto &map = this->map();
-    auto pts = std::move(DiscreteLine2D{
-                           map.world_to_cell(beam.beg()),
-                           map.world_to_cell(beam.end())}.points());
+    auto pts = map.world_to_cells(beam);
     map[pts.back()] += sp2obs(pts.back(), is_occ, scan_quality, beam);
     pts.pop_back();
 

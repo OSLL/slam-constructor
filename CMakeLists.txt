@@ -199,7 +199,10 @@ catkin_add_gtest(area_occupancy_estimator-test
                  test/core/maps/area_occupancy_estimator_test.cpp)
 catkin_add_gtest(unbounded_plain_grid_map-test
                  test/core/maps/unbounded_plain_grid_map_test.cpp)
-
+catkin_add_gtest(grid_map-test
+                 test/core/maps/grid_map_test.cpp)
+catkin_add_gtest(geom_dprimitives-test
+                 test/core/geometry_discrete_primitives_test.cpp)
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
