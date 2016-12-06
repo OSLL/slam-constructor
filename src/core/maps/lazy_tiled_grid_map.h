@@ -110,7 +110,7 @@ public:
   UnboundedLazyTiledGridMap(std::shared_ptr<GridCell> prototype,
       const GridMapParams& params = MapValues::gmp)
     : LazyTiledGridMap{prototype, params}
-    , _origin{0, 0} {}
+    , _origin{params.width / 2, params.height / 2} {}
 
   GridCell &operator[](const DPnt2D& c) override {
     ensure_inside(c);
