@@ -33,17 +33,15 @@ public:
 
   GridCell &operator[] (const DPnt2D& c) override {
     assert(has_cell(c));
-    DPnt2D coord = outer2internal(c);
+    DPnt2D coord = external2internal(c);
     return *_cells[coord.y][coord.x];
   }
 
   const GridCell &operator[](const DPnt2D& c) const override {
     assert(has_cell(c));
-    DPnt2D coord = outer2internal(c);
+    DPnt2D coord = external2internal(c);
     return *_cells[coord.y][coord.x];
   }
-
-  DiscretePoint2D origin() const override { return {0, 0}; }
 
 private: // fields
   std::vector<std::vector<std::unique_ptr<GridCell>>> _cells;

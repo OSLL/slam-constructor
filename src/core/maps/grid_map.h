@@ -55,7 +55,7 @@ public:
   DiscretePoint2D world_to_cell(double x, double y) const {
     int cell_x = std::floor(x/_m_per_cell);
     int cell_y = std::floor(y/_m_per_cell);
-    return world2internal({cell_x, cell_y});
+    return {cell_x, cell_y};
   }
 
   std::vector<DiscretePoint2D> world_to_cells(const Segment2D &s) const {
@@ -104,21 +104,12 @@ public:
     return cells;
   }
 
-  Rectangle world_cell_bounds(const DiscretePoint2D &c) const {
-    assert(has_cell(c));
-
-    DiscretePoint2D cell_coord = outer2internal(c);
-    Rectangle bounds;
-    bounds.bot = cell_coord.y * _m_per_cell;
-    bounds.top = bounds.bot + _m_per_cell;
-    bounds.left = cell_coord.x * _m_per_cell;
-    bounds.right = bounds.left + _m_per_cell;
-    return bounds;
-  }
-
-  // Absolute cell coord (world frame) to cell coord on the grid
-  virtual DiscretePoint2D world2internal(const DiscretePoint2D &coord) const {
-    return coord + origin();
+  Rectangle world_cell_bounds(const DiscretePoint2D &cell_coord) const {
+    assert(has_cell(cell_coord));
+    return {_m_per_cell * cell_coord.y,        // bot
+            _m_per_cell * (cell_coord.y + 1),  // top
+            _m_per_cell * cell_coord.x,        // left
+            _m_per_cell * (cell_coord.x + 1)}; // right
   }
 
   virtual DiscretePoint2D origin() const {
@@ -127,7 +118,7 @@ public:
   }
 
   virtual bool has_cell(const DiscretePoint2D& c) const {
-    DiscretePoint2D cell_coord = outer2internal(c);
+    DiscretePoint2D cell_coord = external2internal(c);
     return 0 <= cell_coord.x && cell_coord.x < width() &&
            0 <= cell_coord.y && cell_coord.y < height();
 
@@ -139,11 +130,9 @@ public:
 protected:
 
   // A cell coordinate determined outside of the map to the coord on the grid
-  // Motivation: grid's structure changes after a world2internal coord return
+  // Motivation: grid's structure changes after world_to_cell coord return
   //             can spoil the returned coord.
-  virtual DiscretePoint2D outer2internal(const DiscretePoint2D &coord) const {
-    return coord;
-  }
+  DPnt2D external2internal(const DPnt2D &p) const { return p + origin(); }
 
   void set_height(unsigned h) { _height = h; }
   void set_width(unsigned w) { _width = w; }

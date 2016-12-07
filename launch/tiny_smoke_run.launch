@@ -15,8 +15,8 @@
     <param name="ros/skip_exceeding_lsr_vals" value="false" />
 
     <!-- Map setup-->
-    <param name="slam/map/height_in_meters" value="1000" />
-    <param name="slam/map/width_in_meters" value="1000" />
+    <param name="slam/map/height_in_meters" value="100" />
+    <param name="slam/map/width_in_meters" value="100" />
     <param name="slam/map/meters_per_cell" value="0.1" />
 
     <!-- Internal constants setup -->

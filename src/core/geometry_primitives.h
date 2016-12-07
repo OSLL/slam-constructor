@@ -165,8 +165,8 @@ struct Rectangle {
     bot_edge{{left, bot}, {right, bot}}, top_edge{{left, top}, {right, top}},
     left_edge{{left, bot}, {left, top}}, right_edge{{right, bot}, {right, top}}
   {
-      assert(bot <= top);
-      assert(left <= right);
+    assert(bot <= top);
+    assert(left <= right);
   }
 
   double side() const { return top - bot; }
@@ -228,7 +228,7 @@ struct Rectangle {
 
 // TODO: make fields private
 public: // fields
-  double bot, top, left, right;
+  const double bot, top, left, right;
 
 private: // methods
   std::vector<Segment2D> edges() const {
@@ -240,5 +240,10 @@ private: // fields
   // TODO: vector of edges
   Segment2D bot_edge, top_edge, left_edge, right_edge;
 };
+
+std::ostream &operator<<(std::ostream &stream, const Rectangle &r) {
+  stream << "Rectangle [t:" << r.top << ", b:" << r.bot;
+  return stream << ", l:" << r.left << ", r:" << r.right << "]";
+}
 
 #endif

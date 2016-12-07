@@ -33,7 +33,7 @@ public:
     , _tiles{_tiles_nm_x * _tiles_nm_y, _unknown_tile} {}
 
   GridCell &operator[](const DPnt2D& c) override {
-    DPnt2D coord = outer2internal(c);
+    DPnt2D coord = external2internal(c);
     std::shared_ptr<Tile> &tile = this->tile(coord);
     if (!tile) {
       tile = std::make_shared<Tile>(_unknown_cell);
@@ -50,7 +50,7 @@ public:
   }
 
   const GridCell &operator[](const DPnt2D& c) const override {
-    DPnt2D coord = outer2internal(c);
+    DPnt2D coord = external2internal(c);
     return *tile(coord)->cell(coord);
   }
 
@@ -110,7 +110,7 @@ public:
   UnboundedLazyTiledGridMap(std::shared_ptr<GridCell> prototype,
       const GridMapParams& params = MapValues::gmp)
     : LazyTiledGridMap{prototype, params}
-    , _origin{params.width / 2, params.height / 2} {}
+    , _origin{GridMap::origin()} {}
 
   GridCell &operator[](const DPnt2D& c) override {
     ensure_inside(c);
@@ -125,24 +125,14 @@ public:
     return LazyTiledGridMap::operator[](c);
   }
 
-  DiscretePoint2D origin() const override {
-    return _origin;
-  }
-
-  DiscretePoint2D world2internal(const DiscretePoint2D &coord) const override {
-    return coord;
-  }
+  DiscretePoint2D origin() const override { return _origin; }
 
 protected:
-
-  DiscretePoint2D outer2internal(const DiscretePoint2D &coord) const override {
-    return coord + _origin;
-  }
 
   bool ensure_inside(const DiscretePoint2D &c) {
     if (has_cell(c)) return false;
 
-    DPnt2D coord = outer2internal(c);
+    DPnt2D coord = external2internal(c);
     unsigned prep_x = 0, app_x = 0, prep_y = 0, app_y = 0;
     std::tie(prep_x, app_x) = extra_tiles_nm(0, coord.x, width());
     std::tie(prep_y, app_y) = extra_tiles_nm(0, coord.y, height());

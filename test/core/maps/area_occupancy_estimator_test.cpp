@@ -153,7 +153,6 @@ TEST_F(AreaOccupancyEstimatorTest, emptyBwdSkewDialStopsCenter) {
 //---------------------------//
 // === Out of cell cases === //
 
-/* FIXME: cell returned by Bresenham isn't intersected by a beam
 TEST_F(AreaOccupancyEstimatorTest, occNotInteractsWithCell) {
   auto beam = Segment2D{{2, 2}, {3, 3}};
   ASSERT_EQ(Occupancy::invalid(), aoe.estimate_occupancy(beam, cell, true));
@@ -163,7 +162,6 @@ TEST_F(AreaOccupancyEstimatorTest, emptySkewDiagotCrossCell) {
   auto beam = Segment2D{{0, 50}, {-2, 0}};
   ASSERT_EQ(Occupancy::invalid(), aoe.estimate_occupancy(beam, cell, false));
 }
-*/
 
 //----------------------//
 // === Cell touches === //

@@ -66,9 +66,9 @@ private: // methods
   void gen_points_with_bresenham(const DPoint &beg, const DPoint &end) {
     // 1. Setup vars according to line direction (d_x, d_y)
     DPoint delta = end - beg;
+    bool y_is_primary = std::abs(delta.x) < std::abs(delta.y);
 
     int limit, primary, d_primary, secondary, d_secondary;
-    bool y_is_primary = std::abs(delta.x) < std::abs(delta.y);
     std::tie(limit, primary, d_primary, secondary, d_secondary) = y_is_primary ?
       std::make_tuple(end.y, beg.y, delta.y, beg.x, delta.x) :
       std::make_tuple(end.x, beg.x, delta.x, beg.y, delta.y);

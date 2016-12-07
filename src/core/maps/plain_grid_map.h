@@ -25,13 +25,13 @@ public:
 
   virtual GridCell &operator[] (const DPnt2D& c) override {
     assert(has_cell(c));
-    DPnt2D coord = outer2internal(c);
+    DPnt2D coord = external2internal(c);
     return *_cells[coord.y][coord.x];
   }
 
   virtual const GridCell &operator[](const DPnt2D& c) const override {
     assert(has_cell(c));
-    DPnt2D coord = outer2internal(c);
+    DPnt2D coord = external2internal(c);
     return *_cells[coord.y][coord.x];
   }
 
@@ -48,7 +48,7 @@ public: // methods
   UnboundedPlainGridMap(std::shared_ptr<GridCell> prototype,
                         const GridMapParams &params = MapValues::gmp)
     : PlainGridMap{prototype, params}
-    , _origin{0, 0}, _unknown_cell{prototype->clone()} {}
+    , _origin{GridMap::origin()}, _unknown_cell{prototype->clone()} {}
 
   GridCell &operator[](const DPnt2D& c) override {
     ensure_inside(c);
@@ -61,14 +61,13 @@ public: // methods
   }
 
   DPnt2D origin() const override { return _origin; }
-  DPnt2D world2internal(const DPnt2D &c) const override { return c; }
+
 protected: // methods
-  DPnt2D outer2internal(const DPnt2D &c) const override { return c + _origin; }
 
   bool ensure_inside(const DPnt2D &c) {
     if (has_cell(c)) return false;
 
-    DPnt2D coord = outer2internal(c);
+    DPnt2D coord = external2internal(c);
     unsigned w = width(), h = height();
     unsigned prep_x = 0, app_x = 0, prep_y = 0, app_y = 0;
     std::tie(prep_x, app_x) = determine_cells_nm(0, coord.x, w);
@@ -87,7 +86,7 @@ protected: // methods
     UPDATE_DIM(h, y);
     #undef UPDATE_DIM
 
-    // PERFORMANCE: _cell can be reused
+    // PERFORMANCE: _cells can be reused
     std::vector<std::vector<std::unique_ptr<GridCell>>> new_cells{new_h};
     for (size_t y = 0; y != new_h; ++y) {
       std::generate_n(std::back_inserter(new_cells[y]), new_w,

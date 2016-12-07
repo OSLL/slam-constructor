@@ -27,8 +27,7 @@ public: //methods
                                bool is_occ) override {
     Segment2D effective_beam = ensure_segment_not_on_edge(beam, cell);
     switch (classify_segment(effective_beam, cell)) {
-    // FIXME: cell returned by Bresenham isn't intersected by a beam
-    case SegmentPositionType::Unrelated: break;
+    case SegmentPositionType::Unrelated:
     case SegmentPositionType::Touches:
       return Occupancy::invalid();
     case SegmentPositionType::Pierces:
@@ -59,7 +58,6 @@ public: //methods
         }
       }
     }
-
     double chunk_area = compute_chunk_area(effective_beam, cell, is_occ, intrs);
     return estimate_occupancy(chunk_area, cell.area(), is_occ);
   }
@@ -195,7 +193,7 @@ private: // methods
     } else {
       // chunk is a trapezoid
       // corner choise doesn't matter, so pick bottom-left one.
-      corner_x = bnds.bot, corner_y = bnds.left;
+      corner_x = bnds.left, corner_y = bnds.bot;
       double base_sum = 0;
       for (auto &inter : inters) {
         if (inter.is_horiz()) {
@@ -207,6 +205,7 @@ private: // methods
       // NOTE: cell is supposed to be a square
       area = 0.5 * (bnds.top - bnds.bot) * base_sum;
     }
+    assert(0 <= area && area <= bnds.area() && "BUG: AOE area estimation");
     if (is_occ &&
         are_on_the_same_side(inters[0], inters[1],
                              beam.beg(), {corner_x, corner_y})) {
