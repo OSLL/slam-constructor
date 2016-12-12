@@ -64,7 +64,7 @@ GridMapParams init_grid_map_params() {
   ros::param::param<double>("~slam/map/height_in_meters", h, 10);
   ros::param::param<double>("~slam/map/width_in_meters", w, 10);
   ros::param::param<double>("~slam/map/meters_per_cell", scale, 0.1);
-  return {(int)(w / scale + 0.5), (int)(h / scale + 0.5), scale};
+  return {(int)std::ceil(w / scale), (int)std::ceil(h / scale), scale};
 }
 
 void init_constants_for_ros(double &ros_tf_buffer_size,

@@ -14,7 +14,7 @@
 
 unsigned init_particles_nm() {
   int particles_nm;
-  ros::param::param<int>("~slam/particles/amount", particles_nm, 30);
+  ros::param::param<int>("~slam/particles/number", particles_nm, 30);
   assert(0 < particles_nm && "Particles number must be positive");
   return particles_nm;
 }
