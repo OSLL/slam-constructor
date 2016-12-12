@@ -40,9 +40,10 @@ public: //methods
     tf::Transform base2map = tf::Transform{
       tf::createQuaternionFromRPY(0, 0, pose.theta),
       tf::Vector3(pose.x, pose.y, 0.0)}.inverse();
-    _map2odom_mutex.lock();
-    _map2odom = (_last_odom2base * base2map).inverse();
-    _map2odom_mutex.unlock();
+    {
+      std::lock_guard<std::mutex> lock{_map2odom_mutex};
+      _map2odom = (_last_odom2base * base2map).inverse();
+    }
     publish_map_to_odom();
   }
 
