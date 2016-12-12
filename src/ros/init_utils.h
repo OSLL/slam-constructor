@@ -13,13 +13,13 @@
 
 std::string tf_odom_frame_id() {
   std::string id;
-  ros::param::param<std::string>("~tf_odom_frame_id", id, "odom_combined");
+  ros::param::param<std::string>("~ros/tf/odom_frame_id", id, "odom_combined");
   return id;
 }
 
 std::string tf_map_frame_id() {
   std::string id;
-  ros::param::param<std::string>("~tf_map_frame_id", id, "map");
+  ros::param::param<std::string>("~ros/tf/map_frame_id", id, "map");
   return id;
 }
 
