@@ -63,7 +63,7 @@ protected:
     DPoint obst_pt = map.world_to_cell(beam.end());
 
     _map_update_ctx.obst_dist_sq = robot_pt.dist_sq(obst_pt);
-    double hole_dist = _params.Hole_Width / map.cell_scale();
+    double hole_dist = _params.Hole_Width / map.scale();
     _map_update_ctx.hole_dist_sq = std::pow(hole_dist, 2);
     _map_update_ctx.obst_pt = obst_pt;
 

@@ -12,8 +12,8 @@
 #include "../geometry_utils.h"
 
 struct GridMapParams {
-  int width, height; // in cells
-  double meters_per_cell;
+  const int width_cells, height_cells;
+  const double meters_per_cell;
 };
 
 struct MapValues {
@@ -29,7 +29,7 @@ public:
 public:
   GridMap(std::shared_ptr<GridCell> prototype,
           const GridMapParams& params = MapValues::gmp) :
-    _width(params.width), _height(params.height),
+    _width(params.width_cells), _height(params.height_cells),
     _m_per_cell(params.meters_per_cell), _cell_prototype(prototype) {}
 
   GridMap(GridMap &gm) = default;
@@ -42,7 +42,6 @@ public:
   int width() const { return _width; }
   int height() const { return _height; }
   double scale() const { return _m_per_cell; }
-  double cell_scale() const { return _m_per_cell; }
 
   std::unique_ptr<GridCell> new_cell() const {
     return _cell_prototype->clone();

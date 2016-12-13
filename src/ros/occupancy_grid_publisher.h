@@ -33,7 +33,6 @@ public: // method
     info.origin.position.x = -info.resolution * origin.x;
     info.origin.position.y = -info.resolution * origin.y;
     info.origin.position.z = 0;
-
     map_msg.data.reserve(info.height * info.width);
     DiscretePoint2D pnt;
     DiscretePoint2D end_of_map = DiscretePoint2D(info.width,
