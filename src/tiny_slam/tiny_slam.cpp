@@ -64,7 +64,7 @@ TinyWorldParams init_common_world_params() {
   ros::param::param<int>("~slam/scmtch/MC/limit_of_bad_attempts", lim_bad, 20);
   ros::param::param<int>("~slam/scmtch/MC/limit_of_total_attempts",
                          lim_totl, 100);
-  ros::param::param<double>("~slam/map/hole_width", width,0.5);
+  ros::param::param<double>("~tinySLAM/hole_width", width, 0.5);
 
   return TinyWorldParams({sig_XY, sig_T, unsigned(lim_bad), unsigned(lim_totl)},
                          width);
