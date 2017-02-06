@@ -134,6 +134,7 @@ include_directories(
 add_executable(wg_pr2_bag_adapter src/ros/wg_pr2_bag_adapter.cpp)
 add_executable(gmapping src/gmapping/gmapping.cpp)
 add_executable(tiny_slam src/tiny_slam/tiny_slam.cpp)
+add_executable(viny_slam src/viny_slam/viny_slam.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -144,6 +145,7 @@ add_executable(tiny_slam src/tiny_slam/tiny_slam.cpp)
 target_link_libraries(wg_pr2_bag_adapter ${catkin_LIBRARIES})
 target_link_libraries(gmapping ${catkin_LIBRARIES})
 target_link_libraries(tiny_slam ${catkin_LIBRARIES})
+target_link_libraries(viny_slam ${catkin_LIBRARIES})
 
 #target_link_libraries(openratslam_odom_converter ${catkin_LIBRARIES})
 #target_link_libraries(scan_dbg

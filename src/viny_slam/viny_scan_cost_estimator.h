@@ -1,10 +1,10 @@
-#ifndef __TINY_SCAN_COST_ESTIMATOR
-#define __TINY_SCAN_COST_ESTIMATOR
+#ifndef __VINY_SCAN_COST_ESTIMATOR
+#define __VINY_SCAN_COST_ESTIMATOR
 
 #include "../core/sensor_data.h"
 #include "../core/grid_scan_matcher.h"
 
-class TinyScanCostEstimator : public ScanCostEstimator {
+class VinyScanCostEstimator : public ScanCostEstimator {
 public:
   virtual double estimate_scan_cost(const RobotPose &pose,
                                     const TransformedLaserScan &scan,
@@ -20,13 +20,14 @@ public:
       // move to world frame assume sensor coords (0,0)
       double x_world = pose.x + sp.range * std::cos(sp.angle+pose.theta);
       double y_world = pose.y + sp.range * std::sin(sp.angle+pose.theta);
+      double cost_weight = std::abs(std::cos(sp.angle)) + 0.5;// * sp.range;
 
       DiscretePoint2D cell_coord = map.world_to_cell(x_world, y_world);
       if (!map.has_cell(cell_coord)) {
-        cost += 1.0;
+        cost += 1.0 * cost_weight;
         continue;
       }
-      cost += map[cell_coord].discrepancy(OCCUPIED_OBSERVATION);
+      cost += map[cell_coord].discrepancy(OCCUPIED_OBSERVATION) * cost_weight;
       if (min_cost < cost) {
         break;
       }

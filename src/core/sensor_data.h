@@ -27,6 +27,7 @@ struct TransformedLaserScan {
 };
 
 struct AreaOccupancyObservation {
+  bool is_occupied;
   Occupancy occupancy;
   Point2D obstacle;
   double quality;

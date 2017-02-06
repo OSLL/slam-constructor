@@ -80,7 +80,8 @@ protected:
 
   virtual AreaOccupancyObservation sp2obs(
     const DPoint &, bool is_occ, double quality, const Segment2D &beam) const {
-    return AreaOccupancyObservation{{(double)is_occ, 1.0}, beam.end(), quality};
+    return AreaOccupancyObservation{is_occ, {(double)is_occ, 1.0},
+                                    beam.end(), quality};
   }
 
   virtual const MapType& map() const { return _map; }

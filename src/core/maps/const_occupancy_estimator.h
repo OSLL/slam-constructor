@@ -10,7 +10,8 @@ public:
   virtual Occupancy estimate_occupancy(const Segment2D &beam,
                                        const Rectangle &cell_bnds,
                                        bool is_occ) override {
-    return Occupancy{is_occ ? base_occ_prob() : base_empty_prob(), 1.0};
+    return Occupancy{is_occ ? base_occ_prob() : base_empty_prob(),
+              is_occ ? 0.04 : 0.003};
   }
 
 };

@@ -25,7 +25,8 @@ public:
                                     const TransformedLaserScan &scan,
                                     const GridMap &map,
                                     double min_cost = 0) {
-    auto sp_observation = AreaOccupancyObservation{{1.0, 1.0}, {0, 0}, 1.0};
+    auto sp_observation = AreaOccupancyObservation{true, {1.0, 1.0},
+                                                   {0, 0}, 1.0};
 
     double scan_weight = 0, last_dpoint_weight = -1;
     DiscretePoint2D last_handled_dpoint;
