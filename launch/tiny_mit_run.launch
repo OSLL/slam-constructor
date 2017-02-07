@@ -13,6 +13,7 @@
     <param name="slam/cell/type" value="avg" />
     <param name="slam/occupancy_estimator/type" value="const" />
     <param name="ros/skip_exceeding_lsr_vals" value="false" />
+    <param name="tinySLAM/hole_width" value="0.5" />
 
     <!-- Map setup-->
     <param name="slam/map/height_in_meters" value="100" />
