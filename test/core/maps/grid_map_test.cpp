@@ -23,7 +23,7 @@ public:
 class MockGridMap : public GridMap {
 public:
   MockGridMap(const GridMapParams &gmp) :
-    GridMap{std::make_shared<MockGridCell>(), gmp}, _cells(gmp.height) {
+    GridMap{std::make_shared<MockGridCell>(), gmp}, _cells(gmp.height_cells) {
     for (auto &row : _cells) {
       row.reserve(GridMap::width());
       std::generate_n(std::back_inserter(row), GridMap::width(),

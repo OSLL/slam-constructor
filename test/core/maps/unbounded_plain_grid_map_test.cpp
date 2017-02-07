@@ -17,7 +17,7 @@ class UnboundedPlainGridMapTest : public ::testing::Test {
 protected: // methods
   UnboundedPlainGridMapTest()
     : map{std::make_shared<TestGridCell>(), {1, 1, 1}}
-    , data{{0.5, 0.5}, {-1, -1}, 0} {}
+    , data{true, {0.5, 0.5}, {-1, -1}, 0} {}
 protected: // fields
   UnboundedPlainGridMap map;
   AreaOccupancyObservation data;
@@ -91,7 +91,7 @@ TEST_F(UnboundedPlainGridMapTest, valueStorage) {
   static constexpr int Lim = 50;
   for (int i = -Lim; i != Lim; ++i) {
     for (int j = -Lim; j != Lim; ++j) {
-      map[{i, j}] += {{(double)Lim * i + j, 0}, {0, 0}, 0};
+      map[{i, j}] += {true, {(double)Lim * i + j, 0}, {0, 0}, 0};
     }
   }
   for (int i = -Lim; i != Lim; ++i) {

@@ -16,9 +16,10 @@ private: // types
   };
 public: //methods
 
-  AreaOccupancyEstimator(double occ_prob, double empty_prob,
+  AreaOccupancyEstimator(const Occupancy& base_occupied,
+                         const Occupancy& base_empty,
                          double low_qual = 0.01, double unknown_qual = 0.5)
-    : CellOccupancyEstimator{occ_prob, empty_prob}
+    : CellOccupancyEstimator{base_occupied, base_empty}
     , _low_qual{low_qual}, _unknown_qual{unknown_qual} {
     assert(_low_qual < 1);
   }
@@ -36,7 +37,7 @@ public: //methods
       break;
     case SegmentPositionType::LiesInside:
       return is_occ ? Occupancy::invalid() :
-                      Occupancy{base_empty_prob(), _unknown_qual};
+                      Occupancy{base_empty().prob_occ, _unknown_qual};
     case SegmentPositionType::StopsInside:
       break;
     }
@@ -44,7 +45,7 @@ public: //methods
     Intersections intrs = find_intersections(effective_beam, cell, is_occ);
     if (intrs.size() == 1) {
       if (!is_occ) { // StopsInside/FrontEdge/Vertex
-        return Occupancy{base_empty_prob(), _unknown_qual};
+        return Occupancy{base_empty().prob_occ, _unknown_qual};
       } else { // occupied, stops at some vertex
         auto raw_intersections = cell.find_intersections(effective_beam);
         switch (raw_intersections.size()) {
@@ -226,13 +227,15 @@ private: // methods
     double area_rate = chunk_area / total_area;
     if (is_occ) {
       // Far ToDo: think about experiment quality metric for an occupied case.
-      return Occupancy{std::max(area_rate, base_empty_prob()), 1.0};
+      return Occupancy{std::max(area_rate, base_empty().prob_occ),
+                       base_occupied().estimation_quality};
     } else {
       // TODO: fix scale
       if (0.5 < area_rate) {
         area_rate = 1 - area_rate;
       }
-      return Occupancy{base_empty_prob(), area_rate};
+      return Occupancy{base_empty().prob_occ,
+                       base_empty().estimation_quality * area_rate};
     }
   }
 private:

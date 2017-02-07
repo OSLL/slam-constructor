@@ -2,21 +2,22 @@
 #define _CELL_OCCUPANCY_ESTIMATOR_H
 
 #include "../geometry_utils.h"
-#include "../state_data.h" // Occupancy class
+#include "../state_data.h" // the Occupancy class
 
 class CellOccupancyEstimator {
 public:
-  CellOccupancyEstimator(double base_occ_prob, double base_empty_prob):
-    _base_occ_prob(base_occ_prob), _base_empty_prob(base_empty_prob) {}
+  CellOccupancyEstimator(const Occupancy& base_occ,
+                         const Occupancy& base_empty):
+    _base_occ(base_occ), _base_empty(base_empty) {}
   virtual ~CellOccupancyEstimator() = default;
   virtual Occupancy estimate_occupancy(const Segment2D &beam,
                                        const Rectangle &cell_bnds,
                                        bool is_occ) = 0;
 protected:
-  double base_occ_prob() { return _base_occ_prob; }
-  double base_empty_prob() { return _base_empty_prob; }
+  const Occupancy& base_occupied() const { return _base_occ; }
+  const Occupancy& base_empty() const { return _base_empty; }
 private:
-  double _base_occ_prob, _base_empty_prob;
+  Occupancy _base_occ, _base_empty;
 };
 
 #endif

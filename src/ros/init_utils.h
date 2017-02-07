@@ -7,6 +7,9 @@
 #include <ros/ros.h>
 
 #include "../core/world.h"
+#include "../core/maps/area_occupancy_estimator.h"
+#include "../core/maps/const_occupancy_estimator.h"
+
 #include "topic_with_transform.h"
 #include "pose_correction_tf_publisher.h"
 #include "occupancy_grid_publisher.h"
@@ -33,6 +36,33 @@ bool init_skip_exceeding_lsr() {
   bool param_value;
   ros::param::param<bool>("~ros/skip_exceeding_lsr_vals", param_value, false);
   return param_value;
+}
+
+std::shared_ptr<CellOccupancyEstimator> init_occ_estimator() {
+  double occ_prob, occ_qual, empty_prob, empty_qual;
+  ros::param::param<double>("~slam/occupancy_estimator/"        \
+                            "base_occupied/prob", occ_prob, 0.95);
+  ros::param::param<double>("~slam/occupancy_estimator/"        \
+                            "base_occupied/qual", occ_qual, 1.0);
+  ros::param::param<double>("~slam/occupancy_estimator/"        \
+                            "base_empty/prob", empty_prob, 0.01);
+  ros::param::param<double>("~slam/occupancy_estimator/"        \
+                            "base_empty/qual", empty_qual, 1.0);
+
+  std::string est_type;
+  ros::param::param<std::string>("~slam/occupancy_estimator/type",
+                                 est_type, "const");
+
+  auto base_occ = Occupancy{occ_prob, occ_qual};
+  auto base_empty = Occupancy{empty_prob, empty_qual};
+  if (est_type == "const") {
+    return std::make_shared<ConstOccupancyEstimator>(base_occ, base_empty);
+  } else if (est_type == "area") {
+    return std::make_shared<AreaOccupancyEstimator>(base_occ, base_empty);
+  } else {
+    std::cerr << "Unknown estimator type: " << est_type << std::endl;
+    std::exit(-1);
+  }
 }
 
 template <typename ObservT, typename MapT>

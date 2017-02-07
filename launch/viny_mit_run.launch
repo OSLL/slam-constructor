@@ -11,6 +11,10 @@
 
     <!-- SLAM Components -->
     <param name="slam/occupancy_estimator/type" value="const" />
+    <param name="slam/occupancy_estimator/base_occupied/prob" value="0.95" />
+    <param name="slam/occupancy_estimator/base_occupied/qual" value="0.04" />
+    <param name="slam/occupancy_estimator/base_empty/prob" value="0.01" />
+    <param name="slam/occupancy_estimator/base_empty/qual" value="0.003" />
 
     <!-- Map -->
     <param name="slam/map/height_in_meters" value="100" />
@@ -18,12 +22,13 @@
     <param name="slam/map/meters_per_cell" value="0.1" />
 
     <!-- Internal constants -->
+    <param name="ros/skip_exceeding_lsr_vals" value="false" />
     <param name="slam/cell/base_occupied_prob" value="0.95" />
     <param name="slam/cell/base_empty_prob" value="0.01" />
-    <param name="hole_width" value="0.1" />
-    <param name="ros/skip_exceeding_lsr_vals" value="false" />
+    <param name="vinySlam/hole_width" value="0.1" />
 
     <!-- Monte Carlo Scan Matcher -->
+    <!-- <param name="slam/scmtch/MC/seed" value="15" /> -->
     <param name="slam/scmtch/MC/sigma_XY" value="0.2" />
     <param name="slam/scmtch/MC/sigma_theta" value="0.1" />
     <param name="slam/scmtch/MC/limit_of_bad_attempts" value="20" />

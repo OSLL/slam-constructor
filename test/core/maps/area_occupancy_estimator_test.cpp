@@ -22,7 +22,8 @@ protected: //consts
   static constexpr double Unknown_Est_Qual = 0.7;
 protected: // methods
   AreaOccupancyEstimatorTest()
-    : aoe{Base_Occup_Prob, Base_Empty_Prob, Low_Est_Qual, Unknown_Est_Qual}
+    : aoe{Occupancy{Base_Occup_Prob, 1.0}, Occupancy{Base_Empty_Prob, 1.0},
+          Low_Est_Qual, Unknown_Est_Qual}
     , cell{-1, 1, -1, 1} {}
 protected: // fields
   AreaOccupancyEstimator aoe;

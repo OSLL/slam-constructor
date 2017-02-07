@@ -10,8 +10,6 @@
 #include "../ros/init_utils.h"
 
 #include "../core/sensor_data.h"
-#include "../core/maps/area_occupancy_estimator.h"
-#include "../core/maps/const_occupancy_estimator.h"
 #include "../core/maps/grid_cell_strategy.h"
 
 #include "tiny_world.h"
@@ -34,27 +32,6 @@ std::shared_ptr<GridCell> init_cell_prototype(TinyWorldParams &params) {
     std::exit(-1);
   }
 }
-
-std::shared_ptr<CellOccupancyEstimator> init_occ_estimator() {
-  double occ_prob, empty_prob;
-  ros::param::param<double>("~slam/cell/base_occupied_prob", occ_prob, 0.95);
-  ros::param::param<double>("~slam/cell/base_empty_prob", empty_prob, 0.01);
-
-  using OccEstPtr = std::shared_ptr<CellOccupancyEstimator>;
-  std::string est_type;
-  ros::param::param<std::string>("~slam/occupancy_estimator/type",
-                                 est_type, "const");
-
-  if (est_type == "const") {
-    return OccEstPtr{new ConstOccupancyEstimator(occ_prob, empty_prob)};
-  } else if (est_type == "area") {
-    return OccEstPtr{new AreaOccupancyEstimator(occ_prob, empty_prob)};
-  } else {
-    std::cerr << "Unknown estimator type: " << est_type << std::endl;
-    std::exit(-1);
-  }
-}
-
 
 TinyWorldParams init_common_world_params() {
   double sig_XY, sig_T, width;

@@ -1,8 +1,9 @@
 #include <iostream>
+#include <memory>
+#include <random>
+
 #include <ros/ros.h>
 #include <sensor_msgs/LaserScan.h>
-#include <memory>
-
 #include <nav_msgs/OccupancyGrid.h>
 
 #include "../ros/topic_with_transform.h"
@@ -10,32 +11,10 @@
 #include "../ros/init_utils.h"
 
 #include "../core/sensor_data.h"
-#include "../core/maps/area_occupancy_estimator.h"
-#include "../core/maps/const_occupancy_estimator.h"
 #include "../core/maps/grid_cell_strategy.h"
 
 #include "viny_world.h"
 #include "viny_grid_cell.h"
-
-std::shared_ptr<CellOccupancyEstimator> init_occ_estimator() {
-  double occ_prob, empty_prob;
-  ros::param::param<double>("~slam/cell/base_occupied_prob", occ_prob, 0.95);
-  ros::param::param<double>("~slam/cell/base_empty_prob", empty_prob, 0.01);
-
-  using OccEstPtr = std::shared_ptr<CellOccupancyEstimator>;
-  std::string est_type;
-  ros::param::param<std::string>("~slam/occupancy_estimator/type",
-                                 est_type, "const");
-
-  if (est_type == "const") {
-    return OccEstPtr{new ConstOccupancyEstimator(occ_prob, empty_prob)};
-  } else if (est_type == "area") {
-    return OccEstPtr{new AreaOccupancyEstimator(occ_prob, empty_prob)};
-  } else {
-    std::cerr << "Unknown estimator type: " << est_type << std::endl;
-    std::exit(-1);
-  }
-}
 
 std::shared_ptr<GridCell> init_cell_prototype(VinyWorldParams &params) {
   params.localized_scan_quality = 0.9;
@@ -45,16 +24,22 @@ std::shared_ptr<GridCell> init_cell_prototype(VinyWorldParams &params) {
 
 VinyWorldParams init_common_world_params() {
   double sig_XY, sig_T, width;
-  int lim_bad, lim_totl;
+  int lim_bad, lim_totl, seed;
   ros::param::param<double>("~slam/scmtch/MC/sigma_XY", sig_XY, 0.2);
   ros::param::param<double>("~slam/scmtch/MC/sigma_theta", sig_T, 0.1);
-  ros::param::param<int>("~slam/scmtch/MC/limit_of_bad_attempts", lim_bad, 20);
+  ros::param::param<int>("~slam/scmtch/MC/limit_of_bad_attempts",
+                         lim_bad, 20);
   ros::param::param<int>("~slam/scmtch/MC/limit_of_total_attempts",
                          lim_totl, 100);
-  ros::param::param<double>("~hole_width", width, 1.5);
+  ros::param::param<int>("~slam/scmtch/MC/seed", seed,
+                         std::random_device{}());
+  ros::param::param<double>("~vinySlam/hole_width", width, 0.5);
 
-  return VinyWorldParams({sig_XY, sig_T, unsigned(lim_bad), unsigned(lim_totl)},
-                         width);
+  ROS_INFO("MC Scan Matcher seed: %u\n", seed);
+  auto sm_params = VinySMParams{sig_XY, sig_T,
+                                (unsigned)lim_bad, (unsigned)lim_totl,
+                                (unsigned) seed};
+  return VinyWorldParams{sm_params, width};
 }
 
 using ObservT = sensor_msgs::LaserScan;

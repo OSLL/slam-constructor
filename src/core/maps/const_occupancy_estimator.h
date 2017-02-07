@@ -5,13 +5,13 @@
 
 class ConstOccupancyEstimator : public CellOccupancyEstimator {
 public:
-  ConstOccupancyEstimator(double occ, double empty) :
-    CellOccupancyEstimator(occ, empty) {}
+  ConstOccupancyEstimator(const Occupancy& base_occ,
+                          const Occupancy& base_empty):
+    CellOccupancyEstimator(base_occ, base_empty) {}
   virtual Occupancy estimate_occupancy(const Segment2D &beam,
                                        const Rectangle &cell_bnds,
                                        bool is_occ) override {
-    return Occupancy{is_occ ? base_occ_prob() : base_empty_prob(),
-              is_occ ? 0.04 : 0.003};
+    return is_occ ? base_occupied() : base_empty();
   }
 
 };
