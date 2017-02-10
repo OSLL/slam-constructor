@@ -69,6 +69,23 @@ public:
     }
 
     *this = result;
+    normalize();
+    return *this;
+  }
+
+  BaseDSBelief& operator-=(const BaseDSBelief& rhs) {
+    auto result = BaseDSBelief();
+    result.reset();
+
+    for (int this_id = 0; this_id < NM; ++this_id) {
+      for (int that_id = 0; that_id < NM; ++that_id) {
+        result.belief_by_id(this_id & that_id) +=
+          belief_by_id(this_id) * rhs.belief_by_id(that_id);
+      }
+    }
+
+    *this = result;
+    normalize();
     return *this;
   }
 
@@ -77,7 +94,7 @@ public:
     return occ;
   }
 
-  void normalize() {
+  void normalize_conflict() {
     double weight = _occupied + _empty + _unknown;
     _occupied /= weight;
     _empty /= weight;
@@ -90,8 +107,19 @@ public:
   double empty()    const { return _empty; }
   double unknown()  const { return _unknown; }
 private:
-  void reset() { _occupied = _empty = _unknown = _conflict = 0; }
+  void normalize() {
+    double tot_weight = _occupied + _empty + _conflict + _unknown;
+    if (tot_weight == 0.0) {
+      _unknown = 1.0;
+      return;
+    }
+    _conflict /= tot_weight;
+    _occupied /= tot_weight;
+    _empty /= tot_weight;
+    _unknown /= tot_weight;
+  }
 
+  void reset() { _occupied = _empty = _unknown = _conflict = 0; }
 
   double& belief_by_id(int id) {
     return const_cast<double&>(
@@ -113,12 +141,6 @@ private:
   double _conflict = 0.0;
 };
 
-std::ostream &operator<<(std::ostream &stream, const BaseDSBelief &belief) {
-  return stream << "{o: " << belief.occupied() << ", e: " << belief.empty()  \
-                << ", dn: " << belief.unknown() \
-                << ", c: " << belief.conflict() << "}";
-}
-
 /**/
 
 class VinyDSCell : public GridCell {
@@ -133,18 +155,16 @@ public:
     if (!aoo.occupancy.is_valid()) { return; }
 
     belief += aoo;
-    belief.normalize();
-    auto belief_prob = ((Occupancy) belief).prob_occ;
-
-    //double that_p = 0.5 + (aoo.occupancy - 0.5) * aoo.quality;
-
-    occupancy.prob_occ = belief_prob;// +that_p) / 2;
+    belief.normalize_conflict();
+    occupancy.prob_occ = ((Occupancy) belief).prob_occ;
   }
 
   virtual double discrepancy(const AreaOccupancyObservation &aoo) const {
     auto that_belief = BaseDSBelief{aoo};
+    double d_occ = std::abs(that_belief.occupied() - belief.occupied());
     that_belief += belief;
-    return that_belief.conflict() + belief.unknown();
+    //return combined_belief.conflict() + belief.unknown();
+    return that_belief.conflict() + d_occ + belief.unknown();
   }
 
 private:

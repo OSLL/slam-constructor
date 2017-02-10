@@ -71,6 +71,10 @@ public: //methods
     return x_projection_contains(p) && y_projection_contains(p);
   }
 
+  double length_sq() const {
+    return std::pow(_end.x - _beg.x, 2) + std::pow(_end.y - _beg.y, 2);
+  }
+
 private: // methods
 
   bool x_projection_contains(const Point2D &p) const {
