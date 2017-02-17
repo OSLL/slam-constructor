@@ -25,18 +25,18 @@ private:
   double _n;
 };
 
-class BaseDSBelief {
+class BaseTBM {
 private:
   // TODO: use enum class
   static const int UNKNOWN = 0b00, EMPTY = 0b01, OCCUPIED = 0b10,
                    CONFLICT = 0b11, NM = 4;
 public:
-  BaseDSBelief() {}
-  BaseDSBelief(const BaseDSBelief&) = default;
-  BaseDSBelief& operator=(const BaseDSBelief&) = default;
-  BaseDSBelief& operator=(BaseDSBelief&&) = default;
+  BaseTBM() {}
+  BaseTBM(const BaseTBM&) = default;
+  BaseTBM& operator=(const BaseTBM&) = default;
+  BaseTBM& operator=(BaseTBM&&) = default;
 
-  BaseDSBelief(const AreaOccupancyObservation& aoo) {
+  BaseTBM(const AreaOccupancyObservation& aoo) {
     if (!aoo.occupancy.is_valid()) { return; }
 
     // TODO: consider other conversion schemas
@@ -57,8 +57,8 @@ public:
     */
   }
 
-  BaseDSBelief& operator+=(const BaseDSBelief& rhs) {
-    auto result = BaseDSBelief();
+  BaseTBM& operator+=(const BaseTBM& rhs) {
+    auto result = BaseTBM();
     result.reset();
 
     for (int this_id = 0; this_id < NM; ++this_id) {
@@ -73,8 +73,8 @@ public:
     return *this;
   }
 
-  BaseDSBelief& operator-=(const BaseDSBelief& rhs) {
-    auto result = BaseDSBelief();
+  BaseTBM& operator-=(const BaseTBM& rhs) {
+    auto result = BaseTBM();
     result.reset();
 
     for (int this_id = 0; this_id < NM; ++this_id) {
@@ -87,6 +87,14 @@ public:
     *this = result;
     normalize();
     return *this;
+  }
+
+  double discrepancy(const BaseTBM &that) const {
+    double total_unknown = that.unknown() + unknown();
+    double d_occ = std::abs(that.occupied() - occupied());
+    BaseTBM combined = that;
+    combined += *this;
+    return combined.conflict() + d_occ + total_unknown;
   }
 
   explicit operator Occupancy() {
@@ -123,7 +131,7 @@ private:
 
   double& belief_by_id(int id) {
     return const_cast<double&>(
-             static_cast<const BaseDSBelief*>(this)->belief_by_id(id));
+             static_cast<const BaseTBM*>(this)->belief_by_id(id));
   }
 
   const double& belief_by_id(int id) const {
@@ -160,16 +168,11 @@ public:
   }
 
   virtual double discrepancy(const AreaOccupancyObservation &aoo) const {
-    auto that_belief = BaseDSBelief{aoo};
-    std::cout << that_belief.unknown() << std::endl;
-    double total_unknown = that_belief.unknown() + belief.unknown();
-    double d_occ = std::abs(that_belief.occupied() - belief.occupied());
-    that_belief += belief;
-    return that_belief.conflict() + d_occ + total_unknown;
+    return belief.discrepancy(aoo);
   }
 
 private:
-  BaseDSBelief belief;
+  BaseTBM belief;
 };
 
 #endif
