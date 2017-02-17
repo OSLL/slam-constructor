@@ -12,18 +12,26 @@
 
 #include "topic_with_transform.h"
 #include "pose_correction_tf_publisher.h"
+#include "robot_pose_tf_publisher.h"
 #include "occupancy_grid_publisher.h"
 
+std::string get_string_param(const std::string &name,
+                             const std::string &dflt_value) {
+  std::string value;
+  ros::param::param<std::string>(name, value, dflt_value);
+  return value;
+}
+
 std::string tf_odom_frame_id() {
-  std::string id;
-  ros::param::param<std::string>("~ros/tf/odom_frame_id", id, "odom_combined");
-  return id;
+  return get_string_param("~ros/tf/odom_frame_id", "odom_combined");
 }
 
 std::string tf_map_frame_id() {
-  std::string id;
-  ros::param::param<std::string>("~ros/tf/map_frame_id", id, "map");
-  return id;
+  return get_string_param("~ros/tf/map_frame_id", "map");
+}
+
+std::string tf_robot_pose_frame_id() {
+  return get_string_param("~ros/tf/robot_pose_frame_id", "robot_pose");
 }
 
 bool is_async_correction() {
@@ -73,6 +81,15 @@ create_pose_correction_tf_publisher(WorldObservable<MapT> *slam,
     tf_map_frame_id(), tf_odom_frame_id(), is_async_correction()
   );
   scan_prov->subscribe(pose_publisher);
+  slam->subscribe_pose(pose_publisher);
+  return pose_publisher;
+}
+
+template <typename MapT>
+std::shared_ptr<RobotPoseTfPublisher>
+create_robot_pose_tf_publisher(WorldObservable<MapT> *slam) {
+  auto pose_publisher = std::make_shared<RobotPoseTfPublisher>(
+    tf_map_frame_id(), tf_robot_pose_frame_id());
   slam->subscribe_pose(pose_publisher);
   return pose_publisher;
 }

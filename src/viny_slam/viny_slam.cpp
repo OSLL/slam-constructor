@@ -75,6 +75,7 @@ int main(int argc, char** argv) {
 
   auto pose_pub_pin = create_pose_correction_tf_publisher<ObservT, VinySlamMap>(
     slam.get(), scan_provider.get());
+  auto rp_pub_pin = create_robot_pose_tf_publisher<VinySlamMap>(slam.get());
 
   ros::spin();
 }
