@@ -161,10 +161,11 @@ public:
 
   virtual double discrepancy(const AreaOccupancyObservation &aoo) const {
     auto that_belief = BaseDSBelief{aoo};
+    std::cout << that_belief.unknown() << std::endl;
+    double total_unknown = that_belief.unknown() + belief.unknown();
     double d_occ = std::abs(that_belief.occupied() - belief.occupied());
     that_belief += belief;
-    //return combined_belief.conflict() + belief.unknown();
-    return that_belief.conflict() + d_occ + belief.unknown();
+    return that_belief.conflict() + d_occ + total_unknown;
   }
 
 private:

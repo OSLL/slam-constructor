@@ -65,8 +65,9 @@ protected:
     _map_update_ctx.obst_dist_sq = robot_pt.dist_sq(obst_pt);
     double hole_dist = _params.Hole_Width / map.scale();
     if (hole_dist < 0) {
+      // dynamic wall blurring, Hole_Width is a scaling coefficient
       double dist_sq = beam.length_sq();
-      hole_dist = 0.005 * dist_sq / map.scale();
+      hole_dist *= -dist_sq;
     }
     _map_update_ctx.hole_dist_sq = std::pow(hole_dist, 2);
     _map_update_ctx.obst_pt = obst_pt;
