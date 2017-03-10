@@ -49,10 +49,11 @@ public:
   RobotPoseDeltaRV(const RobotPoseDeltaRV &rpd_rv)
     : _x_rv{rpd_rv._x_rv->clone()}, _y_rv{rpd_rv._y_rv->clone()},
       _th_rv{rpd_rv._th_rv->clone()} {}
-  RobotPoseDeltaRV& operator=(RobotPoseDeltaRV rpd_rv) {
-    std::swap(_x_rv, rpd_rv._x_rv);
-    std::swap(_y_rv, rpd_rv._y_rv);
-    std::swap(_th_rv, rpd_rv._th_rv);
+  RobotPoseDeltaRV& operator=(const RobotPoseDeltaRV &rpd_rv) {
+    RobotPoseDeltaRV tmp{rpd_rv};
+    std::swap(_x_rv, tmp._x_rv);
+    std::swap(_y_rv, tmp._y_rv);
+    std::swap(_th_rv, tmp._th_rv);
     return *this;
   }
 

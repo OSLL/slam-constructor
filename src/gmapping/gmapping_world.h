@@ -62,9 +62,8 @@ public:
       return;
     }
 
-    if (!(_scan_is_first || _is_master)) {
-      // add "noise" to a non-master particle in order
-      // to guess extra cost function peak.
+    if (!_scan_is_first) {
+      // add "noise" to guess extra cost function peak
       update_robot_pose(_pose_guess_rv.sample(_rnd_engine));
     }
 
@@ -84,7 +83,14 @@ public:
     reset_scan_matching_delta();
   }
 
-  void mark_master() { _is_master = true; }
+  void mark_master() {
+    _is_master = true;
+    // master is corrected on each step without noise
+    _pose_guess_rv = RobotPoseDeltaRV<std::mt19937>{
+      GaussianRV1D{0, 0}, GaussianRV1D{0, 0}, GaussianRV1D{0, 0}};
+    _next_sm_delta_rv = RobotPoseDeltaRV<std::mt19937>{
+      GaussianRV1D{0, 0}, GaussianRV1D{0, 0}, GaussianRV1D{0, 0}};
+  }
   bool is_master() { return _is_master; }
   void sample() override { _is_master = false; }
 
