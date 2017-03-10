@@ -1,5 +1,5 @@
-#ifndef __PARTICLE_FILTER_H
-#define __PARTICLE_FILTER_H
+#ifndef SLAM_CTOR_PARTICLE_FILTER_H_INCLUDED
+#define SLAM_CTOR_PARTICLE_FILTER_H_INCLUDED
 
 #include <memory>
 #include <vector>
@@ -15,7 +15,7 @@ public:
   double weight() const { return _weight; }
   void set_weight(double w) { _weight = w; }
 
-  virtual void sample() = 0;
+  virtual void sample() {}
 private:
   double _weight;
 };
@@ -111,16 +111,30 @@ public: // methods
     for (auto &p : _particles) { p->set_weight(p->weight() / total_weight); }
   }
 
+  const ParticleT& heaviest_particle() const {
+    const ParticleT *heaviest = nullptr;
+    for (auto &p : particles()) {
+      if (heaviest && p->weight() < heaviest->weight()) { continue; }
+      heaviest = p.get();
+    }
+    return *heaviest;
+  }
+
+  ParticleT& heaviest_particle() {
+    return const_cast<ParticleT&>(
+      static_cast<const ParticleFilter<ParticleT>>(*this).heaviest_particle());
+  }
+
   inline std::vector<ParticlePtr>& particles() { return _particles; }
   inline const std::vector<ParticlePtr>& particles() const {
     return _particles;
   }
+
 private:
   std::shared_ptr<ParticleFactory<ParticleT>> _particle_supplier;
   std::vector<ParticlePtr> _particles;
   /* TODO: make template parameter/set at runtime */
   UniformResamling<ParticlePtr> _resampler;
 };
-
 
 #endif // header-guard

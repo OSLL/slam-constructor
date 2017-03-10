@@ -1,5 +1,5 @@
-#ifndef __GMAPPING_PARTICLE_FILTER_H
-#define __GMAPPING_PARTICLE_FILTER_H
+#ifndef SLAM_CTOR_GMAPPING_PARTICLE_FILTER_H_INCLUDED
+#define SLAM_CTOR_GMAPPING_PARTICLE_FILTER_H_INCLUDED
 
 #include <memory>
 #include <vector>
@@ -43,12 +43,12 @@ public: // methods
     for (auto &p : _pf.particles()) {
       p->sample();
     }
+    _pf.heaviest_particle().mark_master();
   }
 
   void handle_sensor_data(TransformedLaserScan &scan) override {
-    for (auto &world : _pf.particles()) {
-      world->handle_sensor_data(scan);
-    }
+    update_robot_pose(scan.pose_delta);
+    handle_observation(scan);
     notify_with_pose(pose());
     notify_with_map(map());
   }
@@ -57,25 +57,11 @@ public: // methods
     for (auto &world : _pf.particles()) {
       world->update_robot_pose(delta);
     }
-    _traversed_since_last_resample += delta;
-
-    if (0.8 < _traversed_since_last_resample.sq_dist() &&
-        0.4 < std::fabs(_traversed_since_last_resample.theta) &&
-      _pf.try_resample()) {
-      _traversed_since_last_resample.reset();
-    }
+    _traversed_since_last_resample += delta.abs();
   }
 
   const WorldT& world() const override {
-    double max_weight = 0.0;
-    std::shared_ptr<WorldT> world(nullptr);
-    for (auto &p : _pf.particles()) {
-      if (p->weight() < max_weight) { continue; }
-
-      max_weight = p->weight();
-      world = p;
-    }
-    return *world;
+    return _pf.heaviest_particle();
   }
 
   const RobotPose& pose() const override { return world().pose(); }
@@ -90,12 +76,42 @@ protected:
 
     // NB: weights are updated during scan update for performance reasons
     _pf.normalize_weights();
+    try_resample();
+
     /*
     std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
     std::cout << std::setprecision(4);
-    for (auto &p : _pf.particles()) { std::cout << p.weight() << " "; }
+    for (auto &p : _pf.particles()) { std::cout << p->weight() << " "; }
     std::cout << std::endl;
     */
+  }
+private:
+
+  bool try_resample() {
+    if (_traversed_since_last_resample.sq_dist() <= 0.5 &&
+        std::fabs(_traversed_since_last_resample.theta <= 0.2)) {
+      return false;
+    }
+    bool is_resampled = _pf.try_resample();
+    if (!is_resampled) { return false; }
+    _traversed_since_last_resample.reset();
+    ensure_master_exists();
+
+    return true;
+  }
+private:
+
+  void ensure_master_exists() {
+    auto master_pred = [](std::shared_ptr<GmappingWorld> p) {
+      return p->is_master();
+    };
+    auto prts = _pf.particles();
+    bool master_survived = prts.end() !=
+      std::find_if(prts.begin(), prts.end(), master_pred);
+
+    if (master_survived) {
+      _pf.heaviest_particle().mark_master();
+    }
   }
 
 private: // fields

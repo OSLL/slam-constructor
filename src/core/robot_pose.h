@@ -25,6 +25,9 @@ public: // methods
     return x != 0.0 || y != 0.0 || theta != 0.0;
   }
 
+  RobotPoseDelta abs() const {
+    return RobotPoseDelta{std::abs(x), std::abs(y), std::abs(theta)};
+  }
   double sq_dist() const { return x*x + y*y; }
 
   void reset() { x = y = theta = 0; }
