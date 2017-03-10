@@ -23,14 +23,14 @@
     <param name="ros/subscribers_queue_size" value="1000" />
 
     <!-- Params for particles init/sample stohastic strategy -->
-    <param name = "slam/particles/sample/xy/x0" value = "0.0" />
+    <param name = "slam/particles/sample/xy/mean" value = "0.0" />
     <param name = "slam/particles/sample/xy/sigma" value = "0.1" />
-    <param name = "slam/particles/sample/theta/x0" value = "0.0" />
+    <param name = "slam/particles/sample/theta/mean" value = "0.0" />
     <param name = "slam/particles/sample/theta/sigma" value = "0.03" />
-    <param name = "slam/particles/init_pose_delta/xy/x0" value = "0.6" />
-    <param name = "slam/particles/init_pose_delta/xy/sigma" value = "0.8" />
-    <param name = "slam/particles/init_pose_delta/theta/x0" value = "0.3" />
-    <param name = "slam/particles/init_pose_delta/theta/sigma" value = "0.4" />
+    <param name = "slam/particles/sm_delta_lim/xy/min" value = "0.6" />
+    <param name = "slam/particles/sm_delta_lim/xy/max" value = "0.8" />
+    <param name = "slam/particles/sm_delta_lim/theta/min" value = "0.3" />
+    <param name = "slam/particles/sm_delta_lim/theta/max" value = "0.4" />
 
   </node>
 

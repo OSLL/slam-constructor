@@ -1,6 +1,8 @@
-#ifndef __ROBOT_POSE_H_INCLUDED
-#define __ROBOT_POSE_H_INCLUDED
+#ifndef SLAM_CTOR_CORE_ROBOT_POSE_H_INCLUDED
+#define SLAM_CTOR_CORE_ROBOT_POSE_H_INCLUDED
 
+#include <memory>
+#include "random_utils.h"
 #include "geometry_utils.h"
 
 class RobotPoseDelta {
@@ -33,6 +35,38 @@ public: // methods
   void reset() { x = y = theta = 0; }
 public: // fields
   double x, y, theta;
+};
+
+template <typename RandomEngineT>
+class RobotPoseDeltaRV {
+public:
+
+  RobotPoseDeltaRV(const RandomVariable1D<RandomEngineT> &x_rv,
+                   const RandomVariable1D<RandomEngineT> &y_rv,
+                   const RandomVariable1D<RandomEngineT> &th_rv)
+    : _x_rv{x_rv.clone()}, _y_rv{y_rv.clone()}, _th_rv{th_rv.clone()} {}
+
+  RobotPoseDeltaRV(const RobotPoseDeltaRV &rpd_rv)
+    : _x_rv{rpd_rv._x_rv->clone()}, _y_rv{rpd_rv._y_rv->clone()},
+      _th_rv{rpd_rv._th_rv->clone()} {}
+  RobotPoseDeltaRV& operator=(RobotPoseDeltaRV rpd_rv) {
+    std::swap(_x_rv, rpd_rv._x_rv);
+    std::swap(_y_rv, rpd_rv._y_rv);
+    std::swap(_th_rv, rpd_rv._th_rv);
+    return *this;
+  }
+
+  RobotPoseDeltaRV(RobotPoseDeltaRV &&rpd_rv) = default;
+  RobotPoseDeltaRV& operator=(RobotPoseDeltaRV &&rpd_rv) = default;
+  ~RobotPoseDeltaRV() {}
+
+  RobotPoseDelta sample(RandomEngineT &re) {
+    return RobotPoseDelta{_x_rv->sample(re), _y_rv->sample(re),
+                          _th_rv->sample(re)};
+  }
+
+private:
+  std::unique_ptr<RandomVariable1D<RandomEngineT>> _x_rv, _y_rv, _th_rv;
 };
 
 class RobotPose {

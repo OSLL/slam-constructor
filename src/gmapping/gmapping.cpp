@@ -20,30 +20,30 @@ unsigned init_particles_nm() {
 }
 
 GMappingParams init_gmapping_params() {
-  double x0_sample_xy, sigma_sample_xy,
-         x0_sample_th, sigma_sample_th,
-         x0_init_pd_xy, sigma_init_pd_xy,
-         x0_init_pd_th, sigma_init_pd_th;
-  ros::param::param<double>("slam/particles/sample/xy/x0",
-                                           x0_sample_xy, 0.0);
+  double mean_sample_xy, sigma_sample_xy,
+         mean_sample_th, sigma_sample_th,
+         min_sm_lim_xy, max_sm_lim_xy,
+         min_sm_lim_th, max_sm_lim_th;
+  ros::param::param<double>("slam/particles/sample/xy/mean",
+                                           mean_sample_xy, 0.0);
   ros::param::param<double>("slam/particles/sample/xy/sigma",
                                            sigma_sample_xy, 0.1);
-  ros::param::param<double>("slam/particles/sample/theta/x0",
-                                           x0_sample_th, 0.0);
+  ros::param::param<double>("slam/particles/sample/theta/mean",
+                                           mean_sample_th, 0.0);
   ros::param::param<double>("slam/particles/sample/theta/sigma",
                                            sigma_sample_th, 0.03);
-  ros::param::param<double>("slam/particles/init_pose_delta/xy/x0",
-                                           x0_init_pd_xy, 0.6);
-  ros::param::param<double>("slam/particles/init_pose_delta/xy/sigma",
-                                           sigma_init_pd_xy, 0.8);
-  ros::param::param<double>("slam/particles/init_pose_delta/theta/x0",
-                                           x0_init_pd_th, 0.3);
-  ros::param::param<double>("slam/particles/init_pose_delta/theta/sigma",
-                                           sigma_init_pd_th, 0.4);
-  return {x0_sample_xy, sigma_sample_xy,
-          x0_sample_th, sigma_sample_th,
-          x0_init_pd_xy, sigma_init_pd_xy,
-          x0_init_pd_th, sigma_init_pd_th};
+  ros::param::param<double>("slam/particles/sm_delta_lim/xy/min",
+                                           min_sm_lim_xy, 0.6);
+  ros::param::param<double>("slam/particles/sm_delta_lim/xy/max",
+                                           max_sm_lim_xy, 0.8);
+  ros::param::param<double>("slam/particles/sm_delta_lim/theta/min",
+                                           min_sm_lim_th, 0.3);
+  ros::param::param<double>("slam/particles/sm_delta_lim/theta/max",
+                                           max_sm_lim_th, 0.4);
+  return {mean_sample_xy, sigma_sample_xy,
+          mean_sample_th, sigma_sample_th,
+          min_sm_lim_xy, max_sm_lim_xy,
+          min_sm_lim_th, max_sm_lim_th};
 }
 
 using ObservT = sensor_msgs::LaserScan;
