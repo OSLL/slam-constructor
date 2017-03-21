@@ -1,5 +1,5 @@
-#ifndef _GRID_MAP_H
-#define _GRID_MAP_H
+#ifndef SLAM_CTOR_CORE_GRID_MAP_H_INCLUDED
+#define SLAM_CTOR_CORE_GRID_MAP_H_INCLUDED
 
 #include <memory>
 #include <cmath>
@@ -32,8 +32,8 @@ public:
     _width(params.width_cells), _height(params.height_cells),
     _m_per_cell(params.meters_per_cell), _cell_prototype(prototype) {}
 
-  GridMap(GridMap &gm) = default;
-  GridMap& operator=(GridMap &gm) = default;
+  GridMap(const GridMap &gm) = default;
+  GridMap& operator=(const GridMap &gm) = default;
   GridMap(GridMap &&gm) = default;
   GridMap& operator=(GridMap &&gm) = default;
   virtual ~GridMap() = default;

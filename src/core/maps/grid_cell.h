@@ -1,5 +1,5 @@
-#ifndef __GRID_CELL_H_INCLUDED
-#define __GRID_CELL_H_INCLUDED
+#ifndef SLAM_CTOR_CORE_GRID_CELL_H_INCLUDED
+#define SLAM_CTOR_CORE_GRID_CELL_H_INCLUDED
 
 #include <memory>
 #include "../sensor_data.h"

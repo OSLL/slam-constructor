@@ -1,5 +1,5 @@
-#ifndef _PLAIN_GRID_MAP_H_INCLUDED
-#define _PLAIN_GRID_MAP_H_INCLUDED
+#ifndef SLAM_CTOR_CORE_PLAIN_GRID_MAP_H_INCLUDED
+#define SLAM_CTOR_CORE_PLAIN_GRID_MAP_H_INCLUDED
 
 #include <cmath>
 #include <vector>
@@ -13,8 +13,8 @@ class PlainGridMap : public GridMap {
 public:
   // TODO: cp, mv ctors, dtor
   PlainGridMap(std::shared_ptr<GridCell> prototype,
-               const GridMapParams& params = MapValues::gmp) :
-    GridMap{prototype, params}, _cells(GridMap::height()) {
+               const GridMapParams& params = MapValues::gmp)
+    : GridMap{prototype, params}, _cells(GridMap::height()) {
     for (auto &row : _cells) {
       row.reserve(GridMap::width());
       for (int i = 0; i < GridMap::width(); i++) {
