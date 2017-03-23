@@ -39,9 +39,9 @@ public:
   virtual ~GridMap() = default;
 
   // TODO: change return type to unsigned
-  int width() const { return _width; }
-  int height() const { return _height; }
-  double scale() const { return _m_per_cell; }
+  virtual int width() const { return _width; }
+  virtual int height() const { return _height; }
+  virtual double scale() const { return _m_per_cell; }
 
   std::unique_ptr<GridCell> new_cell() const {
     return _cell_prototype->clone();
@@ -52,8 +52,8 @@ public:
   }
 
   DiscretePoint2D world_to_cell(double x, double y) const {
-    int cell_x = std::floor(x/_m_per_cell);
-    int cell_y = std::floor(y/_m_per_cell);
+    int cell_x = std::floor(x / scale());
+    int cell_y = std::floor(y / scale());
     return {cell_x, cell_y};
   }
 
@@ -70,12 +70,13 @@ public:
     std::vector<DiscretePoint2D> cells;
     cells.reserve(cells_nm);
 
-    Point2D mid_cell{(pnt.x + 0.5)* _m_per_cell, (pnt.y + 0.5) * _m_per_cell};
+    double m_per_cell = scale();
+    Point2D mid_cell{(pnt.x + 0.5) * m_per_cell, (pnt.y + 0.5) * m_per_cell};
     // NB: y's are multiplied by d_x to eliminate separate vert. line handling
     auto mid_cell_seg_y = d_x * s.beg().y + (mid_cell.x - s.beg().x) * d_y;
     auto e = mid_cell_seg_y - mid_cell.y * d_x; // e = actual_e * d_x
-    auto e_x_inc = inc_x * _m_per_cell * d_y; // slope * d_x
-    auto e_y_inc = -inc_y * _m_per_cell * d_x; // - d_x
+    auto e_x_inc = inc_x * m_per_cell * d_y; // slope * d_x
+    auto e_y_inc = -inc_y * m_per_cell * d_x; // - d_x
 
     while (1) {
       cells.push_back(pnt);
@@ -105,15 +106,15 @@ public:
 
   Rectangle world_cell_bounds(const DiscretePoint2D &cell_coord) const {
     assert(has_cell(cell_coord));
-    return {_m_per_cell * cell_coord.y,        // bot
-            _m_per_cell * (cell_coord.y + 1),  // top
-            _m_per_cell * cell_coord.x,        // left
-            _m_per_cell * (cell_coord.x + 1)}; // right
+    auto m_per_cell = scale();
+    return {m_per_cell * cell_coord.y,        // bot
+            m_per_cell * (cell_coord.y + 1),  // top
+            m_per_cell * cell_coord.x,        // left
+            m_per_cell * (cell_coord.x + 1)}; // right
   }
 
   virtual DiscretePoint2D origin() const {
-    static DiscretePoint2D origin{(int)_width / 2, (int)_height / 2};
-    return origin;
+    return DiscretePoint2D{(int)width() / 2, (int)height() / 2};
   }
 
   virtual bool has_cell(const DiscretePoint2D& c) const {
@@ -135,6 +136,8 @@ protected:
 
   void set_height(unsigned h) { _height = h; }
   void set_width(unsigned w) { _width = w; }
+
+  std::shared_ptr<GridCell> cell_prototype() { return _cell_prototype; }
 private: // fields
   int _width, _height;
   double _m_per_cell;

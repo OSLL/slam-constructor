@@ -18,7 +18,7 @@ public:
     if (!aoo.occupancy.is_valid()) { return; }
 
     const double q = aoo.quality;
-    occupancy.prob_occ = (1.0 - q) * (*this) + q * aoo.occupancy;
+    _occupancy.prob_occ = (1.0 - q) * (*this) + q * aoo.occupancy;
   }
 };
 
@@ -38,7 +38,7 @@ public:
 
     _n += 1;
     double that_p = 0.5 + (aoo.occupancy - 0.5) * aoo.quality;
-    occupancy.prob_occ = ((*this) * (_n - 1) + that_p) / _n;
+    _occupancy.prob_occ = ((*this) * (_n - 1) + that_p) / _n;
   }
 
 private:

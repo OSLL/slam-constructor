@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-SET(CMAKE_CXX_FLAGS "-std=c++14 -Wall -O3 -pthread")
+SET(CMAKE_CXX_FLAGS "-std=c++14 -Wall -O3 -pthread -fdiagnostics-color")
 project(slam_fmwk)
 
 ## Find catkin macros and libraries
@@ -205,6 +205,9 @@ catkin_add_gtest(unbounded_lazy_tiled_grid_maps-test
                  test/core/maps/unbounded_lazy_tiled_grid_map_test.cpp)
 catkin_add_gtest(grid_map-test
                  test/core/maps/grid_map_test.cpp)
+catkin_add_gtest(zoomable_grid_map-test
+                 test/core/maps/zoomable_grid_map_test.cpp)
+
 catkin_add_gtest(geom_dprimitives-test
                  test/core/geometry_discrete_primitives_test.cpp)
 
