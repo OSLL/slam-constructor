@@ -1,5 +1,5 @@
-#ifndef __GEOMETRY_PRIMITIVES_H_INCLUDED
-#define __GEOMETRY_PRIMITIVES_H_INCLUDED
+#ifndef SLAM_CTOR_CORE_GEOMETRY_PRIMITIVES_H_INCLUDED
+#define SLAM_CTOR_CORE_GEOMETRY_PRIMITIVES_H_INCLUDED
 
 #include <cmath>
 #include <cassert>
@@ -173,6 +173,11 @@ struct Rectangle {
     assert(left <= right);
   }
 
+  Rectangle(const Rectangle &) = default;
+  Rectangle(Rectangle &&) = default;
+  Rectangle& operator=(const Rectangle &rhs) = default;
+  Rectangle& operator=(Rectangle &&rhs) = default;
+
   double side() const { return top - bot; }
   double area() const { return (top - bot) * (right - left); }
 
@@ -230,9 +235,9 @@ struct Rectangle {
     return intersections;
   }
 
-// TODO: make fields private
+// TODO: make fields private; add access functions
 public: // fields
-  const double bot, top, left, right;
+  double bot, top, left, right;
 
 private: // methods
   std::vector<Segment2D> edges() const {

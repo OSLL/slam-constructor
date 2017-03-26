@@ -1,6 +1,7 @@
 #ifndef SLAM_CTOR_CORE_ROBOT_POSE_H_INCLUDED
 #define SLAM_CTOR_CORE_ROBOT_POSE_H_INCLUDED
 
+#include <iostream>
 #include <memory>
 #include "random_utils.h"
 #include "geometry_utils.h"
@@ -36,6 +37,11 @@ public: // methods
 public: // fields
   double x, y, theta;
 };
+
+std::ostream& operator<<(std::ostream& os, const RobotPoseDelta& rpd) {
+  os << "PoseDelta{ x: " << rpd.x << ", y: " << rpd.y;
+  return os << ", th: " << rpd.theta << "}";
+}
 
 template <typename RandomEngineT>
 class RobotPoseDeltaRV {
