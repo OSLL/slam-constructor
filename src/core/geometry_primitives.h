@@ -164,13 +164,14 @@ private: // fields
 
 struct Rectangle {
   Rectangle() : Rectangle(0, 0, 0, 0) {}
-  Rectangle(double b, double t, double l, double r) :
-    bot{b}, top{t}, left{l}, right{r},
-    bot_edge{{left, bot}, {right, bot}}, top_edge{{left, top}, {right, top}},
-    left_edge{{left, bot}, {left, top}}, right_edge{{right, bot}, {right, top}}
-  {
-    assert(bot <= top);
-    assert(left <= right);
+  Rectangle(double b, double t, double l, double r)
+    : _bot{b}, _top{t}, _left{l}, _right{r}
+    , bot_edge{{_left, _bot}, {_right, _bot}}
+    , top_edge{{_left, _top}, {_right, _top}}
+    , left_edge{{_left, _bot}, {_left, _top}}
+    , right_edge{{_right, _bot}, {_right, _top}} {
+    assert(_bot <= _top);
+    assert(_left <= _right);
   }
 
   Rectangle(const Rectangle &) = default;
@@ -178,21 +179,21 @@ struct Rectangle {
   Rectangle& operator=(const Rectangle &rhs) = default;
   Rectangle& operator=(Rectangle &&rhs) = default;
 
-  double side() const { return top - bot; }
-  double area() const { return (top - bot) * (right - left); }
+  double side() const { return top() - bot(); }
+  double area() const { return (top() - bot()) * (right() - left()); }
 
   /* Inclusion predicates */
   bool contains(const Point2D &p) const {
-    return are_ordered(bot, p.y, top) && are_ordered(left, p.x, right);
+    return are_ordered(bot(), p.y, top()) && are_ordered(left(), p.x, right());
   }
 
   // NB: segment is not necessary coincide with an edge of the rectangle
   bool has_on_edge_line(const Segment2D &s) const {
     if (s.is_vert()) {
-      return are_equal(s.beg().x, left) || are_equal(s.beg().x, right);
+      return are_equal(s.beg().x, left()) || are_equal(s.beg().x, right());
     }
     if (s.is_horiz()) {
-      return are_equal(s.beg().y, bot) || are_equal(s.beg().y, top);
+      return are_equal(s.beg().y, bot()) || are_equal(s.beg().y, top());
     }
     return false;
   }
@@ -235,10 +236,13 @@ struct Rectangle {
     return intersections;
   }
 
-// TODO: make fields private; add access functions
-public: // fields
-  double bot, top, left, right;
+  double bot() const { return _bot; }
+  double top() const { return _top; }
+  double left() const { return _left; }
+  double right() const { return _right; }
 
+private: // fields
+  double _bot, _top, _left, _right;
 private: // methods
   std::vector<Segment2D> edges() const {
     return {top_edge, bot_edge, left_edge, right_edge};
@@ -251,8 +255,8 @@ private: // fields
 };
 
 std::ostream &operator<<(std::ostream &stream, const Rectangle &r) {
-  stream << "Rectangle [t:" << r.top << ", b:" << r.bot;
-  return stream << ", l:" << r.left << ", r:" << r.right << "]";
+  stream << "Rectangle [t:" << r.top() << ", b:" << r.bot();
+  return stream << ", l:" << r.left() << ", r:" << r.right() << "]";
 }
 
 #endif

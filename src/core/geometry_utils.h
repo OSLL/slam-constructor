@@ -1,5 +1,5 @@
-#ifndef __GEOMETRY_UTILS_H
-#define __GEOMETRY_UTILS_H
+#ifndef SLAM_CTOR_CORE_GEOMETRY_UTILS_H_INCLUDED
+#define SLAM_CTOR_CORE_GEOMETRY_UTILS_H_INCLUDED
 
 #include <vector>
 #include <cmath>

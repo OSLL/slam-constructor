@@ -86,13 +86,14 @@ public:
         for (int d_x_i = 0; d_x_i < 2; ++d_x_i) {
           for (int d_y_i = 0; d_y_i < 2; ++d_y_i) {
             auto srch_area = Rectangle{
-              best_node.delta_window.bot + ((d_y_i % 2 == 0) ? 0 : transl_step),
-              (d_y_i % 2 == 0) ? best_node.delta_window.bot + transl_step
-                               : best_node.delta_window.top,
-              best_node.delta_window.left +
+              best_node.delta_window.bot() + ((d_y_i % 2 == 0) ? 0
+                                                               : transl_step),
+              (d_y_i % 2 == 0) ? best_node.delta_window.bot() + transl_step
+                               : best_node.delta_window.top(),
+              best_node.delta_window.left() +
                 ((d_x_i % 2 == 0) ? 0 : transl_step),
-              (d_x_i % 2 == 0) ? best_node.delta_window.left + transl_step
-                               : best_node.delta_window.right,
+              (d_x_i % 2 == 0) ? best_node.delta_window.left() + transl_step
+                               : best_node.delta_window.right(),
             };
             pose_delta.y = pose_delta.x = srch_area.side() / 2;
             unchecked_poses.emplace(
@@ -106,7 +107,6 @@ public:
         }
       } // if (node_is_leaf
     }
-    std::cout << "POST SEARCH" << std::endl;
     // BUG: no pose delta has been found
     return std::numeric_limits<double>::quiet_NaN();
   }

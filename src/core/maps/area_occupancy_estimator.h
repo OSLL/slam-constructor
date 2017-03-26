@@ -73,9 +73,9 @@ private: // methods
 
     Point2D shift;
     if (s.is_horiz()) {
-      shift = {0, (are_equal(s.beg().y, cell.top) ? -1 : 1) * Shift_Amount};
+      shift = {0, (are_equal(s.beg().y, cell.top()) ? -1 : 1) * Shift_Amount};
     } else if (s.is_vert()) {
-      shift = {(are_equal(s.beg().x, cell.right) ? -1 : 1) * Shift_Amount, 0};
+      shift = {(are_equal(s.beg().x, cell.right()) ? -1 : 1) * Shift_Amount, 0};
     } else {
       assert(false && "BUG: non-axis aligned segment is on rectange edge");
     }
@@ -175,10 +175,10 @@ private: // methods
       // is also a corner of the triangle
       for (auto &inter : inters) {
         switch (inter.location) {
-        case Intersection::Location::Bot: corner_y = bnds.bot; break;
-        case Intersection::Location::Top: corner_y = bnds.top; break;
-        case Intersection::Location::Left: corner_x = bnds.left; break;
-        case Intersection::Location::Right: corner_x = bnds.right; break;
+        case Intersection::Location::Bot: corner_y = bnds.bot(); break;
+        case Intersection::Location::Top: corner_y = bnds.top(); break;
+        case Intersection::Location::Left: corner_x = bnds.left(); break;
+        case Intersection::Location::Right: corner_x = bnds.right(); break;
         default: assert(false && "Unexpected location type");
         }
       }
@@ -194,7 +194,7 @@ private: // methods
     } else {
       // chunk is a trapezoid
       // corner choise doesn't matter, so pick bottom-left one.
-      corner_x = bnds.left, corner_y = bnds.bot;
+      corner_x = bnds.left(), corner_y = bnds.bot();
       double base_sum = 0;
       for (auto &inter : inters) {
         if (inter.is_horiz()) {
@@ -204,7 +204,7 @@ private: // methods
         }
       }
       // NOTE: cell is supposed to be a square
-      area = 0.5 * (bnds.top - bnds.bot) * base_sum;
+      area = 0.5 * (bnds.top() - bnds.bot()) * base_sum;
     }
     assert(0 <= area && area <= bnds.area() && "BUG: AOE area estimation");
     if (is_occ &&
