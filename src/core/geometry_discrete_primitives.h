@@ -45,7 +45,7 @@ public: // functions
   }
 };
 
-std::ostream &operator<<(std::ostream &stream, const DiscretePoint2D &pnt) {
+inline std::ostream &operator<<(std::ostream &stream, const DiscretePoint2D &pnt) {
   return stream << "(" << pnt.x << ", " << pnt.y << ")";
 }
 

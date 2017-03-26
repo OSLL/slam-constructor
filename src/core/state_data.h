@@ -32,7 +32,7 @@ struct Occupancy {
 
 };
 
-std::ostream &operator<<(std::ostream &stream, const Occupancy &occ) {
+inline std::ostream &operator<<(std::ostream &stream, const Occupancy &occ) {
   if (!occ.is_valid()) {
     return stream << "invalid";
   }

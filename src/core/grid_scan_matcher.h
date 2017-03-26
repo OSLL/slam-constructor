@@ -7,6 +7,7 @@
 
 #include "state_data.h"
 #include "robot_pose.h"
+#include "maps/grid_map.h"
 
 class GridScanMatcherObserver {
 public:

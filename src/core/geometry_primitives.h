@@ -27,9 +27,9 @@ public: // fields
   double x, y;
 };
 
-Point2D operator*(double scalar, const Point2D &p) { return p * scalar; }
+inline Point2D operator*(double scalar, const Point2D &p) { return p * scalar; }
 
-std::ostream &operator<<(std::ostream &stream, const Point2D &pnt) {
+inline std::ostream &operator<<(std::ostream &stream, const Point2D &pnt) {
   return stream << "(" << pnt.x << ", " << pnt.y << ")";
 }
 
@@ -91,7 +91,7 @@ private: // fields
   bool _is_horiz, _is_vert;
 };
 
-std::ostream &operator<<(std::ostream &stream, const Segment2D &s) {
+inline std::ostream &operator<<(std::ostream &stream, const Segment2D &s) {
   return stream << "[" << s.beg() << "; " << s.end() << "]";
 }
 
@@ -245,7 +245,7 @@ private: // fields
   Segment2D bot_edge, top_edge, left_edge, right_edge;
 };
 
-std::ostream &operator<<(std::ostream &stream, const Rectangle &r) {
+inline std::ostream &operator<<(std::ostream &stream, const Rectangle &r) {
   stream << "Rectangle [t:" << r.top << ", b:" << r.bot;
   return stream << ", l:" << r.left << ", r:" << r.right << "]";
 }
