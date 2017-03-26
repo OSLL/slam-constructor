@@ -1,8 +1,8 @@
-#ifndef __TINY_SCAN_COST_ESTIMATOR
-#define __TINY_SCAN_COST_ESTIMATOR
+#ifndef SLAM_CTOR_TINY_SCAN_COST_ESTIMATOR_H_INCLUDED
+#define SLAM_CTOR_TINY_SCAN_COST_ESTIMATOR_H_INCLUDED
 
 #include "../core/sensor_data.h"
-#include "../core/grid_scan_matcher.h"
+#include "../core/scan_matchers/grid_scan_matcher.h"
 
 class TinyScanCostEstimator : public ScanCostEstimator {
 public:

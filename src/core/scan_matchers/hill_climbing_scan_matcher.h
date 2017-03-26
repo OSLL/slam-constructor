@@ -1,15 +1,15 @@
-#ifndef __GRADIENT_WALKER_SCAN_MATCHER_H_INCLUDED
-#define __GRADIENT_WALKER_SCAN_MATCHER_H_INCLUDED
+#ifndef SLAM_CTOR_CORE_HILL_CLIMBING_SCAN_MATCHER_H_INCLUDED
+#define SLAM_CTOR_CORE_HILL_CLIMBING_SCAN_MATCHER_H_INCLUDED
 
 #include <math.h>
 #include <limits>
 
 #include "grid_scan_matcher.h"
-#include "maps/grid_map.h"
+#include "../maps/grid_map.h"
 
-class GradientWalkerScanMatcher : public GridScanMatcher {
+class HillClimbingScanMatcher : public GridScanMatcher {
 public:
-  GradientWalkerScanMatcher(std::shared_ptr<ScanCostEstimator> est) :
+  HillClimbingScanMatcher(std::shared_ptr<ScanCostEstimator> est) :
      GridScanMatcher(est), _angular_delta(0.1), _linear_delta(0.1),
      _max_step_shrinks(6) {}
 

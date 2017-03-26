@@ -1,10 +1,10 @@
-#ifndef __GRID_CELL_STRATEGY_H
-#define __GRID_CELL_STRATEGY_H
+#ifndef SLAM_CTOR_CORE_GRID_CELL_STRATEGY_H_INCLUDED
+#define SLAM_CTOR_CORE_GRID_CELL_STRATEGY_H_INCLUDED
 
 #include <memory>
 
 #include "grid_cell.h"
-#include "../grid_scan_matcher.h"
+#include "../scan_matchers/grid_scan_matcher.h"
 #include "cell_occupancy_estimator.h"
 
 class GridCellStrategy {

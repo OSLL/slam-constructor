@@ -1,5 +1,5 @@
-#ifndef __GMAPPING_COST_ESTIMATOR
-#define __GMAPPING_COST_ESTIMATOR
+#ifndef SLAM_CTOR_GMAPPING_COST_ESTIMATOR_H_INCLUDED
+#define SLAM_CTOR_GMAPPING_COST_ESTIMATOR_H_INCLUDED
 
 #include <cmath>
 #include <limits>
@@ -7,7 +7,7 @@
 #include <utility>
 
 #include "../core/geometry_utils.h"
-#include "../core/grid_scan_matcher.h"
+#include "../core/scan_matchers/grid_scan_matcher.h"
 #include "../core/maps/grid_map.h"
 
 #include "gmapping_grid_cell.h"

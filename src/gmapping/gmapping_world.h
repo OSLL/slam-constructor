@@ -10,7 +10,7 @@
 #include "../core/maps/grid_cell.h"
 #include "../core/maps/grid_cell_strategy.h"
 #include "../core/maps/lazy_tiled_grid_map.h"
-#include "../core/gradient_walker_scan_matcher.h"
+#include "../core/scan_matchers/hill_climbing_scan_matcher.h"
 
 #include "gmapping_grid_cell.h"
 #include "gmapping_cost_estimator.h"
@@ -104,7 +104,7 @@ private:
 private:
   bool _is_master = false;
   bool _scan_is_first = true;
-  GradientWalkerScanMatcher _matcher;
+  HillClimbingScanMatcher _matcher;
   std::mt19937 _rnd_engine;
   RobotPoseDeltaRV<std::mt19937> _pose_guess_rv, _next_sm_delta_rv;
   RobotPoseDelta _delta_since_last_sm, _next_sm_delta;

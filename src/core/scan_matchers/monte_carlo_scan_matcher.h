@@ -1,12 +1,10 @@
-#ifndef __MONTE_CARLO_SCAN_MATCHER_H
-#define __MONTE_CARLO_SCAN_MATCHER_H
+#ifndef SLAM_CTOR_CORE_MONTE_CARLO_SCAN_MATCHER_H_INCLUDED
+#define SLAM_CTOR_CORE_MONTE_CARLO_SCAN_MATCHER_H_INCLUDED
 
 #include <functional>
 #include <limits>
 #include <memory>
 
-#include "robot_pose.h"
-#include "sensor_data.h"
 #include "grid_scan_matcher.h"
 
 // TODO: move publish transform to observer

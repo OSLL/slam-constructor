@@ -1,12 +1,12 @@
-#ifndef __GRID_SCAN_MATCHER_H
-#define __GRID_SCAN_MATCHER_H
+#ifndef SLAM_CTOR_CORE_GRID_SCAN_MATCHER_H_INCLUDED
+#define SLAM_CTOR_CORE_GRID_SCAN_MATCHER_H_INCLUDED
 
 #include <vector>
 #include <memory>
 #include <algorithm>
 
-#include "state_data.h"
-#include "robot_pose.h"
+#include "../state_data.h"
+#include "../robot_pose.h"
 
 class GridScanMatcherObserver {
 public:

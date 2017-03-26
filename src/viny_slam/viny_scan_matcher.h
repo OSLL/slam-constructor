@@ -1,9 +1,9 @@
-#ifndef __VINY_SCAN_MATCHER_H
-#define __VINY_SCAN_MATCHER_H
+#ifndef SLAM_CTOR_VINY_SCAN_MATCHER_H_INCLUDED
+#define SLAM_CTOR_VINY_SCAN_MATCHER_H_INCLUDED
 
 #include <random>
 
-#include "../core/monte_carlo_scan_matcher.h"
+#include "../core/scan_matchers/monte_carlo_scan_matcher.h"
 #include "viny_scan_cost_estimator.h"
 
 struct VinySMParams {
