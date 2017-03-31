@@ -211,5 +211,10 @@ catkin_add_gtest(zoomable_grid_map-test
 catkin_add_gtest(geom_dprimitives-test
                  test/core/geometry_discrete_primitives_test.cpp)
 
+catkin_add_gtest(grid_map_patcher-test
+                 test/utils/data_generation/grid_map_patcher_test.cpp)
+catkin_add_gtest(lscan_generator-test
+                 test/utils/data_generation/laser_scan_generator_test.cpp)
+
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)

@@ -1,5 +1,7 @@
-#ifndef __SLAM_CTOR_CORE_MATH_UTILS_H_INCLUDED
-#define __SLAM_CTOR_CORE_MATH_UTILS_H_INCLUDED
+#ifndef SLAM_CTOR_CORE_MATH_UTILS_H_INCLUDED
+#define SLAM_CTOR_CORE_MATH_UTILS_H_INCLUDED
+
+#include <cmath>
 
 inline bool are_equal(double a, double b) {
   // cmp doubles according to http://realtimecollisiondetection.net/blog/?p=89
@@ -14,6 +16,10 @@ inline bool less_or_equal(double a, double b) {
 
 inline bool are_ordered(double a, double b, double c) {
   return less_or_equal(a, b) && less_or_equal(b, c);
+}
+
+constexpr inline double deg2rad(double angle_deg) {
+  return angle_deg * M_PI / 180;
 }
 
 #endif
