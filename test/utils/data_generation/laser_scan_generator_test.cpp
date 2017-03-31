@@ -29,7 +29,8 @@ class LaserScanGeneratorTest : public ::testing::Test {
 protected: // methods
   LaserScanGeneratorTest()
     : map{std::make_shared<TestGridCell>(),
-          GridMapParams{Map_Width, Map_Height, Map_Scale}} {}
+          GridMapParams{Map_Width, Map_Height, Map_Scale}}
+    , rpose{map.scale() / 2, map.scale() / 2, 0} /* middle of a cell */ {}
 protected:
   using ScanPoints = std::vector<ScanPoint>;
 protected: // consts
@@ -39,14 +40,16 @@ protected: // consts
 
   static constexpr int Patch_Scale = 10;
 protected: // fields
-  void patch_map_with_cecum(const RobotPoseDelta &rpd,
-                            int scale = Patch_Scale) {
+  void prepare_map_and_robot_pose(const RobotPoseDelta &rpd,
+                                  int scale = Patch_Scale) {
+    patch_map_with_cecum(scale);
+    rpose += rpd;
+  }
+
+  void patch_map_with_cecum(int scale) {
     auto gm_patcher = GridMapPatcher{};
     std::stringstream raster{Cecum_Corridor_Map_Patch};
     gm_patcher.apply_text_raster(map, raster, {}, scale, scale);
-
-    rpose += rpd;
-    rpose += RobotPoseDelta{map.scale() / 2, map.scale() / 2, 0};
   }
 
   void check_scan_points(const ScanPoints &expected, const ScanPoints &actual,
@@ -77,8 +80,8 @@ protected: // fields
   }
 
 protected: // fields
-  RobotPose rpose;
   UnboundedPlainGridMap map;
+  RobotPose rpose;
   LaserScanGenerator lsg{LaserScannerParams{150, deg2rad(90), deg2rad(180)}};
 };
 
@@ -114,7 +117,7 @@ TEST_F(LaserScanGeneratorTest, leftOfCecumEntranceFacingRight4beams) {
     (-Cecum_Patch_H * Patch_Scale + 1) * map.scale(),
     deg2rad(0)
   };
-  patch_map_with_cecum(pose_delta, Patch_Scale);
+  prepare_map_and_robot_pose(pose_delta, Patch_Scale);
   auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
 
   const double scale = map.scale() * Patch_Scale;
@@ -130,7 +133,7 @@ TEST_F(LaserScanGeneratorTest, rightOfCecumEntranceFacingTop4beams) {
     (-Cecum_Patch_H * Patch_Scale + 1) * map.scale(),
     deg2rad(90)
   };
-  patch_map_with_cecum(pose_delta, Patch_Scale);
+  prepare_map_and_robot_pose(pose_delta, Patch_Scale);
   const double scale = map.scale() * Patch_Scale;
   auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
 
@@ -146,7 +149,7 @@ TEST_F(LaserScanGeneratorTest, rightOfCecumEndFacingLeft4beams) {
     (Cecum_Free_Y_Start * Patch_Scale) * map.scale(),
     deg2rad(180)
   };
-  patch_map_with_cecum(pose_delta, Patch_Scale);
+  prepare_map_and_robot_pose(pose_delta, Patch_Scale);
   const double scale = map.scale() * Patch_Scale;
   auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
 
@@ -163,7 +166,7 @@ TEST_F(LaserScanGeneratorTest, leftOfCecumEndFacingDown4beams) {
     (Cecum_Free_Y_Start * Patch_Scale) * map.scale(),
     deg2rad(270)
   };
-  patch_map_with_cecum(pose_delta, Patch_Scale);
+  prepare_map_and_robot_pose(pose_delta, Patch_Scale);
   const double scale = map.scale() * Patch_Scale;
   auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
 
@@ -178,7 +181,7 @@ TEST_F(LaserScanGeneratorTest, middleOfCecumEntranceFacingIn4beams) {
     (Cecum_Patch_W * Patch_Scale / 2) * map.scale(),
     (-Cecum_Patch_H * Patch_Scale + 1) * map.scale(),
     deg2rad(90)};
-  patch_map_with_cecum(pose_delta, Patch_Scale);
+  prepare_map_and_robot_pose(pose_delta, Patch_Scale);
   auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
 
   /* extra 0.5*map.scale() is for robot offset inside the cell */
@@ -199,7 +202,7 @@ TEST_F(LaserScanGeneratorTest, rightOfCecumEndFacingLeftBot45deg4beams) {
     (Cecum_Free_Y_Start * Patch_Scale) * map.scale(),
     deg2rad(225)
   };
-  patch_map_with_cecum(pose_delta, Patch_Scale);
+  prepare_map_and_robot_pose(pose_delta, Patch_Scale);
   const double scale = map.scale() * Patch_Scale;
   auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
 
@@ -217,7 +220,7 @@ TEST_F(LaserScanGeneratorTest, leftOfCecumEndFacingRightBot30deg4beams) {
     (Cecum_Free_Y_Start * Patch_Scale) * map.scale(),
     deg2rad(-30)
   };
-  patch_map_with_cecum(pose_delta, Patch_Scale);
+  prepare_map_and_robot_pose(pose_delta, Patch_Scale);
   const double scale = map.scale() * Patch_Scale;
   auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
 
@@ -236,7 +239,7 @@ TEST_F(LaserScanGeneratorTest, cecumCenterFacingDown8beams240FoW) {
       * map.scale(),
     deg2rad(-90)
   };
-  patch_map_with_cecum(pose_delta, Patch_Scale);
+  prepare_map_and_robot_pose(pose_delta, Patch_Scale);
   auto lsgen = LaserScanGenerator{LaserScannerParams{15, deg2rad(270 / 8),
                                                          deg2rad(270 / 2)}};
   auto scan = lsgen.generate_2D_laser_scan(map, rpose, 1);
