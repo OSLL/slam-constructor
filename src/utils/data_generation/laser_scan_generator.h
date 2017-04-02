@@ -10,14 +10,16 @@
 #include "../../core/geometry_utils.h"
 
 struct LaserScannerParams {
-  LaserScannerParams(double mx_dist, double h_a_inc, double h_half_sector)
+  constexpr LaserScannerParams(double mx_dist, double h_a_inc,
+                               double h_half_sector)
     : max_dist{mx_dist}, h_angle_inc{h_a_inc}, h_hsector{h_half_sector} {}
-  LaserScannerParams() : LaserScannerParams{15, deg2rad(90), deg2rad(180)} {}
+  constexpr LaserScannerParams()
+    : LaserScannerParams{15, deg2rad(90), deg2rad(180)} {}
 
-  double max_dist; // meters
+  const double max_dist; // meters
   // "h" is for "horizontal"
-  double h_angle_inc; // radians
-  double h_hsector; // half sector, radians
+  const double h_angle_inc; // radians
+  const double h_hsector; // half sector, radians
 };
 
 class LaserScanGenerator {

@@ -211,6 +211,9 @@ catkin_add_gtest(zoomable_grid_map-test
 catkin_add_gtest(geom_dprimitives-test
                  test/core/geometry_discrete_primitives_test.cpp)
 
+catkin_add_gtest(hill_climbing_sm-smoke_test
+                 test/core/scan_matchers/hill_climbing_sm_smoke_test.cpp)
+
 catkin_add_gtest(grid_map_patcher-test
                  test/utils/data_generation/grid_map_patcher_test.cpp)
 catkin_add_gtest(lscan_generator-test

@@ -22,4 +22,8 @@ constexpr inline double deg2rad(double angle_deg) {
   return angle_deg * M_PI / 180;
 }
 
+constexpr inline double rad2deg(double angle_rad) {
+  return angle_rad * 180 / M_PI;
+}
+
 #endif

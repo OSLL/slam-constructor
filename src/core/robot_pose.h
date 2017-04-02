@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <memory>
+#include "math_utils.h"
 #include "random_utils.h"
 #include "geometry_utils.h"
 
@@ -16,6 +17,15 @@ public: // methods
     y += delta.y;
     theta += delta.theta;
     return *this;
+  }
+
+  bool operator==(const RobotPoseDelta &rhs) const {
+    return are_equal(x, rhs.x) && are_equal(y, rhs.y) &&
+           are_equal(theta, rhs.theta);
+  }
+
+  RobotPoseDelta operator+(const RobotPoseDelta &rhs) const {
+    return {x + rhs.x, y + rhs.y, theta + rhs.theta};
   }
 
   bool is_abs_less(const RobotPoseDelta& that) const {
