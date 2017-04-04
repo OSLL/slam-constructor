@@ -56,12 +56,14 @@ public:
         assert(0 && "Try to access for modification two cells simultaneously");
       }
     }
+    ensure_coord_is_tracked(coord);
     _proxy_pin.reset(
       new ZoomableGridCellProxy{_zoom_level, coord, _zoomed_map_cache});
     return *_proxy_pin;
   }
 
   const GridCell &operator[](const DPnt2D& coord) const override {
+    ensure_coord_is_tracked(coord);
     const GridMap& active_map = *(*_zoomed_map_cache)[_zoom_level];
     return active_map[coord];
   }
@@ -77,6 +79,13 @@ public:
   }
 
 private:
+
+  void ensure_coord_is_tracked(const DiscretePoint2D &coord) const {
+    if (_zoom_level != _zoomed_map_cache->size() - 1) { return; }
+    const GridMap& active_map = *(*_zoomed_map_cache)[_zoom_level];
+    // FIXME: ensure coord is covered by max zoom level map
+    assert(active_map.has_cell(coord));
+  }
 
   void ensure_zoom_cache_is_valid() {
     GridMap* the_coarsest_map = _zoomed_map_cache->back().get();
@@ -132,7 +141,12 @@ private:
         // TODO CHECK: assert inside zoomed out map
         GridCell &zo_master = cell(zl, zoom_out(vphys_coord, zl));
         // TODO: move to policy
-        if (double(master) < double(zo_master)) {
+        /*
+        std::cout << zl << ". " << zoom_out(vphys_coord, zl) << " "
+                  << double(master) << " vs "
+                  << double(zo_master) << std::endl;
+        */
+        if (double(master) <= double(zo_master)) {
           break;
         }
         zo_master = master;
@@ -169,10 +183,14 @@ private:
         return active_map.world_to_cell(ph_pnt);
       }
 
+      // TODO: fix me. The top level map must have single pixel
+      return {0, 0};
       // Treat last map as single pixel with origin at scale-center
+      /*
       return active_map.world_to_cell(
         Point2D{ph_pnt.x + active_map.scale() / 2,
                 ph_pnt.y + active_map.scale() / 2});
+      */
     }
   private:
     unsigned _zoom_level;

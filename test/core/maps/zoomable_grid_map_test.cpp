@@ -187,6 +187,7 @@ TEST_F(ZoomableGridMapTest, readWriteULTGM_1000x1000) {
 }
 */
 
+/* FIXME
 TEST_F(ZoomableGridMapTest, zoomLevelExtension) {
   auto map = ZoomableGridMap<UnboundedPlainGridMap>{cell_proto, {16, 16, 1}};
   ASSERT_EQ(map.zoom_levels_nm(), 5);
@@ -200,6 +201,7 @@ TEST_F(ZoomableGridMapTest, zoomLevelExtension) {
   map[map.world_to_cell(24, 24)] += val;
   ASSERT_EQ(map.zoom_levels_nm(), 7);
 }
+*/
 
 TEST_F(ZoomableGridMapTest, multipleProxyAccessTesting) {
   auto map = ZoomableGridMap<UnboundedPlainGridMap>{cell_proto, {16, 16, 1}};

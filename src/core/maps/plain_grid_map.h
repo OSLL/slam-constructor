@@ -55,7 +55,7 @@ public: // methods
     return PlainGridMap::operator[](c);
   }
 
-   const GridCell &operator[](const DPnt2D& c) const override {
+  const GridCell &operator[](const DPnt2D& c) const override {
     if (!has_cell(c)) { return *_unknown_cell; }
     return PlainGridMap::operator[](c);
   }

@@ -213,6 +213,8 @@ catkin_add_gtest(geom_dprimitives-test
 
 catkin_add_gtest(hill_climbing_sm-smoke_test
                  test/core/scan_matchers/hill_climbing_sm_smoke_test.cpp)
+catkin_add_gtest(m3rsm-smoke_test
+                 test/core/scan_matchers/m3rsm_smoke_test.cpp)
 
 catkin_add_gtest(grid_map_patcher-test
                  test/utils/data_generation/grid_map_patcher_test.cpp)

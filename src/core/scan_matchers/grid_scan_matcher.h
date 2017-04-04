@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
+#include <limits>
 
 #include "../state_data.h"
 #include "../sensor_data.h"
@@ -27,6 +28,13 @@ public:
 
 class ScanCostEstimator {
 public:
+  double estimate_scan_cost(const RobotPose &pose,
+                            const TransformedLaserScan &scan,
+                            const GridMap &map) {
+    return estimate_scan_cost(pose, scan, map,
+                              std::numeric_limits<double>::max());
+  }
+
   virtual double estimate_scan_cost(const RobotPose &pose,
                                     const TransformedLaserScan &scan,
                                     const GridMap &map,

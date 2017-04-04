@@ -57,6 +57,17 @@ public:
     return {cell_x, cell_y};
   }
 
+  Point2D cell_to_world(const DiscretePoint2D &cell) const {
+    return {scale() * (cell.x + 0.5), scale() * (cell.y + 0.5)};
+  }
+
+  DiscretePoint2D world_to_cell_by_vec(double v_origin_x, double v_origin_y,
+                                       double range, double direction_a) const {
+    double x_world = v_origin_x + range * std::cos(direction_a);
+    double y_world = v_origin_y + range * std::sin(direction_a);
+    return world_to_cell(x_world, y_world);
+  }
+
   std::vector<DiscretePoint2D> world_to_cells(const Segment2D &s) const {
     // returns a vector of cells intersected by a given segment.
     // The first cell contains start of the segment, the last - its end.
