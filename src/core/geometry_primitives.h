@@ -179,7 +179,9 @@ struct Rectangle {
   Rectangle& operator=(const Rectangle &rhs) = default;
   Rectangle& operator=(Rectangle &&rhs) = default;
 
-  double side() const { return top() - bot(); }
+  double vside_len() const { return top() - bot(); }
+  double hside_len() const { return right() - left(); }
+  double side() const { return vside_len(); }
   double area() const { return (top() - bot()) * (right() - left()); }
 
   /* Inclusion predicates */
@@ -253,6 +255,13 @@ private: // fields
   // TODO: vector of edges
   Segment2D bot_edge, top_edge, left_edge, right_edge;
 };
+
+inline bool operator==(const Rectangle &lhs, const Rectangle &rhs) {
+  return are_equal(lhs.top(), rhs.top()) &&
+         are_equal(lhs.bot(), rhs.bot()) &&
+         are_equal(lhs.left(), rhs.left()) &&
+         are_equal(lhs.right(), rhs.right());
+}
 
 std::ostream &operator<<(std::ostream &stream, const Rectangle &r) {
   stream << "Rectangle [t:" << r.top() << ", b:" << r.bot();

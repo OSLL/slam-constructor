@@ -218,6 +218,9 @@ catkin_add_gtest(m3rsm-smoke_test
 
 catkin_add_gtest(grid_map_patcher-test
                  test/utils/data_generation/grid_map_patcher_test.cpp)
+catkin_add_gtest(map_primitives-test
+                 test/utils/data_generation/map_primitives_test.cpp)
+
 catkin_add_gtest(lscan_generator-test
                  test/utils/data_generation/laser_scan_generator_test.cpp)
 

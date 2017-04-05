@@ -1,21 +1,11 @@
 #include <gtest/gtest.h>
 
-#include <sstream>
-
 #include "../../../src/core/math_utils.h"
 #include "../../../src/core/robot_pose.h"
 #include "../../../src/core/maps/plain_grid_map.h"
+#include "../../../src/utils/data_generation/map_primitives.h"
 #include "../../../src/utils/data_generation/grid_map_patcher.h"
 #include "../../../src/utils/data_generation/laser_scan_generator.h"
-
-const std::string Cecum_Corridor_Map_Patch =
-  "+-+\n"
-  "| |\n"
-  "| |";
-constexpr int Cecum_Patch_W = 3, Cecum_Patch_H = 3;
-constexpr int Cecum_Free_W = 1, Cecum_Free_H = 2;
-// wrt top-left
-constexpr int Cecum_Free_X_Start = 1, Cecum_Free_Y_Start = -1;
 
 class TestGridCell : public GridCell {
 public:
@@ -40,16 +30,16 @@ protected: // consts
 
   static constexpr int Patch_Scale = 10;
 protected: // fields
-  void prepare_map_and_robot_pose(const RobotPoseDelta &rpd,
+  void prepare_map_and_robot_pose(const MapPrimitive &mp,
+                                  const RobotPoseDelta &rpd,
                                   int scale = Patch_Scale) {
-    patch_map_with_cecum(scale);
+    patch_map(mp, scale);
     rpose += rpd;
   }
 
-  void patch_map_with_cecum(int scale) {
+  void patch_map(const MapPrimitive &mp, int scale) {
     auto gm_patcher = GridMapPatcher{};
-    std::stringstream raster{Cecum_Corridor_Map_Patch};
-    gm_patcher.apply_text_raster(map, raster, {}, scale, scale);
+    gm_patcher.apply_text_raster(map, mp.to_stream(), {}, scale, scale);
   }
 
   void check_scan_points(const ScanPoints &expected, const ScanPoints &actual,
@@ -73,6 +63,7 @@ protected: // fields
   }
 
   // TODO: move to debug utils
+  /*
   void dbg_print_map_pose(int scale = Patch_Scale) {
     auto rc = map.world_to_cell(rpose.x, rpose.y);
     std::cout << "(" << rpose.x << " " << rpose.y << ") -> " << rc << std::endl;
@@ -84,6 +75,7 @@ protected: // fields
       std::cout << std::endl;
     }
   }
+  */
 
 protected: // fields
   UnboundedPlainGridMap map;
@@ -117,83 +109,108 @@ TEST_F(LaserScanGeneratorTest, insideObstacle4beams) {
 // Perpendicular wall facing
 
 TEST_F(LaserScanGeneratorTest, leftOfCecumEntranceFacingRight4beams) {
+  const auto Top_Bnd_Pos = CecumTextRasterMapPrimitive::BoundPosition::Top;
+  auto cecum_mp = CecumTextRasterMapPrimitive{7, 4, Top_Bnd_Pos};
+  auto mp_free_space = cecum_mp.free_space()[0];
+
   auto pose_delta = RobotPoseDelta{
-    (Cecum_Free_X_Start * Patch_Scale) * map.scale(),
-    (-Cecum_Patch_H * Patch_Scale + 1) * map.scale(),
+    (mp_free_space.left() * Patch_Scale) * map.scale(),
+    (-cecum_mp.height() * Patch_Scale + 1) * map.scale(),
     deg2rad(0)
   };
-  prepare_map_and_robot_pose(pose_delta, Patch_Scale);
+  prepare_map_and_robot_pose(cecum_mp, pose_delta, Patch_Scale);
   auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
 
   const double scale = map.scale() * Patch_Scale;
-  const auto Expected_SPs = ScanPoints{{map.scale(), deg2rad(-180)},
-                                       {Cecum_Free_W * scale, deg2rad(0)},
-                                       {Cecum_Free_H * scale, deg2rad(90)}};
+  const auto Expected_SPs = ScanPoints{
+    {map.scale(), deg2rad(-180)},
+    {mp_free_space.hside_len() * scale, deg2rad(0)},
+    {mp_free_space.vside_len() * scale, deg2rad(90)}};
   check_scan_points(Expected_SPs, scan.points);
 }
 
 TEST_F(LaserScanGeneratorTest, rightOfCecumEntranceFacingTop4beams) {
+  const auto Top_Bnd_Pos = CecumTextRasterMapPrimitive::BoundPosition::Top;
+  auto cecum_mp = CecumTextRasterMapPrimitive{7, 4, Top_Bnd_Pos};
+  auto mp_free_space = cecum_mp.free_space()[0];
+
   auto pose_delta = RobotPoseDelta{
-    ((Cecum_Free_X_Start + Cecum_Free_W) * Patch_Scale - 1) * map.scale(),
-    (-Cecum_Patch_H * Patch_Scale + 1) * map.scale(),
+    (mp_free_space.right() * Patch_Scale - 1) * map.scale(),
+    (-cecum_mp.height() * Patch_Scale + 1) * map.scale(),
     deg2rad(90)
   };
-  prepare_map_and_robot_pose(pose_delta, Patch_Scale);
+  prepare_map_and_robot_pose(cecum_mp, pose_delta, Patch_Scale);
   const double scale = map.scale() * Patch_Scale;
   auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
 
-  const auto Expected_SPs = ScanPoints{{map.scale(), deg2rad(-90)},
-                                       {Cecum_Free_H * scale, deg2rad(0)},
-                                       {Cecum_Free_W * scale, deg2rad(90)}};
+  const auto Expected_SPs = ScanPoints{
+    {map.scale(), deg2rad(-90)},
+    {mp_free_space.vside_len() * scale, deg2rad(0)},
+    {mp_free_space.hside_len() * scale, deg2rad(90)}};
   check_scan_points(Expected_SPs, scan.points);
 }
 
 TEST_F(LaserScanGeneratorTest, rightOfCecumEndFacingLeft4beams) {
+  const auto Top_Bnd_Pos = CecumTextRasterMapPrimitive::BoundPosition::Top;
+  auto cecum_mp = CecumTextRasterMapPrimitive{7, 4, Top_Bnd_Pos};
+  auto mp_free_space = cecum_mp.free_space()[0];
+
   auto pose_delta = RobotPoseDelta{
-    ((Cecum_Free_X_Start + Cecum_Free_W) * Patch_Scale - 1) * map.scale(),
-    (Cecum_Free_Y_Start * Patch_Scale) * map.scale(),
+    (mp_free_space.right() * Patch_Scale - 1) * map.scale(),
+    ((mp_free_space.top() - 1) * Patch_Scale) * map.scale(),
     deg2rad(180)
   };
-  prepare_map_and_robot_pose(pose_delta, Patch_Scale);
-  const double scale = map.scale() * Patch_Scale;
+  prepare_map_and_robot_pose(cecum_mp, pose_delta, Patch_Scale);
   auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
 
-
-  const auto Expected_SPs = ScanPoints{{map.scale(), deg2rad(-180)},
-                                       {map.scale(), deg2rad(-90)},
-                                       {Cecum_Free_W * scale, deg2rad(0)}};
+  const auto Expected_SPs = ScanPoints{
+    {map.scale(), deg2rad(-180)},
+    {map.scale(), deg2rad(-90)},
+    {mp_free_space.hside_len() * Patch_Scale * map.scale(), deg2rad(0)}};
   check_scan_points(Expected_SPs, scan.points);
 }
 
 TEST_F(LaserScanGeneratorTest, leftOfCecumEndFacingDown4beams) {
+  const auto Top_Bnd_Pos = CecumTextRasterMapPrimitive::BoundPosition::Top;
+  auto cecum_mp = CecumTextRasterMapPrimitive{7, 4, Top_Bnd_Pos};
+  auto mp_free_space = cecum_mp.free_space()[0];
+
   auto pose_delta = RobotPoseDelta{
-    (Cecum_Free_X_Start * Patch_Scale) * map.scale(),
-    (Cecum_Free_Y_Start * Patch_Scale) * map.scale(),
+    (mp_free_space.left() * Patch_Scale) * map.scale(),
+    ((mp_free_space.top() - 1) * Patch_Scale) * map.scale(),
     deg2rad(270)
   };
-  prepare_map_and_robot_pose(pose_delta, Patch_Scale);
-  const double scale = map.scale() * Patch_Scale;
+  prepare_map_and_robot_pose(cecum_mp, pose_delta, Patch_Scale);
   auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
 
-  const auto Expected_SPs = ScanPoints{{map.scale(), deg2rad(-180)},
-                                       {map.scale(), deg2rad(-90)},
-                                       {Cecum_Free_W * scale, deg2rad(90)}};
+  const auto Expected_SPs = ScanPoints{
+    {map.scale(), deg2rad(-180)},
+    {map.scale(), deg2rad(-90)},
+    {mp_free_space.hside_len() * Patch_Scale * map.scale(), deg2rad(90)}};
   check_scan_points(Expected_SPs, scan.points);
 }
 
 TEST_F(LaserScanGeneratorTest, middleOfCecumEntranceFacingIn4beams) {
+  const auto Top_Bnd_Pos = CecumTextRasterMapPrimitive::BoundPosition::Top;
+  auto cecum_mp = CecumTextRasterMapPrimitive{7, 4, Top_Bnd_Pos};
+  auto mp_free_space = cecum_mp.free_space()[0];
+
   auto pose_delta = RobotPoseDelta{
-    (Cecum_Patch_W * Patch_Scale / 2) * map.scale(),
-    (-Cecum_Patch_H * Patch_Scale + 1) * map.scale(),
+    (cecum_mp.width() * Patch_Scale / 2) * map.scale(),
+    (-cecum_mp.height() * Patch_Scale + 1) * map.scale(),
     deg2rad(90)};
-  prepare_map_and_robot_pose(pose_delta, Patch_Scale);
+  prepare_map_and_robot_pose(cecum_mp, pose_delta, Patch_Scale);
   auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
 
-  /* extra 0.5*map.scale() is for robot offset inside the cell */
+  // extra 0.5*map.scale() is for robot offset inside the cell
   const auto Expected_SPs = ScanPoints{
-    {((Patch_Scale * Cecum_Free_W + 1) / 2) * map.scale(), deg2rad(-90)},
-    {Patch_Scale * Cecum_Free_H * map.scale(), deg2rad(0)},
-    {(Patch_Scale * Cecum_Free_W / 2 + 1) * map.scale(), deg2rad(90)}};
+    {((Patch_Scale * mp_free_space.hside_len() + 1) / 2) * map.scale(),
+     deg2rad(-90)},
+    {Patch_Scale * mp_free_space.vside_len() * map.scale(),
+     deg2rad(0)},
+    {(Patch_Scale * mp_free_space.hside_len() / 2 + 1) * map.scale(),
+     deg2rad(90)}
+  };
 
   check_scan_points(Expected_SPs, scan.points);
 }
@@ -202,56 +219,69 @@ TEST_F(LaserScanGeneratorTest, middleOfCecumEntranceFacingIn4beams) {
 // Misc fall facing
 
 TEST_F(LaserScanGeneratorTest, rightOfCecumEndFacingLeftBot45deg4beams) {
+  const auto Top_Bnd_Pos = CecumTextRasterMapPrimitive::BoundPosition::Top;
+  auto cecum_mp = CecumTextRasterMapPrimitive{4, 7, Top_Bnd_Pos};
+  auto mp_fspc = cecum_mp.free_space()[0];
+
   auto pose_delta = RobotPoseDelta{
-    ((Cecum_Free_X_Start + Cecum_Free_W) * Patch_Scale - 1) * map.scale(),
-    (Cecum_Free_Y_Start * Patch_Scale) * map.scale(),
+    (mp_fspc.right() * Patch_Scale - 1) * map.scale(),
+    ((mp_fspc.top() - 1) * Patch_Scale) * map.scale(),
     deg2rad(225)
   };
-  prepare_map_and_robot_pose(pose_delta, Patch_Scale);
-  const double scale = map.scale() * Patch_Scale;
+  prepare_map_and_robot_pose(cecum_mp, pose_delta, Patch_Scale);
   auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
 
   const auto Expected_SPs = ScanPoints{
     {map.scale(), deg2rad(-180)},
     {map.scale(), deg2rad(-90)},
-    {Cecum_Free_W * scale / std::cos(deg2rad(45)), deg2rad(0)},
+    {mp_fspc.hside_len() * map.scale() * Patch_Scale / std::cos(deg2rad(45)),
+     deg2rad(0)},
     {map.scale(), deg2rad(90)}};
   check_scan_points(Expected_SPs, scan.points);
 }
 
 TEST_F(LaserScanGeneratorTest, leftOfCecumEndFacingRightBot30deg4beams) {
+  const auto Top_Bnd_Pos = CecumTextRasterMapPrimitive::BoundPosition::Top;
+  auto cecum_mp = CecumTextRasterMapPrimitive{3, 4, Top_Bnd_Pos};
+  auto mp_fspc = cecum_mp.free_space()[0];
+
   auto pose_delta = RobotPoseDelta{
-    (Cecum_Free_X_Start * Patch_Scale) * map.scale(),
-    (Cecum_Free_Y_Start * Patch_Scale) * map.scale(),
+    (mp_fspc.left() * Patch_Scale) * map.scale(),
+    ((mp_fspc.top() - 1) * Patch_Scale) * map.scale(),
     deg2rad(-30)
   };
-  prepare_map_and_robot_pose(pose_delta, Patch_Scale);
-  const double scale = map.scale() * Patch_Scale;
+  prepare_map_and_robot_pose(cecum_mp, pose_delta, Patch_Scale);
   auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
 
   const auto Expected_SPs = ScanPoints{
     {map.scale(), deg2rad(-180)},
     {map.scale(), deg2rad(-90)},
-    {Cecum_Free_W * scale / std::cos(deg2rad(30)), deg2rad(0)},
+    {mp_fspc.hside_len() * map.scale() * Patch_Scale / std::cos(deg2rad(30)),
+     deg2rad(0)},
     {map.scale(), deg2rad(90)}};
   check_scan_points(Expected_SPs, scan.points);
 }
 
 TEST_F(LaserScanGeneratorTest, cecumCenterFacingDown8beams240FoW) {
+  const auto Top_Bnd_Pos = CecumTextRasterMapPrimitive::BoundPosition::Top;
+  // TODO: investigate expected scan points generation for the "4, 9" case
+  auto cecum_mp = CecumTextRasterMapPrimitive{3, 9, Top_Bnd_Pos};
+  auto mp_fspc = cecum_mp.free_space()[0];
+
   auto pose_delta = RobotPoseDelta{
-    (Cecum_Patch_W * Patch_Scale) * map.scale() / 2,
-    (Cecum_Free_Y_Start * Patch_Scale - Cecum_Free_H * Patch_Scale / 2)
-      * map.scale(),
+    (cecum_mp.width() * Patch_Scale) * map.scale() / 2,
+    ((mp_fspc.top() - 1) - mp_fspc.vside_len() / 2) * Patch_Scale * map.scale(),
     deg2rad(-90)
   };
-  prepare_map_and_robot_pose(pose_delta, Patch_Scale);
-  auto lsgen = LaserScanGenerator{LaserScannerParams{15, deg2rad(270 / 8),
+  prepare_map_and_robot_pose(cecum_mp, pose_delta, Patch_Scale);
+  auto lsgen = LaserScanGenerator{LaserScannerParams{30, deg2rad(270 / 8),
                                                          deg2rad(270 / 2)}};
   auto scan = lsgen.generate_2D_laser_scan(map, rpose, 1);
 
   constexpr double A_Step = 270 / 8;
-  double left_w = (Patch_Scale * Cecum_Free_W / 2 + 1) * map.scale();
-  double right_w =  ((Patch_Scale * Cecum_Free_W + 1) / 2) * map.scale();
+  double cecum_free_w = mp_fspc.hside_len();
+  double left_w =  ((Patch_Scale * cecum_free_w + 1) / 2) * map.scale();
+  double right_w = (Patch_Scale * cecum_free_w / 2) * map.scale();
   const auto Expected_SPs = ScanPoints{
     {left_w / std::cos(deg2rad(45 - 0 * A_Step)), deg2rad(-135 + 0 * A_Step)},
     {left_w / std::cos(deg2rad(45 - 1 * A_Step)), deg2rad(-135 + 1 * A_Step)},
