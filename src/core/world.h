@@ -1,5 +1,5 @@
-#ifndef __WORLD_H_INCLUDED
-#define __WORLD_H_INCLUDED
+#ifndef SLAM_CTOR_CORE_WORLD_H_INCLUDED
+#define SLAM_CTOR_CORE_WORLD_H_INCLUDED
 
 #include <memory>
 

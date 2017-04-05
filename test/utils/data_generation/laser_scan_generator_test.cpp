@@ -7,6 +7,8 @@
 #include "../../../src/utils/data_generation/grid_map_patcher.h"
 #include "../../../src/utils/data_generation/laser_scan_generator.h"
 
+#include "../../../src/utils/console_view.h"
+
 class TestGridCell : public GridCell {
 public:
   TestGridCell() : GridCell{Occupancy{0, 0}} {}
@@ -62,20 +64,11 @@ protected: // fields
                 std::abs(abs_err.range / std::cos(rpose.theta + actual.angle)));
   }
 
-  // TODO: move to debug utils
-  /*
-  void dbg_print_map_pose(int scale = Patch_Scale) {
-    auto rc = map.world_to_cell(rpose.x, rpose.y);
-    std::cout << "(" << rpose.x << " " << rpose.y << ") -> " << rc << std::endl;
-    auto c = DiscretePoint2D{0, 0};
-    for (c.y = 0; -Cecum_Patch_H * scale < c.y; --c.y) {
-      for (c.x = 0; c.x < Cecum_Patch_W * scale; ++c.x) {
-        std::cout << (rc == c ? "*" : std::to_string(map[c] == 1.0 ? 1 : 0));
-      }
-      std::cout << std::endl;
-    }
+  void dbg_show_map_near_robot(int l, int r, int u, int d) {
+    auto scale = Patch_Scale * map.scale();
+    show_grid_map(map, {rpose.x, rpose.y},
+                  l * scale, r * scale, u * scale, d * scale);
   }
-  */
 
 protected: // fields
   UnboundedPlainGridMap map;
