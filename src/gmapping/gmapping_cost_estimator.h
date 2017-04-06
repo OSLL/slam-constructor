@@ -32,10 +32,12 @@ public:
     DiscretePoint2D last_handled_dpoint;
     scan.trig_cache->set_theta(pose.theta);
 
+    int best_scan_weight = 0;
     for (size_t i = _scan_margin; i < scan.points.size() - _scan_margin; ++i) {
       if (_pts_skip_rate && i % _pts_skip_rate) {
         continue;
       }
+      best_scan_weight += 1;
 
       const ScanPoint &sp = scan.points[i];
       double c = scan.trig_cache->cos(sp.angle);
@@ -78,7 +80,7 @@ public:
       scan_weight += last_dpoint_weight;
     }
 
-    return scan_weight;
+    return best_scan_weight - scan_weight;
   }
 
 private:

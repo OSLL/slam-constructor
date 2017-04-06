@@ -23,18 +23,18 @@ public:
     double a_step = _angular_delta, l_step = _linear_delta;
 
     RobotPose best_pose = init_pose;
-    double best_prob = sce->estimate_scan_cost(best_pose, scan, map, 1.0);
+    double best_cost = sce->estimate_scan_cost(best_pose, scan, map);
     for (unsigned step_shrinks = 0; step_shrinks < _max_step_shrinks;) {
       RobotPose current_pose = best_pose;
       bool pose_was_shifted = false;
       for (size_t action = 0; action < DirNm * DimNm; ++action) {
         RobotPose shifted_pose = shift(current_pose, a_step, l_step, action);
-        double shifted_pose_prob =
-          sce->estimate_scan_cost(shifted_pose, scan, map, 1.0);
+        double shifted_pose_cost =
+          sce->estimate_scan_cost(shifted_pose, scan, map);
 
-        if (best_prob < shifted_pose_prob) {
+        if (shifted_pose_cost < best_cost) {
           best_pose = shifted_pose;
-          best_prob = shifted_pose_prob;
+          best_cost = shifted_pose_cost;
           pose_was_shifted = true;
         }
       }
@@ -45,7 +45,7 @@ public:
       }
     }
     pose_delta = best_pose - init_pose;
-    return best_prob;
+    return best_cost;
   }
 
 private:
@@ -53,6 +53,7 @@ private:
   enum Dir {Inc = 0, Dec, DirNm};
   static_assert(DimNm % 2 != DirNm % 2, "");
 
+  // TODO: return RobotPoseDelta
   RobotPose shift(const RobotPose &current_pose, double a_step, double l_step,
                   size_t  action) {
     RobotPose shifted = current_pose;
