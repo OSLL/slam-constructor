@@ -10,7 +10,7 @@
 class RobotPoseDelta {
 public: // methods
   RobotPoseDelta() : RobotPoseDelta(0, 0, 0){}
-  RobotPoseDelta(double d_x, double d_y, double d_th) :
+  constexpr RobotPoseDelta(double d_x, double d_y, double d_th) :
     x(d_x), y(d_y), theta(d_th) {}
   RobotPoseDelta& operator+=(const RobotPoseDelta& delta) {
     x += delta.x;

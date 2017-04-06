@@ -1,5 +1,5 @@
-#ifndef SLAM_CTOR_TESTS_MOCK_GRID_CELL_H
-#define SLAM_CTOR_TESTS_MOCK_GRID_CELL_H
+#ifndef SLAM_CTOR_TESTS_MOCK_GRID_CELL_H_INCLUDED
+#define SLAM_CTOR_TESTS_MOCK_GRID_CELL_H_INCLUDED
 
 #include "../../src/core/maps/grid_cell.h"
 
