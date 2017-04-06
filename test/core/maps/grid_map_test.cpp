@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include <limits>
 
 #include "../../../src/core/maps/grid_map.h"
 
@@ -58,7 +59,7 @@ public:
 protected: // methods
 
   Point2D cell_middle(const DiscretePoint2D& pnt) {
-    return {(pnt.x + 0.5) * Grid_Scale, (pnt.y + 0.5) * Grid_Scale};
+    return map.cell_to_world(pnt);
   }
 
 protected: // fields
@@ -318,6 +319,66 @@ TEST_F(GridMapRasterizationTest, verticalLineAlinedBwd) {
   ASSERT_EQ(map.world_to_cells({{0, 0}, {-0.35, 0}}),
             DSegment({{0, 0}, {-1, 0}, {-2, 0}, {-3, 0}, {-4, 0}}));
 }
+
+//============================================================================//
+
+class GridMapInfinityScalingTest : public ::testing::Test {
+protected:
+  static_assert(std::numeric_limits<double>::has_infinity);
+  static constexpr double Inf = std::numeric_limits<double>::infinity();
+protected:
+  GridMapInfinityScalingTest() : map{{1, 1, Inf}} {}
+
+  void test_map_access(double x, double y) {
+    ASSERT_EQ(DiscretePoint2D(0, 0), map.world_to_cell(x, y));
+  }
+protected: // fields
+  MockGridMap map;
+};
+
+TEST_F(GridMapInfinityScalingTest, access1stQ) {
+  test_map_access(0, 0);
+  test_map_access(std::numeric_limits<double>::max(),
+                  std::numeric_limits<double>::max());
+  /* FIXME
+  test_map_access(std::numeric_limits<double>::infinity(),
+                  std::numeric_limits<double>::infinity());
+  */
+}
+
+TEST_F(GridMapInfinityScalingTest, access2ndQ) {
+  test_map_access(-5, 3);
+  test_map_access(std::numeric_limits<double>::lowest(),
+                  std::numeric_limits<double>::max());
+  /* FIXME
+  test_map_access(-std::numeric_limits<double>::infinity(),
+                  std::numeric_limits<double>::infinity());
+  */
+}
+
+TEST_F(GridMapInfinityScalingTest, access3rdQ) {
+  test_map_access(-5, -3);
+  test_map_access(std::numeric_limits<double>::lowest(),
+                  std::numeric_limits<double>::lowest());
+  /* FIXME
+  test_map_access(-std::numeric_limits<double>::infinity(),
+                  -std::numeric_limits<double>::infinity());
+  */
+}
+
+TEST_F(GridMapInfinityScalingTest, access4thQ) {
+  test_map_access(5, -3);
+  test_map_access(std::numeric_limits<double>::max(),
+                  std::numeric_limits<double>::lowest());
+  /* FIXME
+  test_map_access(std::numeric_limits<double>::infinity(),
+                  -std::numeric_limits<double>::infinity());
+  */
+}
+
+//============================================================================//
+//============================================================================//
+//============================================================================//
 
 int main (int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
