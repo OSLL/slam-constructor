@@ -3,20 +3,14 @@
 #include <memory>
 #include <ostream>
 
-#include "../../../src/core/maps/plain_grid_map.h"
+#include "../mock_grid_cell.h"
 
-class TestGridCell : public GridCell {
-public:
-  TestGridCell() : GridCell{{0, 0}} {}
-  std::unique_ptr<GridCell> clone() const override {
-    return std::make_unique<TestGridCell>(*this);
-  }
-};
+#include "../../../src/core/maps/plain_grid_map.h"
 
 class UnboundedPlainGridMapTest : public ::testing::Test {
 protected: // methods
   UnboundedPlainGridMapTest()
-    : map{std::make_shared<TestGridCell>(), {1, 1, 1}}
+    : map{std::make_shared<MockGridCell>(), {1, 1, 1}}
     , data{true, {0.5, 0.5}, {-1, -1}, 0} {}
 protected: // fields
   UnboundedPlainGridMap map;

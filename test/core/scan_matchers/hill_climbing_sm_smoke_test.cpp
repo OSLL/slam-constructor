@@ -2,6 +2,8 @@
 
 #include <limits>
 
+#include "../mock_grid_cell.h"
+
 #include "../../../src/core/scan_matchers/hill_climbing_scan_matcher.h"
 
 #include "../../../src/core/maps/plain_grid_map.h"
@@ -32,18 +34,6 @@ constexpr int Cecum_Patch_W = 15, Cecum_Patch_H = 13;
 constexpr int Cecum_Free_X_Start = 1, Cecum_Free_Y_Start = -1;
 constexpr int Cecum_Free_W = 13, Cecum_Free_H = 12;
 
-class TestGridCell : public GridCell {
-public:
-  TestGridCell() : GridCell{Occupancy{0, 0}} {}
-  std::unique_ptr<GridCell> clone() const override {
-    return std::make_unique<TestGridCell>(*this);
-  }
-
-  double discrepancy(const AreaOccupancyObservation &aoo) const override {
-    return std::abs(_occupancy - aoo.occupancy);
-  }
-};
-
 // TODO: rm code duplication for cost estimators
 class DiscrepancySumCostEstimator : public ScanCostEstimator {
 public:
@@ -73,7 +63,7 @@ public:
 class HillClimbingScanMatcherTest : public ::testing::Test {
 protected: // methods
   HillClimbingScanMatcherTest()
-    : map{std::make_shared<TestGridCell>(),
+    : map{std::make_shared<MockGridCell>(),
           {Map_Width, Map_Height, Map_Scale}}
     , rpose{map.scale() / 2, map.scale() / 2, 0} // middle of a cell
     , hcsm{std::make_shared<DiscrepancySumCostEstimator>(),

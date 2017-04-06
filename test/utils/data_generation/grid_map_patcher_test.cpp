@@ -3,22 +3,16 @@
 #include <algorithm>
 #include <iterator>
 
+#include "../../core/mock_grid_cell.h"
+
 #include "../../../src/utils/data_generation/map_primitives.h"
 #include "../../../src/utils/data_generation/grid_map_patcher.h"
 #include "../../../src/core/maps/plain_grid_map.h"
 
-class TestGridCell : public GridCell {
-public:
-  TestGridCell() : GridCell{Occupancy{0, 0}} {}
-  std::unique_ptr<GridCell> clone() const override {
-    return std::make_unique<TestGridCell>(*this);
-  }
-};
-
 class GridMapPatcherTest : public ::testing::Test {
 protected: // methods
   GridMapPatcherTest()
-    : map{std::make_shared<TestGridCell>(),
+    : map{std::make_shared<MockGridCell>(),
           GridMapParams{Map_Width, Map_Height, Map_Scale}} {}
 
 protected: // consts
@@ -72,7 +66,7 @@ protected: // fields
         // std::cout << map[coord] << " ";
         if (coord.x == Check_Left || coord.x == Check_Right ||
             coord.y == Check_Top || coord.y == Check_Bot) {
-          ASSERT_EQ(0.0, map[coord]);
+          ASSERT_EQ(MockGridCell::Default_Occ_Prob, map[coord]);
           continue;
         }
 

@@ -3,27 +3,21 @@
 #include <memory>
 #include <cmath>
 
+#include "../mock_grid_cell.h"
+
 #include "../../../src/core/maps/zoomable_grid_map.h"
 #include "../../../src/core/maps/plain_grid_map.h"
 #include "../../../src/core/maps/lazy_tiled_grid_map.h"
 
-constexpr double Default_Occupancy_Prob = -42;
-
-class TestGridCell : public GridCell {
-public:
-  TestGridCell() : GridCell{Occupancy{Default_Occupancy_Prob, 0}} {}
-  std::unique_ptr<GridCell> clone() const override {
-    return std::make_unique<TestGridCell>(*this);
-  }
-};
-
 class ZoomableGridMapTest : public ::testing::Test {
+protected:
+  static constexpr double Default_Occupancy_Prob = -42;
 protected: // methods
   ZoomableGridMapTest()
-    : cell_proto{std::make_shared<TestGridCell>()}
+    : cell_proto{std::make_shared<MockGridCell>(Default_Occupancy_Prob)}
     , map{cell_proto, {16, 16, 1}} {}
 protected: // fields
-  std::shared_ptr<TestGridCell> cell_proto;
+  std::shared_ptr<GridCell> cell_proto;
   ZoomableGridMap<UnboundedPlainGridMap> map;
 };
 

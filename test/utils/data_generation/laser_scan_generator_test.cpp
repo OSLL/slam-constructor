@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include "../../core/mock_grid_cell.h"
+
 #include "../../../src/core/math_utils.h"
 #include "../../../src/core/robot_pose.h"
 #include "../../../src/core/maps/plain_grid_map.h"
@@ -9,18 +11,10 @@
 
 #include "../../../src/utils/console_view.h"
 
-class TestGridCell : public GridCell {
-public:
-  TestGridCell() : GridCell{Occupancy{0, 0}} {}
-  std::unique_ptr<GridCell> clone() const override {
-    return std::make_unique<TestGridCell>(*this);
-  }
-};
-
 class LaserScanGeneratorTest : public ::testing::Test {
 protected: // methods
   LaserScanGeneratorTest()
-    : map{std::make_shared<TestGridCell>(),
+    : map{std::make_shared<MockGridCell>(),
           GridMapParams{Map_Width, Map_Height, Map_Scale}}
     , rpose{map.scale() / 2, map.scale() / 2, 0} /* middle of a cell */ {}
 protected:

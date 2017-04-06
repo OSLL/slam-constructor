@@ -5,21 +5,13 @@
 #include <algorithm>
 #include <limits>
 
+#include "../mock_grid_cell.h"
+
 #include "../../../src/core/maps/grid_map.h"
 
 //============================================================================//
 //===                                 Mocks                                ===//
 //============================================================================//
-
-constexpr double Grid_Scale = 0.1;
-
-class MockGridCell : public GridCell {
-public:
-  MockGridCell() : GridCell{{0, 0}} {}
-  std::unique_ptr<GridCell> clone() const override {
-    return std::make_unique<MockGridCell>(*this);
-  }
-};
 
 class MockGridMap : public GridMap {
 public:
@@ -53,6 +45,8 @@ private: // fields
 //============================================================================//
 
 class GridMapRasterizationTest : public ::testing::Test {
+protected:
+  static constexpr double Grid_Scale = 0.1;
 public:
   GridMapRasterizationTest() : map{{1000, 1000, Grid_Scale}} {}
 
