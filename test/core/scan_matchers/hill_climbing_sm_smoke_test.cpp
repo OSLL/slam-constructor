@@ -6,7 +6,6 @@
 
 #include "scan_matcher_test_utils.h"
 
-#include "../../../src/utils/console_view.h"
 #include "../../../src/core/scan_matchers/hill_climbing_scan_matcher.h"
 #include "../../../src/core/maps/plain_grid_map.h"
 

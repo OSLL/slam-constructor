@@ -56,6 +56,11 @@ public:
     auto &z_map = dynamic_cast<ZoomableGridMap<UnboundedPlainGridMap> &>(
                     const_cast<GridMap&>(map));
     auto unchecked_poses = max_pq<BranchAndBoundNode>{};
+    // TODO: Rectangle -> pose correction when best area is found
+    // add explicit "no correction" entry
+    z_map.set_zoom_level(0);
+    unchecked_poses.emplace(sce->estimate_scan_cost(init_pose, scan, z_map),
+                            0, Rectangle{0, 0, 0, 0}, 0);
 
     // init unchecked poses pool
     // TODO: dynamic init zoom level calculation
@@ -83,6 +88,7 @@ public:
                 << std::endl;
       */
     }
+
     //std::cout << "INIT is DONE" << std::endl;
     // the best pose lookup
     while (!unchecked_poses.empty()) {

@@ -71,7 +71,6 @@ protected: // methods
   }
 
   virtual GridScanMatcher& scan_matcher() = 0;
-  // TODO: move to params
   virtual RobotPoseDelta default_acceptable_error() { return Acceptable_Error; }
 
   virtual bool is_result_noise_acceptable(const TransformedLaserScan &scan,
