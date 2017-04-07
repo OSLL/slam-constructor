@@ -13,9 +13,9 @@ public:
   GridCell& operator=(GridCell&& gc) = default;
   virtual ~GridCell() = default;
 
-  operator double() const { return _occupancy.prob_occ; }
+  operator double() const { return occupancy().prob_occ; }
   explicit operator bool() const { return double(*this) == 0; }
-  const Occupancy& occupancy() const { return _occupancy; }
+  virtual const Occupancy& occupancy() const { return _occupancy; }
 
   virtual std::unique_ptr<GridCell> clone() const {
     return std::make_unique<GridCell>(*this);

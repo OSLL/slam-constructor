@@ -148,7 +148,7 @@ protected:
   void set_height(unsigned h) { _height = h; }
   void set_width(unsigned w) { _width = w; }
 
-  std::shared_ptr<GridCell> cell_prototype() { return _cell_prototype; }
+  std::shared_ptr<GridCell> cell_prototype() const { return _cell_prototype; }
 private: // fields
   int _width, _height;
   double _m_per_cell;

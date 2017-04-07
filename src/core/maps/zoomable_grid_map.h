@@ -3,27 +3,33 @@
 
 #include <memory>
 #include <cassert>
+#include <limits>
+#include <utility>
 
 #include "grid_map.h"
 
 template <typename T>
 class ZoomableGridMap : public GridMap {
-private:
+private: // type aliases
   using ZoomedMapCache = std::vector<std::unique_ptr<GridMap>>;
-private:
+private: // classes declarations
   class ZoomableGridCellProxy;
-public:
-  static constexpr unsigned Unzoomed_Map_Level = 0;
+private: // consts
+  static constexpr int Coarsest_Map_W = 1, Coarsest_Map_H = 1;
 public:
 
   ZoomableGridMap(std::shared_ptr<GridCell> prototype,
                   const GridMapParams& params = MapValues::gmp)
-    // TODO: height, width should be taken from the base map
     : GridMap{prototype, params}
     , _zoomed_map_cache{std::make_shared<ZoomedMapCache>()} {
 
+    // finest map
     _zoomed_map_cache->push_back(std::make_unique<T>(prototype, params));
-    ensure_zoom_cache_is_valid();
+    // coarsest map
+    auto coarsest_mp = GridMapParams{Coarsest_Map_W, Coarsest_Map_H,
+                                     std::numeric_limits<double>::infinity()};
+    _zoomed_map_cache->push_back(std::make_unique<T>(prototype, coarsest_mp));
+    ensure_zcache_is_continuous();
   }
 
   ZoomableGridMap(const ZoomableGridMap&) = delete;
@@ -31,20 +37,33 @@ public:
   ZoomableGridMap(ZoomableGridMap&&) = default;
   ZoomableGridMap& operator=(ZoomableGridMap&&) = default;
 
-  int width() const override {
-    return (*_zoomed_map_cache)[_zoom_level]->width();
-  }
-  int height() const override {
-    return (*_zoomed_map_cache)[_zoom_level]->height();
-  }
-  double scale() const override {
-    return (*_zoomed_map_cache)[_zoom_level]->scale();
+  static constexpr unsigned finest_zoom_level() { return 0; }
+  unsigned coarsest_zoom_level() const { return zoom_levels_nm() - 1; }
+
+  unsigned zoom_levels_nm() const {
+    ensure_zcache_is_continuous();
+    return _zoomed_map_cache->size();
   }
 
-  DiscretePoint2D origin() const override {
-    return (*_zoomed_map_cache)[_zoom_level]->origin();
+  void set_zoom_level(unsigned zoom_level) {
+    assert(zoom_level < zoom_levels_nm());
+    _zoom_level = zoom_level;
   }
 
+  //----------------------------------------------------------------------------
+  // GridMap overrides
+
+  int width() const override { return active_map().width(); }
+  int height() const override { return active_map().height(); }
+  double scale() const override { return active_map().scale(); }
+  DiscretePoint2D origin() const override { return active_map().origin(); }
+
+  const GridCell& operator[](const DPnt2D& coord) const override {
+    return active_map()[coord];
+  }
+
+  // non-const op[] must return a GridCell reference according to its iface
+  // WA: use a pin to track proxy's lifetime
   ZoomableGridCellProxy& operator[](const DPnt2D& coord) override {
     if (_proxy_pin.get() != nullptr) {
       if (_proxy_pin->zoom_level() == _zoom_level &&
@@ -56,69 +75,70 @@ public:
         assert(0 && "Try to access for modification two cells simultaneously");
       }
     }
-    ensure_coord_is_tracked(coord);
-    _proxy_pin.reset(
-      new ZoomableGridCellProxy{_zoom_level, coord, _zoomed_map_cache});
+    _proxy_pin.reset(new ZoomableGridCellProxy{coord, _zoom_level,
+                                               _zoomed_map_cache});
     return *_proxy_pin;
   }
 
-  const GridCell &operator[](const DPnt2D& coord) const override {
-    ensure_coord_is_tracked(coord);
-    const GridMap& active_map = *(*_zoomed_map_cache)[_zoom_level];
-    return active_map[coord];
-  }
-
-  void set_zoom_level(unsigned zoom_level) {
-    assert(zoom_level < zoom_levels_nm());
-    _zoom_level = zoom_level;
-  }
-
-  unsigned zoom_levels_nm() {
-    ensure_zoom_cache_is_valid();
-    return _zoomed_map_cache->size();
-  }
-
 private:
 
-  void ensure_coord_is_tracked(const DiscretePoint2D &coord) const {
-    if (_zoom_level != _zoomed_map_cache->size() - 1) { return; }
-    const GridMap& active_map = *(*_zoomed_map_cache)[_zoom_level];
-    // FIXME: ensure coord is covered by max zoom level map
-    assert(active_map.has_cell(coord));
+  const GridMap& map(unsigned zoom_level) const {
+    return *(*_zoomed_map_cache)[zoom_level];
   }
 
-  void ensure_zoom_cache_is_valid() {
-    GridMap* the_coarsest_map = _zoomed_map_cache->back().get();
-    if (the_coarsest_map->width() == 1 && the_coarsest_map->height() == 1) {
-      return;
-    }
+  const GridMap& active_map() const {return map(_zoom_level); }
 
-    int w = the_coarsest_map->width(), h = the_coarsest_map->height();
-    double cell_size = the_coarsest_map->scale();
+  GridMap& active_map() {
+    return const_cast<GridMap&>(
+      static_cast<const decltype(this)>(this)->active_map());
+  }
 
-    while (w != 1 || h != 1) {
-      w = std::max(1, int(std::ceil(1.0 * w / map_scale_factor())));
-      h = std::max(1, int(std::ceil(1.0 * h / map_scale_factor())));
-      cell_size *= map_scale_factor();
+  void ensure_zcache_is_continuous() const {
+    static const int PC_W_Target = Coarsest_Map_W * map_scale_factor(),
+                     PC_H_Target = Coarsest_Map_H * map_scale_factor();
 
-      _zoomed_map_cache->push_back(
-        std::make_unique<T>(cell_prototype(), GridMapParams{w, h, cell_size})
-      );
+    const GridMap& pre_coarsest_map = map(_zoomed_map_cache->size() - 2);
+    int pc_w = pre_coarsest_map.width(), pc_h = pre_coarsest_map.height();
+    double pc_scale = pre_coarsest_map.scale();
+
+    if (pc_w <= PC_W_Target && pc_h <= PC_H_Target) { return; }
+
+    pc_w = ge_2_pow(pc_w), pc_h = ge_2_pow(pc_h);
+    // more cache levels have to be added
+    while (PC_W_Target < pc_w || PC_H_Target < pc_h) {
+      pc_w = std::max(PC_W_Target, int(std::ceil(pc_w / map_scale_factor())));
+      pc_h = std::max(PC_H_Target, int(std::ceil(pc_h / map_scale_factor())));
+      pc_scale *= map_scale_factor();
+
+      auto map_params = GridMapParams{pc_w, pc_h, pc_scale};
+      _zoomed_map_cache->insert((_zoomed_map_cache->rbegin() + 1).base(),
+                                std::make_unique<T>(cell_prototype(),
+                                                    map_params));
     }
   }
 
-  static int map_scale_factor() {
+  static double map_scale_factor() {
     return 2;
   }
 
-private:
+private: // classes
+
   class ZoomableGridCellProxy : public GridCell {
   public:
-    ZoomableGridCellProxy(unsigned zoom_level, const DPnt2D& coord,
+    ZoomableGridCellProxy(const DPnt2D& coord, unsigned zoom_level,
                           std::shared_ptr<ZoomedMapCache> map_cache)
       : GridCell{Occupancy{0, 0}}
       , _zoom_level{zoom_level}, _coord{coord}, _map_cache{map_cache} {
-      _occupancy = master_cell().occupancy();
+    }
+
+    unsigned zoom_level() { return _zoom_level; }
+    const DPnt2D& coord() { return _coord; }
+
+    //--------------------------------------------------------------------------
+    // GridCell overrides
+
+    const Occupancy& occupancy() const {
+      return cell(_zoom_level, _coord).occupancy();
     }
 
     std::unique_ptr<GridCell> clone() const override {
@@ -126,71 +146,45 @@ private:
     }
 
     void operator+=(const AreaOccupancyObservation &aoo) override {
-      // TODO: update of several cells
-      assert(_zoom_level == Unzoomed_Map_Level);
+      // LADO: update of several cells if "non-unzoomed" cell is updated
+      assert(_zoom_level == finest_zoom_level());
 
-      GridCell& master = master_cell();
+      // * Update back cell
+      GridCell& master = cell(_zoom_level, _coord);
       master += aoo;
-      _occupancy = master.occupancy();
 
-      const GridMap& active_map = *(*_map_cache)[_zoom_level];
-      const Point2D vphys_coord = {(_coord.x + 0.5) * active_map.scale(),
-                                   (_coord.y + 0.5) * active_map.scale()};
-      // Update upper cells
+
+      // * Update coarser levels' cells
+      const Point2D vphys_coord = active_map(_zoom_level).cell_to_world(_coord);
       for (unsigned zl = _zoom_level + 1; zl < _map_cache->size(); ++zl) {
-        // TODO CHECK: assert inside zoomed out map
-        GridCell &zo_master = cell(zl, zoom_out(vphys_coord, zl));
-        // TODO: move to policy
-        /*
-        std::cout << zl << ". " << zoom_out(vphys_coord, zl) << " "
-                  << double(master) << " vs "
-                  << double(zo_master) << std::endl;
-        */
-        if (double(master) <= double(zo_master)) {
+        auto coarser_master_coord = active_map(zl).world_to_cell(vphys_coord);
+        GridCell &coarser_master = cell(zl, coarser_master_coord);
+        // LADO: move to Bounding Strategy
+        if (double(master) <= double(coarser_master)) {
           break;
         }
-        zo_master = master;
+        coarser_master = master;
       }
-      // TODO: update lower levels
+      // LADO: Update finer levels
     }
 
     double discrepancy(const AreaOccupancyObservation &aoo) const override {
-      return master_cell().discrepancy(aoo);
+      return cell(_zoom_level, _coord).discrepancy(aoo);
     }
 
-    unsigned zoom_level() { return _zoom_level; }
-    const DPnt2D& coord() { return _coord; }
   private:
-    // NB: "op[] const" and "op[]" may have different semantics for GridMap
+
+    GridMap& active_map(unsigned zoom_lvl) const {
+      return *(*_map_cache)[zoom_lvl];
+    }
+
     const GridCell& cell(unsigned zoom_lvl, const DPnt2D &coord) const {
-      const GridMap& active_map = *(*_map_cache)[zoom_lvl];
-      return active_map[coord];
+      const GridMap& map = static_cast<decltype(map)>(active_map(zoom_lvl));
+      // NB: "op[] const" and "op[]" may have different semantics for GridMap
+      return map[coord];
     }
     GridCell& cell(unsigned zoom_lvl, const DPnt2D &coord) {
-      return (*(*_map_cache)[zoom_lvl])[coord];
-    }
-    const GridCell& master_cell() const {
-      return cell(_zoom_level, _coord);
-    }
-    GridCell& master_cell() {
-      return cell(_zoom_level, _coord);
-    }
-
-    DPnt2D zoom_out(const Point2D& ph_pnt, unsigned zoom_lvl) {
-      // TODO: scailing, code duplication -> move zoom out to strategy
-      const GridMap& active_map = *(*_map_cache)[zoom_lvl];
-      if (zoom_lvl != _map_cache->size() - 1) {
-        return active_map.world_to_cell(ph_pnt);
-      }
-
-      // TODO: fix me. The top level map must have single pixel
-      return {0, 0};
-      // Treat last map as single pixel with origin at scale-center
-      /*
-      return active_map.world_to_cell(
-        Point2D{ph_pnt.x + active_map.scale() / 2,
-                ph_pnt.y + active_map.scale() / 2});
-      */
+      return active_map(zoom_lvl)[coord];
     }
   private:
     unsigned _zoom_level;
@@ -201,8 +195,8 @@ private:
 private:
   // TODO: several pins
   std::shared_ptr<ZoomableGridCellProxy> _proxy_pin;
-  unsigned _zoom_level = Unzoomed_Map_Level;
-  std::shared_ptr<ZoomedMapCache> _zoomed_map_cache;
+  unsigned _zoom_level = finest_zoom_level();
+  mutable std::shared_ptr<ZoomedMapCache> _zoomed_map_cache;
 };
 
 

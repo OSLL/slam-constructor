@@ -95,7 +95,7 @@ public:
       auto best_node = unchecked_poses.top();
       auto transl_step = best_node.delta_window.side() / 2;
       bool node_is_leaf = best_node.lvl ==
-                          ZoomableGridMap<GridMap>::Unzoomed_Map_Level;
+                          ZoomableGridMap<GridMap>::finest_zoom_level();
 
       /*
       std::cout << best_node.lvl << ": " << best_node.delta_window;
