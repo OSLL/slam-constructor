@@ -6,6 +6,7 @@
 #include <cassert>
 #include <vector>
 #include <utility>
+#include <limits>
 
 #include "cell_occupancy_estimator.h"
 #include "grid_cell.h"
@@ -117,7 +118,9 @@ public:
 
   Rectangle world_cell_bounds(const DiscretePoint2D &cell_coord) const {
     assert(has_cell(cell_coord));
+
     auto m_per_cell = scale();
+    assert(m_per_cell != std::numeric_limits<double>::infinity());
     return {m_per_cell * cell_coord.y,        // bot
             m_per_cell * (cell_coord.y + 1),  // top
             m_per_cell * cell_coord.x,        // left
