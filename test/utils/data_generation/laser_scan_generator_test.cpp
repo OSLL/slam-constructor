@@ -261,11 +261,11 @@ TEST_F(LaserScanGeneratorTest, cecumCenterFacingDown8beams240FoW) {
     deg2rad(-90)
   };
   prepare_map_and_robot_pose(cecum_mp, pose_delta, Patch_Scale);
-  auto lsgen = LaserScanGenerator{LaserScannerParams{30, deg2rad(270 / 8),
-                                                         deg2rad(270 / 2)}};
+  auto lsgen = LaserScanGenerator{LaserScannerParams{30, deg2rad(270.0 / 8),
+                                                         deg2rad(270.0 / 2)}};
   auto scan = lsgen.generate_2D_laser_scan(map, rpose, 1);
 
-  constexpr double A_Step = 270 / 8;
+  constexpr double A_Step = 270.0 / 8;
   double cecum_free_w = mp_fspc.hside_len();
   double left_w =  ((Patch_Scale * cecum_free_w + 1) / 2) * map.scale();
   double right_w = (Patch_Scale * cecum_free_w / 2) * map.scale();
@@ -279,8 +279,7 @@ TEST_F(LaserScanGeneratorTest, cecumCenterFacingDown8beams240FoW) {
     {right_w / std::cos(deg2rad(45 - 2 * A_Step)), deg2rad(-135 + 6 * A_Step)},
     {right_w / std::cos(deg2rad(45 - 1 * A_Step)), deg2rad(-135 + 7 * A_Step)},
     {right_w / std::cos(deg2rad(45 - 0 * A_Step)), deg2rad(-135 + 8 * A_Step)}};
-  check_scan_points(Expected_SPs, scan.points,
-                    ScanPoint{map.scale(), 0.001});
+  check_scan_points(Expected_SPs, scan.points);
 }
 
 //------------------------------------------------------------------------------

@@ -19,7 +19,7 @@ struct LaserScannerParams {
   const double max_dist; // meters
   // "h" is for "horizontal"
   const double h_angle_inc; // radians
-  const double h_hsector; // half sector, radians
+  const double h_hsector; // half of horizontal sector (FoW), radians
 };
 
 class LaserScanGenerator {
@@ -33,7 +33,6 @@ public:
    scan.quality = 1.0;
    scan.trig_cache = std::make_shared<TrigonometricCache>();
    scan.trig_cache->update(-_lsp.h_hsector, _lsp.h_hsector, _lsp.h_angle_inc);
-
    auto robot_point = Point2D{pose.x, pose.y};
    auto robot_coord = map.world_to_cell(robot_point);
    assert(!are_equal(robot_point.x, robot_coord.x * map.scale()) &&

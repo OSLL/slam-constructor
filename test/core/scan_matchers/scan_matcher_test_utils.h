@@ -50,7 +50,8 @@ protected: // consts
   };
 protected: // methods
 
-  static LaserScannerParams to_lsp(double max_dist, int fow_deg, int pts_nm) {
+  static LaserScannerParams to_lsp(double max_dist,
+                                   double fow_deg, int pts_nm) {
     return LaserScannerParams{max_dist,
         deg2rad(fow_deg / pts_nm), deg2rad(fow_deg / 2.0)};
   }
