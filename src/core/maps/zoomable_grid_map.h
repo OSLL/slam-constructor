@@ -8,7 +8,18 @@
 
 #include "grid_map.h"
 
-template <typename T>
+class MaxCoarserZoomingPolicy {
+public:
+  static bool on_finer_cell_update(GridCell &fine_cell, GridCell &coarse_cell) {
+    if (double(fine_cell) <= double(coarse_cell)) {
+      return false;
+    }
+    coarse_cell = fine_cell;
+    return true;
+  }
+};
+
+template <typename T, typename ZoomingPolicy = MaxCoarserZoomingPolicy>
 class ZoomableGridMap : public GridMap {
 private: // type aliases
   using ZoomedMapCache = std::vector<std::unique_ptr<GridMap>>;
@@ -159,11 +170,9 @@ private: // classes
       for (unsigned zl = _zoom_level + 1; zl < _map_cache->size(); ++zl) {
         auto coarser_master_coord = active_map(zl).world_to_cell(vphys_coord);
         GridCell &coarser_master = cell(zl, coarser_master_coord);
-        // LADO: move to Bounding Strategy
-        if (double(master) <= double(coarser_master)) {
+        if (!ZoomingPolicy::on_finer_cell_update(master, coarser_master)) {
           break;
         }
-        coarser_master = master;
       }
       // LADO: Update finer levels
     }
