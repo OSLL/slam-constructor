@@ -62,6 +62,9 @@ public: //methods
     _slam->handle_sensor_data(transformed_scan);
   }
 
+  const RobotPose &odometry_pose() const { return _prev_pose; }
+  void set_odometry_pose(const RobotPose& pose) { _prev_pose = pose; }
+
 private: // fields
   DstPtr _slam;
   bool _skip_max_vals;

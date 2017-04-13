@@ -36,6 +36,9 @@ public:
     */
   }
 
+  BaseTBM(double occupied, double empty, double unknown, double conflict) :
+    _occupied(occupied), _empty(empty), _unknown(unknown), _conflict(conflict) {}
+
   BaseTBM& operator+=(const BaseTBM& rhs) {
     auto result = BaseTBM();
     result.reset();
@@ -148,6 +151,20 @@ public:
 
   virtual double discrepancy(const AreaOccupancyObservation &aoo) const {
     return belief.discrepancy(aoo);
+  }
+
+  virtual std::vector<char> serialize() const override {
+    Serializer s(GridCell::serialize());
+    s << belief.occupied() << belief.empty() << belief.unknown() << belief.conflict();
+    return s.result();
+  }
+
+  virtual size_t deserialize(const std::vector<char>& data, size_t pos = 0) override {
+    Deserializer d(data, GridCell::deserialize(data, pos));
+    double o, e, u, c;
+    d >> o >> e >> u >> c;
+    belief = BaseTBM(o, e, u, c);
+    return d.pos();
   }
 
 private:

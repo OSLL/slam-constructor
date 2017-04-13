@@ -3,6 +3,7 @@
 
 #include <memory>
 #include "../sensor_data.h"
+#include "../serialization.h"
 
 class GridCell {
 public:
@@ -28,6 +29,17 @@ public:
   // must be in interval [0, 1.0]
   virtual double discrepancy(const AreaOccupancyObservation &aoo) const {
     return std::abs(_occupancy - aoo.occupancy);
+  }
+
+  virtual std::vector<char> serialize() const {
+      Serializer s; s << occupancy.prob_occ << occupancy.estimation_quality;
+      return s.result();
+  }
+
+  virtual size_t deserialize(const std::vector<char>& data, size_t pos = 0) {
+      Deserializer d(data, pos);
+      d >> occupancy.prob_occ >> occupancy.estimation_quality;
+      return d.pos();
   }
 
 protected:

@@ -44,6 +44,8 @@ public: // methods
     if (sm) { sm->unsubscribe(obs); }
   }
 
+  virtual const MapType& map() const { return _map; }
+  virtual MapType& map() { return _map; }
 
 protected:
 
@@ -83,9 +85,6 @@ protected:
     return AreaOccupancyObservation{is_occ, {(double)is_occ, 1.0},
                                     beam.end(), quality};
   }
-
-  virtual const MapType& map() const { return _map; }
-  virtual MapType& map() { return _map; }
 
 private: // fields
   MapType _map;

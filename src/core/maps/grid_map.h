@@ -49,6 +49,11 @@ public:
 
   virtual const GridCell &operator[](const Coord& coord) const = 0;
 
+  virtual void load_state(const std::vector<char>&) {}
+  virtual std::vector<char> save_state() const {
+      return std::vector<char>();
+  }
+
 protected:
 
   std::shared_ptr<GridCell> cell_prototype() const { return _cell_prototype; }

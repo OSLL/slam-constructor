@@ -168,6 +168,7 @@ protected:
   // notifies with actual height/width changes
   void set_height(unsigned h) { _height = h; }
   void set_width(unsigned w) { _width = w; }
+  void set_scale(double s) { _m_per_cell = s; }
 
 private: // fields
   int _width, _height;
