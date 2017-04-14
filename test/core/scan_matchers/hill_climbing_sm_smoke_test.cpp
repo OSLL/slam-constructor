@@ -97,7 +97,7 @@ TEST_F(HillClimbingScanMatcherSmokeTest, cecumAngStepThetaCwDrift) {
   test_scan_matcher(RobotPoseDelta{0, 0, -Init_Ang_Step});
 }
 
-/* FIXME
+/* FIXME: looks like the method itself should be fixed.
 TEST_F(HillClimbingScanMatcherSmokeTest, cecumComboStepsDrift) {
   init_pose_facing_top_cecum_bound();
   test_scan_matcher({Init_Lin_Step, -Init_Lin_Step, Init_Ang_Step});

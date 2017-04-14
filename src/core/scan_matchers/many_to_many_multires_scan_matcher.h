@@ -83,7 +83,7 @@ public:
                       RobotPoseDelta &result_pose_delta) override {
     // TODO: dynamic angle step estimate
     //std::cout << "M3RS Start" << std::endl;
-    // FIXME?: dynamic cast
+    // FIXME?: dynamic cast; iterators over zoomed maps?
     auto &z_map = dynamic_cast<ZoomableGridMap<CoreMapType> &>(
                     const_cast<GridMap&>(map));
     auto unchecked_poses = init_unchecked_poses(init_pose, scan, z_map);
