@@ -61,6 +61,8 @@ public:
     _zoom_level = zoom_level;
   }
 
+  unsigned zoom_level() const { return _zoom_level; }
+
   //----------------------------------------------------------------------------
   // GridMap overrides
 

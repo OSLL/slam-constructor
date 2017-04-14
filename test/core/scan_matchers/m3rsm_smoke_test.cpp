@@ -22,16 +22,16 @@ protected: // methods
     : ScanMatcherTestBase{std::make_shared<DiscrepancySumCostEstimator>(),
                           Map_Width, Map_Height, Map_Scale,
                           to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
-    , m3rsm{sce, SM_Ang_Step, SM_Ang_Range, SM_Transl_Range, SM_Transl_Range} {}
+    , m3rsm{sce, SM_Ang_Step, SM_Ang_Range,
+            SM_Transl_Err_Factor, SM_Transl_Range, SM_Transl_Range} {}
 protected: // consts
   // map patching params
   static constexpr int Cecum_Patch_W = 15, Cecum_Patch_H = 13;
   static constexpr int Patch_Scale = 1;
 
-  // TODO: rm map H/W setup according to patching params after ZoomableMap fixes
   static constexpr double Map_Scale = 0.1;
-  static constexpr int Map_Width = 3*Cecum_Patch_W * Patch_Scale / Map_Scale;
-  static constexpr int Map_Height = 3*Cecum_Patch_H * Patch_Scale / Map_Scale;
+  static constexpr int Map_Width = 100;
+  static constexpr int Map_Height = 100;
 
   // laser scanner params
   static constexpr double LS_Max_Dist = 15;
@@ -42,24 +42,22 @@ protected: // consts
   static constexpr double SM_Ang_Step = deg2rad(0.5);
   static constexpr double SM_Ang_Range = deg2rad(10);
   static constexpr double SM_Transl_Range = 1; // meter
+  static constexpr double SM_Transl_Err_Factor = 2;
 
 protected: // fields
 
   GridScanMatcher& scan_matcher() override { return m3rsm; };
 
-  void init_pose_facing_top_cecum_bound() {
-    //TODO: fix top level zoom map - the map doesn't cover entire space
-    //WA: work on a grid part with positive coords
-    auto offset = DiscretePoint2D{
-      int(Cecum_Patch_W * Patch_Scale / Map_Scale + 0.5),
-      int(Cecum_Patch_H * Patch_Scale / Map_Scale + 0.5)
-    };
-    rpose += RobotPoseDelta{offset.x * map.scale(), offset.y * map.scale(), 0};
+  RobotPoseDelta default_acceptable_error() override {
+    return {Map_Scale / SM_Transl_Err_Factor, Map_Scale / SM_Transl_Err_Factor,
+            SM_Ang_Step};
+  }
 
+  void init_pose_facing_top_cecum_bound() {
     using CecumMp = CecumTextRasterMapPrimitive;
     auto bnd_pos = CecumMp::BoundPosition::Top;
     auto cecum_mp = CecumMp{Cecum_Patch_W, Cecum_Patch_H, bnd_pos};
-    add_primitive_to_map(cecum_mp, offset, Patch_Scale, Patch_Scale);
+    add_primitive_to_map(cecum_mp, {}, Patch_Scale, Patch_Scale);
 
     rpose += RobotPoseDelta{
       (cecum_mp.width() * Patch_Scale / 2) * map.scale(),
@@ -69,7 +67,7 @@ protected: // fields
   }
 
 protected: // fields
-  ManyToManyMultiResoultionScanMatcher m3rsm;
+  ManyToManyMultiResoultionScanMatcher<UnboundedPlainGridMap> m3rsm;
 };
 
 //------------------------------------------------------------------------------
@@ -79,7 +77,6 @@ TEST_F(M3RScanMatcherSmokeTest, cecumNoPoseNoise) {
   init_pose_facing_top_cecum_bound();
   test_scan_matcher(RobotPoseDelta{0, 0, 0});
 }
-
 
 TEST_F(M3RScanMatcherSmokeTest, cecumLinStepXLeftDrift) {
   init_pose_facing_top_cecum_bound();

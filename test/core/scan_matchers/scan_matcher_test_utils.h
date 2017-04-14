@@ -77,8 +77,10 @@ protected: // methods
   virtual bool is_result_noise_acceptable(const TransformedLaserScan &scan,
                                           const RobotPoseDelta &init_noise,
                                           const RobotPoseDelta &result_noise) {
-    return sce->estimate_scan_cost(rpose, scan, map) ==
-           sce->estimate_scan_cost(rpose + result_noise, scan, map);
+    auto no_noise_cost = sce->estimate_scan_cost(rpose, scan, map);
+    auto noise_cost = sce->estimate_scan_cost(rpose + result_noise, scan, map);
+    //std::cout << no_noise_cost << " vs " << noise_cost << std::endl;
+    return no_noise_cost == noise_cost;
   }
 
   void test_scan_matcher(const LaserScannerParams &lsp,
