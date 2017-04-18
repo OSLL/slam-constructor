@@ -37,6 +37,11 @@ private:
   mutable std::stringstream _stream_pin;
 };
 
+// TODO: move to *.cpp
+constexpr char TextRasterMapPrimitive::Completely_Occupied_Marker;
+constexpr char TextRasterMapPrimitive::Completely_Free_Marker;
+constexpr char TextRasterMapPrimitive::Row_End_Marker;
+
 //------------------------------------------------------------------------------
 // Actual Text Raster Primitives
 //

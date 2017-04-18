@@ -23,4 +23,7 @@ public:
   }
 };
 
+// TODO: move to *.cpp file
+constexpr double MockGridCell::Default_Occ_Prob;
+
 #endif
