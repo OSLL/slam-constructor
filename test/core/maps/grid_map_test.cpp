@@ -48,7 +48,7 @@ class GridMapRasterizationTest : public ::testing::Test {
 protected:
   static constexpr double Grid_Scale = 0.1;
 public:
-  GridMapRasterizationTest() : map{{1000, 1000, Grid_Scale}} {}
+  GridMapRasterizationTest() : map{{100, 100, Grid_Scale}} {}
 
 protected: // methods
 
