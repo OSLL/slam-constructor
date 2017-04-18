@@ -16,13 +16,13 @@
 class DiscrepancySumCostEstimator : public ScanCostEstimator {
 public:
   double estimate_scan_cost(const RobotPose &pose,
-                            const TransformedLaserScan &scan,
+                            const TransformedLaserScan &tr_scan,
                             const GridMap &map,
                             double min_cost) override {
     auto OCCUPIED_OBSERVATION = AreaOccupancyObservation{
       true, Occupancy{1.0, 1.0}, Point2D{0, 0}, 1.0};
     double cost = 0;
-    for (const auto &sp : scan.points) {
+    for (const auto &sp : tr_scan.scan.points()) {
       if (!sp.is_occupied()) {
         continue;
       }
@@ -80,13 +80,17 @@ protected: // methods
   void test_scan_matcher(const LaserScannerParams &lsp,
                          const RobotPoseDelta &noise,
                          const RobotPoseDelta &acc_error) {
-    auto scan = LaserScanGenerator{lsp}.generate_2D_laser_scan(map, rpose, 1);
-    ASSERT_TRUE(scan.points.size() != 0);
+    auto tr_scan = TransformedLaserScan{};
+    tr_scan.pose_delta = RobotPoseDelta{rpose.x, rpose.y, rpose.theta};
+    tr_scan.scan = LaserScanGenerator{lsp}.laser_scan_2D(map, rpose, 1);
+    tr_scan.quality = 1.0;
+
+    ASSERT_TRUE(tr_scan.scan.points().size() != 0);
 
     auto correction = RobotPoseDelta{};
-    scan_matcher().process_scan(rpose + noise, scan, map, correction);
+    scan_matcher().process_scan(rpose + noise, tr_scan, map, correction);
     auto result_noise = noise + correction;
-    if (is_result_noise_acceptable(scan, noise, result_noise)) {
+    if (is_result_noise_acceptable(tr_scan, noise, result_noise)) {
       return;
     }
 

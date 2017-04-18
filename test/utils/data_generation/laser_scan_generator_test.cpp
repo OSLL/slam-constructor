@@ -18,7 +18,7 @@ protected: // methods
           GridMapParams{Map_Width, Map_Height, Map_Scale}}
     , rpose{map.scale() / 2, map.scale() / 2, 0} /* middle of a cell */ {}
 protected:
-  using ScanPoints = std::vector<ScanPoint>;
+  using ScanPoints = std::vector<ScanPoint2D>;
 protected: // consts
   static constexpr int Map_Width = 100;
   static constexpr int Map_Height = 100;
@@ -39,7 +39,7 @@ protected: // fields
   }
 
   void check_scan_points(const ScanPoints &expected, const ScanPoints &actual,
-                         const ScanPoint &sp_err = {Map_Scale / 2, 0.001}) {
+                         const ScanPoint2D &sp_err = {Map_Scale / 2, 0.001}) {
     ASSERT_EQ(expected.size(), actual.size());
     for (std::size_t sp_i = 0; sp_i < expected.size(); ++sp_i) {
       check_scan_point(expected[sp_i], actual[sp_i], sp_err);
@@ -50,8 +50,8 @@ protected: // fields
     }
   }
 
-  void check_scan_point(const ScanPoint &expected, const ScanPoint &actual,
-                        const ScanPoint &abs_err) {
+  void check_scan_point(const ScanPoint2D &expected, const ScanPoint2D &actual,
+                        const ScanPoint2D &abs_err) {
     ASSERT_NEAR(expected.angle(), actual.angle(), abs_err.angle());
 
     // scale absolute range error according to relative angle
@@ -75,10 +75,10 @@ protected: // fields
 // Degenerate cases
 
 TEST_F(LaserScanGeneratorTest, emptyMap4beams) {
-  auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
+  auto scan = lsg.laser_scan_2D(map, rpose, 1);
 
   const auto Expected_SPs = ScanPoints{};
-  check_scan_points(Expected_SPs, scan.points);
+  check_scan_points(Expected_SPs, scan.points());
 }
 
 TEST_F(LaserScanGeneratorTest, insideObstacle4beams) {
@@ -86,11 +86,11 @@ TEST_F(LaserScanGeneratorTest, insideObstacle4beams) {
                                           Point2D{rpose.x, rpose.y}, 1};
   map[map.world_to_cell(rpose.x, rpose.y)] += occ_obs;
 
-  auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
+  auto scan = lsg.laser_scan_2D(map, rpose, 1);
   const auto Expected_SPs = ScanPoints {{0, deg2rad(-180)}, {0, deg2rad(-90)},
                                         {0, deg2rad(0)}, {0, deg2rad(90)}};
 
-  check_scan_points(Expected_SPs, scan.points);
+  check_scan_points(Expected_SPs, scan.points());
 }
 
 //------------------------------------------------------------------------------
@@ -107,14 +107,14 @@ TEST_F(LaserScanGeneratorTest, leftOfCecumEntranceFacingRight4beams) {
     deg2rad(0)
   };
   prepare_map_and_robot_pose(cecum_mp, pose_delta, Patch_Scale);
-  auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
+  auto scan = lsg.laser_scan_2D(map, rpose, 1);
 
   const double scale = map.scale() * Patch_Scale;
   const auto Expected_SPs = ScanPoints{
     {map.scale(), deg2rad(-180)},
     {mp_free_space.hside_len() * scale, deg2rad(0)},
     {mp_free_space.vside_len() * scale, deg2rad(90)}};
-  check_scan_points(Expected_SPs, scan.points);
+  check_scan_points(Expected_SPs, scan.points());
 }
 
 TEST_F(LaserScanGeneratorTest, rightOfCecumEntranceFacingTop4beams) {
@@ -129,13 +129,13 @@ TEST_F(LaserScanGeneratorTest, rightOfCecumEntranceFacingTop4beams) {
   };
   prepare_map_and_robot_pose(cecum_mp, pose_delta, Patch_Scale);
   const double scale = map.scale() * Patch_Scale;
-  auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
+  auto scan = lsg.laser_scan_2D(map, rpose, 1);
 
   const auto Expected_SPs = ScanPoints{
     {map.scale(), deg2rad(-90)},
     {mp_free_space.vside_len() * scale, deg2rad(0)},
     {mp_free_space.hside_len() * scale, deg2rad(90)}};
-  check_scan_points(Expected_SPs, scan.points);
+  check_scan_points(Expected_SPs, scan.points());
 }
 
 TEST_F(LaserScanGeneratorTest, rightOfCecumEndFacingLeft4beams) {
@@ -149,13 +149,13 @@ TEST_F(LaserScanGeneratorTest, rightOfCecumEndFacingLeft4beams) {
     deg2rad(180)
   };
   prepare_map_and_robot_pose(cecum_mp, pose_delta, Patch_Scale);
-  auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
+  auto scan = lsg.laser_scan_2D(map, rpose, 1);
 
   const auto Expected_SPs = ScanPoints{
     {map.scale(), deg2rad(-180)},
     {map.scale(), deg2rad(-90)},
     {mp_free_space.hside_len() * Patch_Scale * map.scale(), deg2rad(0)}};
-  check_scan_points(Expected_SPs, scan.points);
+  check_scan_points(Expected_SPs, scan.points());
 }
 
 TEST_F(LaserScanGeneratorTest, leftOfCecumEndFacingDown4beams) {
@@ -169,13 +169,13 @@ TEST_F(LaserScanGeneratorTest, leftOfCecumEndFacingDown4beams) {
     deg2rad(270)
   };
   prepare_map_and_robot_pose(cecum_mp, pose_delta, Patch_Scale);
-  auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
+  auto scan = lsg.laser_scan_2D(map, rpose, 1);
 
   const auto Expected_SPs = ScanPoints{
     {map.scale(), deg2rad(-180)},
     {map.scale(), deg2rad(-90)},
     {mp_free_space.hside_len() * Patch_Scale * map.scale(), deg2rad(90)}};
-  check_scan_points(Expected_SPs, scan.points);
+  check_scan_points(Expected_SPs, scan.points());
 }
 
 TEST_F(LaserScanGeneratorTest, middleOfCecumEntranceFacingIn4beams) {
@@ -188,7 +188,7 @@ TEST_F(LaserScanGeneratorTest, middleOfCecumEntranceFacingIn4beams) {
     (-cecum_mp.height() * Patch_Scale + 1) * map.scale(),
     deg2rad(90)};
   prepare_map_and_robot_pose(cecum_mp, pose_delta, Patch_Scale);
-  auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
+  auto scan = lsg.laser_scan_2D(map, rpose, 1);
 
   // extra 0.5*map.scale() is for robot offset inside the cell
   const auto Expected_SPs = ScanPoints{
@@ -200,7 +200,7 @@ TEST_F(LaserScanGeneratorTest, middleOfCecumEntranceFacingIn4beams) {
      deg2rad(90)}
   };
 
-  check_scan_points(Expected_SPs, scan.points);
+  check_scan_points(Expected_SPs, scan.points());
 }
 
 //------------------------------------------------------------------------------
@@ -217,7 +217,7 @@ TEST_F(LaserScanGeneratorTest, rightOfCecumEndFacingLeftBot45deg4beams) {
     deg2rad(225)
   };
   prepare_map_and_robot_pose(cecum_mp, pose_delta, Patch_Scale);
-  auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
+  auto scan = lsg.laser_scan_2D(map, rpose, 1);
 
   const auto Expected_SPs = ScanPoints{
     {map.scale(), deg2rad(-180)},
@@ -225,7 +225,7 @@ TEST_F(LaserScanGeneratorTest, rightOfCecumEndFacingLeftBot45deg4beams) {
     {mp_fspc.hside_len() * map.scale() * Patch_Scale / std::cos(deg2rad(45)),
      deg2rad(0)},
     {map.scale(), deg2rad(90)}};
-  check_scan_points(Expected_SPs, scan.points);
+  check_scan_points(Expected_SPs, scan.points());
 }
 
 TEST_F(LaserScanGeneratorTest, leftOfCecumEndFacingRightBot30deg4beams) {
@@ -239,7 +239,7 @@ TEST_F(LaserScanGeneratorTest, leftOfCecumEndFacingRightBot30deg4beams) {
     deg2rad(-30)
   };
   prepare_map_and_robot_pose(cecum_mp, pose_delta, Patch_Scale);
-  auto scan = lsg.generate_2D_laser_scan(map, rpose, 1);
+  auto scan = lsg.laser_scan_2D(map, rpose, 1);
 
   const auto Expected_SPs = ScanPoints{
     {map.scale(), deg2rad(-180)},
@@ -247,7 +247,7 @@ TEST_F(LaserScanGeneratorTest, leftOfCecumEndFacingRightBot30deg4beams) {
     {mp_fspc.hside_len() * map.scale() * Patch_Scale / std::cos(deg2rad(30)),
      deg2rad(0)},
     {map.scale(), deg2rad(90)}};
-  check_scan_points(Expected_SPs, scan.points);
+  check_scan_points(Expected_SPs, scan.points());
 }
 
 TEST_F(LaserScanGeneratorTest, cecumCenterFacingDown8beams240FoW) {
@@ -264,7 +264,7 @@ TEST_F(LaserScanGeneratorTest, cecumCenterFacingDown8beams240FoW) {
   prepare_map_and_robot_pose(cecum_mp, pose_delta, Patch_Scale);
   auto lsgen = LaserScanGenerator{LaserScannerParams{30, deg2rad(270.0 / 8),
                                                          deg2rad(270.0 / 2)}};
-  auto scan = lsgen.generate_2D_laser_scan(map, rpose, 1);
+  auto scan = lsgen.laser_scan_2D(map, rpose, 1);
 
   constexpr double A_Step = 270.0 / 8;
   double cecum_free_w = mp_fspc.hside_len();
@@ -280,7 +280,7 @@ TEST_F(LaserScanGeneratorTest, cecumCenterFacingDown8beams240FoW) {
     {right_w / std::cos(deg2rad(45 - 2 * A_Step)), deg2rad(-135 + 6 * A_Step)},
     {right_w / std::cos(deg2rad(45 - 1 * A_Step)), deg2rad(-135 + 7 * A_Step)},
     {right_w / std::cos(deg2rad(45 - 0 * A_Step)), deg2rad(-135 + 8 * A_Step)}};
-  check_scan_points(Expected_SPs, scan.points);
+  check_scan_points(Expected_SPs, scan.points());
 }
 
 //------------------------------------------------------------------------------
