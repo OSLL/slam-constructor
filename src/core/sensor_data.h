@@ -61,15 +61,14 @@ public: // methods
   }
   bool is_occupied() const { return _is_occupied; }
 
-  ScanPoint2D to_cartesian(std::shared_ptr<TrigonometricCache> trig_cache) {
-    double c = trig_cache->cos(angle());
-    double s = trig_cache->sin(angle());
+  ScanPoint2D to_cartesian(std::shared_ptr<TrigonometricCache> cache) const {
+    const double a = angle();
     return ScanPoint2D{PointType::Cartesian,
-                       range() * c, range() * s,
+                       range() * cache->cos(a), range() * cache->sin(a),
                        _is_occupied};
   }
 
-  ScanPoint2D to_cartesian(double d_angle = 0, double d_range = 0) {
+  ScanPoint2D to_cartesian(double d_angle = 0, double d_range = 0) const {
     auto patched = ScanPoint2D{PointType::Polar,
                                angle() + d_angle, range() + d_range,
                                is_occupied()};
@@ -77,7 +76,7 @@ public: // methods
                        patched.is_occupied()};
   }
 
-  ScanPoint2D to_polar(Point2D displacement = {0, 0}) {
+  ScanPoint2D to_polar(Point2D displacement = {0, 0}) const {
     auto patched = ScanPoint2D{PointType::Cartesian,
                                x() + displacement.x, y() + displacement.y,
                                is_occupied()};
@@ -110,7 +109,7 @@ public:
       static_cast<const LaserScan2D*>(this)->points());
   }
 
-  LaserScan2D to_cartesian(double angle) {
+  LaserScan2D to_cartesian(double angle) const {
     LaserScan2D cartsn_scan;
     cartsn_scan.points().reserve(_points.size());
     cartsn_scan.trig_cache = trig_cache;
