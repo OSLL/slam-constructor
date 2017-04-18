@@ -23,18 +23,12 @@ public:
       true, Occupancy{1.0, 1.0}, Point2D{0, 0}, 1.0};
     double cost = 0;
     for (const auto &sp : scan.points) {
-      if (!sp.is_occupied) {
+      if (!sp.is_occupied()) {
         continue;
       }
-      auto cell_coord = map.world_to_cell_by_vec(pose.x, pose.y, sp.range,
-                                                 pose.theta + sp.angle);
+      auto cell_coord = map.world_to_cell_by_vec(pose.x, pose.y, sp.range(),
+                                                 pose.theta + sp.angle());
       cost += map[cell_coord].discrepancy(OCCUPIED_OBSERVATION);
-      /*
-      std::cout << "(" << x_world << ", " << y_world << ") -> "
-                << cell_coord << " -> "
-                << map[cell_coord].discrepancy(OCCUPIED_OBSERVATION)
-                << std::endl;
-      */
     }
     return cost;
   }

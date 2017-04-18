@@ -1,5 +1,5 @@
-#ifndef __LASER_SCAN_OBSERVER_H
-#define __LASER_SCAN_OBSERVER_H
+#ifndef SLAM_CTOR_ROS_LASER_SCAN_OBSERVER_H_INCLUDED
+#define SLAM_CTOR_ROS_LASER_SCAN_OBSERVER_H_INCLUDED
 
 #include <utility>
 #include <memory>
@@ -29,35 +29,37 @@ public: //methods
     RobotPose new_pose(t.getOrigin().getX(), t.getOrigin().getY(),
                        tf::getYaw(t.getRotation()));
 
-    TransformedLaserScan laser_scan;
-    laser_scan.points.reserve(msg->ranges.size());
-    laser_scan.quality = 1.0;
-    laser_scan.trig_cache = _cache;
+    TransformedLaserScan transformed_scan;
+    transformed_scan.scan.points().reserve(msg->ranges.size());
+    transformed_scan.quality = 1.0;
+    transformed_scan.scan.trig_cache = _cache;
     double a_max = msg->angle_min + msg->angle_increment * msg->ranges.size();
     _cache->update(msg->angle_min, a_max, msg->angle_increment);
-    double angle = msg->angle_min;
 
+    double sp_angle = msg->angle_min;
     for (const auto &range : msg->ranges) {
-      ScanPoint sp(range, angle);
-      angle += msg->angle_increment;
+      bool sp_is_occupied = true;
+      double sp_range = range;
+      sp_angle += msg->angle_increment;
 
-      if (sp.range < msg->range_min) {
+      if (sp_range < msg->range_min) {
         continue;
-      } else if (msg->range_max <= sp.range) {
-        sp.is_occupied = false;
-        sp.range = msg->range_max;
+      } else if (msg->range_max <= sp_range) {
+        sp_is_occupied = false;
+        sp_range = msg->range_max;
         if (_skip_max_vals) {
           continue;
         }
       }
-      laser_scan.points.push_back(sp);
+      transformed_scan.scan.points().emplace_back(sp_range, sp_angle,
+                                                  sp_is_occupied);
     }
-    assert(are_equal(angle, a_max));
+    assert(are_equal(sp_angle, a_max));
 
-    laser_scan.pose_delta = new_pose - _prev_pose;
+    transformed_scan.pose_delta = new_pose - _prev_pose;
     _prev_pose = new_pose;
 
-    _slam->handle_sensor_data(laser_scan);
+    _slam->handle_sensor_data(transformed_scan);
   }
 
 private: // fields

@@ -22,7 +22,7 @@ public:
   GmappingCostEstimator() : _scan_margin(0), _pts_skip_rate(3), _window_sz(1) {}
 
   virtual double estimate_scan_cost(const RobotPose &pose,
-                                    const TransformedLaserScan &scan,
+                                    const TransformedLaserScan &tr_scan,
                                     const GridMap &map,
                                     double min_cost = 0) {
     auto sp_observation = AreaOccupancyObservation{true, {1.0, 1.0},
@@ -30,19 +30,21 @@ public:
 
     double scan_weight = 0, last_dpoint_weight = -1;
     DiscretePoint2D last_handled_dpoint;
-    scan.trig_cache->set_theta(pose.theta);
+    tr_scan.scan.trig_cache->set_theta(pose.theta);
 
     int best_scan_weight = 0;
-    for (size_t i = _scan_margin; i < scan.points.size() - _scan_margin; ++i) {
+    auto end_point_i = tr_scan.scan.points().size() - _scan_margin;
+    for (size_t i = _scan_margin; i < end_point_i; ++i) {
       if (_pts_skip_rate && i % _pts_skip_rate) {
         continue;
       }
       best_scan_weight += 1;
 
-      const ScanPoint &sp = scan.points[i];
-      double c = scan.trig_cache->cos(sp.angle);
-      double s = scan.trig_cache->sin(sp.angle);
-      sp_observation.obstacle = {pose.x + sp.range * c, pose.y + sp.range * s};
+      auto &sp = tr_scan.scan.points()[i];
+      double c = tr_scan.scan.trig_cache->cos(sp.angle());
+      double s = tr_scan.scan.trig_cache->sin(sp.angle());
+      sp_observation.obstacle = {pose.x + sp.range() * c,
+                                 pose.y + sp.range() * s};
 
       auto sp_coord = map.world_to_cell(sp_observation.obstacle);
       if (sp_coord == last_handled_dpoint && last_dpoint_weight != -1) {

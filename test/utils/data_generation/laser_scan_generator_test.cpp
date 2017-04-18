@@ -43,19 +43,20 @@ protected: // fields
     ASSERT_EQ(expected.size(), actual.size());
     for (std::size_t sp_i = 0; sp_i < expected.size(); ++sp_i) {
       check_scan_point(expected[sp_i], actual[sp_i], sp_err);
-      auto expected_occ = actual[sp_i].is_occupied ? 1.0 : 0;
+      auto expected_occ = actual[sp_i].is_occupied() ? 1.0 : 0;
       auto sp_coord = map.world_to_cell_by_vec(rpose.x, rpose.y,
-        actual[sp_i].range, rpose.theta + actual[sp_i].angle);
+        actual[sp_i].range(), rpose.theta + actual[sp_i].angle());
       ASSERT_NEAR(expected_occ, map[sp_coord], 0.01);
     }
   }
 
   void check_scan_point(const ScanPoint &expected, const ScanPoint &actual,
                         const ScanPoint &abs_err) {
-    ASSERT_NEAR(expected.angle, actual.angle, abs_err.angle);
-    ASSERT_NEAR(expected.range, actual.range,
-                // scale absolute range error according to relative angle
-                std::abs(abs_err.range / std::cos(rpose.theta + actual.angle)));
+    ASSERT_NEAR(expected.angle(), actual.angle(), abs_err.angle());
+
+    // scale absolute range error according to relative angle
+    auto range_err = abs_err.range() / std::cos(rpose.theta + actual.angle());
+    ASSERT_NEAR(expected.range(), actual.range(), std::abs(range_err));
   }
 
   void dbg_show_map_near_robot(int l, int r, int u, int d) {

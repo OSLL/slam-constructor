@@ -71,7 +71,7 @@ public:
     double scan_cost = _matcher.process_scan(pose(), scan, map(), pose_delta);
     update_robot_pose(pose_delta);
 
-    double scan_prob = 1 - scan_cost / scan.points.size();
+    double scan_prob = 1 - scan_cost / scan.scan.points().size();
     // TODO: scan_prob threshold to params
     if (0.0 < scan_prob || _scan_is_first) {
       // map update accordig to original gmapping code (ref?)

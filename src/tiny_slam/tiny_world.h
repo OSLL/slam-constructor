@@ -112,7 +112,7 @@ protected:
 private:
   std::shared_ptr<GridCellStrategy> _gcs;
   const TinyWorldParams _params;
-  std::shared_ptr<TinyScanMatcher> _scan_matcher;
+  std::shared_ptr<GridScanMatcher> _scan_matcher;
 
   // a context set up for each map update with a scan point
   mutable MapUpdateCtx _map_update_ctx;
