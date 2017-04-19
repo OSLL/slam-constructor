@@ -5,6 +5,8 @@
 #include <cmath>
 #include <memory>
 #include <vector>
+#include <iostream>
+
 #include "state_data.h"
 #include "robot_pose.h"
 #include "geometry_utils.h"
@@ -70,15 +72,15 @@ public: // methods
 
   ScanPoint2D to_cartesian(double d_angle = 0, double d_range = 0) const {
     auto patched = ScanPoint2D{PointType::Polar,
-                               angle() + d_angle, range() + d_range,
+                               range() + d_range, angle() + d_angle,
                                is_occupied()};
     return ScanPoint2D{PointType::Cartesian, patched.x(), patched.y(),
                        patched.is_occupied()};
   }
 
-  ScanPoint2D to_polar(Point2D displacement = {0, 0}) const {
+  ScanPoint2D to_polar(double d_x = 0, double d_y = 0) const {
     auto patched = ScanPoint2D{PointType::Cartesian,
-                               x() + displacement.x, y() + displacement.y,
+                               x() + d_x, y() + d_y,
                                is_occupied()};
     return ScanPoint2D{PointType::Polar, patched.range(), patched.angle(),
                        patched.is_occupied()};
@@ -98,6 +100,11 @@ private: // data
   PointData _data;
   bool _is_occupied;
 };
+
+inline std::ostream& operator<<(std::ostream &osm, const ScanPoint2D &sp) {
+  osm << "ScanPoint2D{ r: " << sp.range() << "; a: " << sp.angle() << " <-> ";
+  return osm << "x: " << sp.x() << ", y: " << sp.y() << "}";
+}
 
 struct LaserScan2D {
 private:

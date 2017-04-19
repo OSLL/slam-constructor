@@ -283,6 +283,35 @@ TEST_F(LaserScanGeneratorTest, cecumCenterFacingDown8beams240FoW) {
   check_scan_points(Expected_SPs, scan.points());
 }
 
+//---//
+
+TEST_F(LaserScanGeneratorTest, trigonometricCacheCorrectness) {
+  const auto Top_Bnd_Pos = CecumTextRasterMapPrimitive::BoundPosition::Top;
+  auto cecum_mp = CecumTextRasterMapPrimitive{10, 10, Top_Bnd_Pos};
+  auto mp_fspc = cecum_mp.free_space()[0];
+
+  auto pose_delta = RobotPoseDelta{
+    (cecum_mp.width() * Patch_Scale) * map.scale() / 2,
+    ((mp_fspc.top() - 1) - mp_fspc.vside_len() / 2) * Patch_Scale * map.scale(),
+    deg2rad(90)
+  };
+  prepare_map_and_robot_pose(cecum_mp, pose_delta, Patch_Scale);
+
+  const int LS_Points_Nm = 4000;
+  auto lsgen = LaserScanGenerator{
+    LaserScannerParams{30, deg2rad(270.0 / LS_Points_Nm), deg2rad(270.0 / 2)}};
+  auto scan = lsgen.laser_scan_2D(map, rpose, 1);
+
+  const double D_Angle = deg2rad(1.3);
+  scan.trig_cache->set_theta(D_Angle);
+  for (auto &sp : scan.points()) {
+    ASSERT_NEAR(std::cos(sp.angle() + D_Angle),
+                scan.trig_cache->cos(sp.angle()), 0.001);
+    ASSERT_NEAR(std::sin(sp.angle() + D_Angle),
+                scan.trig_cache->sin(sp.angle()), 0.001);
+  }
+}
+
 //------------------------------------------------------------------------------
 
 int main (int argc, char *argv[]) {

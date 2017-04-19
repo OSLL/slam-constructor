@@ -208,8 +208,12 @@ catkin_add_gtest(grid_map-test
 catkin_add_gtest(zoomable_grid_map-test
                  test/core/maps/zoomable_grid_map_test.cpp)
 
+catkin_add_gtest(geom_utils-test
+                 test/core/geometry_utils_test.cpp)
 catkin_add_gtest(geom_dprimitives-test
                  test/core/geometry_discrete_primitives_test.cpp)
+catkin_add_gtest(sensor_data-test
+                 test/core/sensor_data_test.cpp)
 
 catkin_add_gtest(hill_climbing_sm-smoke_test
                  test/core/scan_matchers/hill_climbing_sm_smoke_test.cpp)

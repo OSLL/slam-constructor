@@ -31,7 +31,8 @@ public:
 
     LaserScan2D scan;
     scan.trig_cache = std::make_shared<TrigonometricCache>();
-    scan.trig_cache->update(-_lsp.h_hsector, _lsp.h_hsector, _lsp.h_angle_inc);
+    scan.trig_cache->update(-_lsp.h_hsector, _lsp.h_hsector + _lsp.h_angle_inc,
+                            _lsp.h_angle_inc);
     auto robot_point = Point2D{pose.x, pose.y};
     auto robot_coord = map.world_to_cell(robot_point);
     assert(!are_equal(robot_point.x, robot_coord.x * map.scale()) &&
