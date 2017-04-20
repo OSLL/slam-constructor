@@ -4,6 +4,7 @@
 #include <limits>
 #include <queue>
 #include <vector>
+#include <utility>
 
 #include "grid_scan_matcher.h"
 #include "../maps/zoomable_grid_map.h"
@@ -43,31 +44,31 @@ private: // consts
   static constexpr double _Max_Translation_Error = 0.1,
                           _Max_Rotation_Error = deg2rad(2);
 private: // types
-  struct BranchAndBoundNode {
+  struct RobotPoseDeltas {
     // TODO: map ptr/ref
-    double cost;
-    double theta;
-    Rectangle translation_window;
-    int lvl;
+    double cost_lower_bound;
+    double rotation;
+    Rectangle translations;
+    int zoom_lvl;
 
-    BranchAndBoundNode(double c, double th, const Rectangle& t_wn, int l)
-      : cost{c}, theta{th}, translation_window{t_wn}, lvl{l} {}
-    BranchAndBoundNode(const BranchAndBoundNode&) = default;
-    BranchAndBoundNode(BranchAndBoundNode&&) = default;
-    BranchAndBoundNode& operator=(const BranchAndBoundNode&) = default;
-    BranchAndBoundNode& operator=(BranchAndBoundNode&&) = default;
+    RobotPoseDeltas(double c, double th, const Rectangle& t_wn, int l)
+      : cost_lower_bound{c}, rotation{th}, translations{t_wn}, zoom_lvl{l} {}
+    RobotPoseDeltas(const RobotPoseDeltas&) = default;
+    RobotPoseDeltas(RobotPoseDeltas&&) = default;
+    RobotPoseDeltas& operator=(const RobotPoseDeltas&) = default;
+    RobotPoseDeltas& operator=(RobotPoseDeltas&&) = default;
 
     // returns true if this node is less prepefable than a given one
-    bool operator<(const BranchAndBoundNode &other) const {
-      if (cost == other.cost) {
-        return lvl > other.lvl; // finer is "better"
+    bool operator<(const RobotPoseDeltas &other) const {
+      if (cost_lower_bound == other.cost_lower_bound) {
+        return zoom_lvl > other.zoom_lvl; // finer is "better"
       }
-      // TODO: replace cost with probability in scan matcher
-      return cost > other.cost; // smaller is "better"
+      // TODO: replace cost_lower_bound with probability in scan matcher
+      return cost_lower_bound > other.cost_lower_bound; // smaller is "better"
     }
   };
 
-  using UncheckedPoses = std::priority_queue<BranchAndBoundNode>;
+  using UncheckedPoseDeltas = std::priority_queue<RobotPoseDeltas>;
 public:
   // TODO: do we need max_*_error setup in ctor?
   ManyToManyMultiResoultionScanMatcher(std::shared_ptr<ScanCostEstimator> est,
@@ -75,7 +76,7 @@ public:
                                        double tr_error_factor = 2)
     : GridScanMatcher{est, _Max_Translation_Error, _Max_Translation_Error,
                       _Max_Rotation_Error}
-    , _ang_step{ang_step} , _tr_error_factor{tr_error_factor} {}
+    , _ang_step{ang_step}, _tr_error_factor{tr_error_factor} {}
 
   double process_scan(const RobotPose &init_pose,
                       const TransformedLaserScan &scan,
@@ -86,50 +87,16 @@ public:
     // FIXME?: dynamic cast; iterators over zoomed maps?
     auto &z_map = dynamic_cast<ZoomableGridMap<CoreMapType> &>(
                     const_cast<GridMap&>(map));
-    auto unchecked_poses = init_unchecked_poses(init_pose, scan, z_map);
 
-    auto sce = GridScanMatcher::cost_estimator();
-    auto acceptable_transl_error = max_translation_error(z_map);
-    // the best pose lookup
-    while (!unchecked_poses.empty()) {
-      auto best_node = unchecked_poses.top();
-      bool node_is_leaf = best_node.lvl ==
-                          ZoomableGridMap<GridMap>::finest_zoom_level();
-      auto& tr_wn = best_node.translation_window;
-      if (node_is_leaf) {
-        // search is done
-        result_pose_delta = RobotPoseDelta{tr_wn.left() + tr_wn.hside_len() / 2,
-                                           tr_wn.bot() + tr_wn.vside_len() / 2,
-                                           best_node.theta};
-        //std::cout << "M3RS End -> " << result_pose_delta << std::endl;
-        return best_node.cost;
-      } else {
-        // branching
-        auto branched_windows = std::vector<Rectangle>{};
-        auto should_branch = acceptable_transl_error < tr_wn.side();
-        if (should_branch) {
-          branched_windows = BranchingPolicy::branch(tr_wn);
-        } else {
-          branched_windows.push_back(tr_wn);
-        }
+    add_scan_matching_request(init_pose, scan, z_map);
+    // TODO: store info about init_pose, scan, z_map in the node
+    auto pose_deltas = find_best_pose_delta(init_pose, scan, z_map);
+    reset_scan_matching_requests();
 
-        // update unchecked poses
-        unchecked_poses.pop();
-        z_map.set_zoom_level(best_node.lvl - 1);
-        auto branch_pdelta = RobotPoseDelta{0, 0, best_node.theta};
-        for (auto& window : branched_windows) {
-          branch_pdelta.x = window.left() + window.hside_len() / 2;
-          branch_pdelta.y = window.bot() + window.vside_len() / 2;
-          auto branch_cost = sce->estimate_scan_cost(init_pose + branch_pdelta,
-                                                     scan, z_map);
-          unchecked_poses.emplace(branch_cost, best_node.theta, window,
-                                  best_node.lvl - 1);
-        }
-      } // if (node_is_leaf)
-    }
-    // std::cout << "M3RS End ?!" << std::endl;
-    // BUG: no pose delta has been found
-    return std::numeric_limits<double>::quiet_NaN();
+    auto translation = pose_deltas.translations.center();
+    result_pose_delta = RobotPoseDelta{translation.x, translation.y,
+                                       pose_deltas.rotation};
+    return pose_deltas.cost_lower_bound;
   }
 
 private: // methods
@@ -145,36 +112,85 @@ private: // methods
     map.set_zoom_level(map.coarsest_zoom_level());
   }
 
-  double max_translation_error(ZoomableGridMap<CoreMapType> &map) {
-    map.set_zoom_level(map.finest_zoom_level());
-    return map.scale() / _tr_error_factor;
-  }
-
-  UncheckedPoses init_unchecked_poses(const RobotPose &pose,
-                                       const TransformedLaserScan &scan,
-                                       ZoomableGridMap<CoreMapType> &map) {
-    UncheckedPoses unchecked_poses;
+  void add_scan_matching_request(const RobotPose &pose,
+                                 const TransformedLaserScan &scan,
+                                 ZoomableGridMap<CoreMapType> &map) {
     auto sce = GridScanMatcher::cost_estimator();
     // add explicit "no correction" entry
     map.set_zoom_level(map.finest_zoom_level());
-    unchecked_poses.emplace(sce->estimate_scan_cost(pose, scan, map),
-                            0, Rectangle{0, 0, 0, 0}, map.zoom_level());
+    auto cost = sce->estimate_scan_cost(pose, scan, map);
+    _unchecked_pose_deltas.emplace(cost, 0, Rectangle{0, 0, 0, 0},
+                                   map.zoom_level());
 
     // generate pose ranges to be checked
     auto pose_delta = RobotPoseDelta{0, 0, 0};
-    auto translation_window = Rectangle{-max_y_error(), max_y_error(),
+    const auto translations = Rectangle{-max_y_error(), max_y_error(),
                                         -max_x_error(), max_x_error()};
     setup_init_zoom_level(map);
     for (double th = -max_th_error(); th <= max_th_error(); th += _ang_step) {
       pose_delta.theta = th;
       auto cost = sce->estimate_scan_cost(pose + pose_delta, scan, map);
-      unchecked_poses.emplace(cost, th, translation_window, map.zoom_level());
+      _unchecked_pose_deltas.emplace(cost, th, translations, map.zoom_level());
     }
+  }
 
-    return unchecked_poses;
+  double max_translation_error(ZoomableGridMap<CoreMapType> &map) {
+    map.set_zoom_level(map.finest_zoom_level());
+    return map.scale() / _tr_error_factor;
+  }
+
+  RobotPoseDeltas find_best_pose_delta(const RobotPose &pose,
+                                       const TransformedLaserScan &scan,
+                                       ZoomableGridMap<CoreMapType> &map) {
+    auto sce = GridScanMatcher::cost_estimator();
+    auto acceptable_transl_error = max_translation_error(map);
+    // the best pose lookup
+    while (!_unchecked_pose_deltas.empty()) {
+      auto d_poses = _unchecked_pose_deltas.top();
+      if (d_poses.zoom_lvl == ZoomableGridMap<GridMap>::finest_zoom_level()) {
+         // search is done
+        return d_poses;
+      }
+
+      // branching
+      auto& tr_wn = d_poses.translations;
+      auto splitted_translations = std::vector<Rectangle>{};
+      auto should_branch = acceptable_transl_error < tr_wn.vside_len() ||
+                           acceptable_transl_error < tr_wn.hside_len();
+      if (should_branch) {
+        splitted_translations = BranchingPolicy::branch(tr_wn);
+      } else {
+        splitted_translations.push_back(tr_wn);
+      }
+
+      // update unchecked corrections
+      _unchecked_pose_deltas.pop();
+      map.set_zoom_level(d_poses.zoom_lvl - 1);
+      for (auto& st : splitted_translations) {
+        // TODO: Robustness guarantee the translation is the best in the window
+        Point2D best_translation = st.center();
+        auto branch_delta = RobotPoseDelta{best_translation.x,
+                                           best_translation.y,
+                                           d_poses.rotation};
+        auto branch_cost = sce->estimate_scan_cost(pose + branch_delta,
+                                                   scan, map);
+        assert(d_poses.cost_lower_bound <= branch_cost &&
+               "BUG: Bounding assumption is violated");
+        _unchecked_pose_deltas.emplace(branch_cost, d_poses.rotation, st,
+                                       d_poses.zoom_lvl - 1);
+      }
+    }
+    // std::cout << "M3RS End ?!" << std::endl;
+    // BUG: no pose delta has been found
+    return {std::numeric_limits<double>::quiet_NaN(), 0, Rectangle{}, -1};
+  }
+
+  void reset_scan_matching_requests() {
+    _unchecked_pose_deltas = UncheckedPoseDeltas{};
   }
 
 private:
+  UncheckedPoseDeltas _unchecked_pose_deltas;
   double _ang_step;
   double _tr_error_factor;
 };
