@@ -14,14 +14,15 @@ public:
   static std::vector<Rectangle> branch(const Rectangle &area) {
     auto result = std::vector<Rectangle>{};
     result.reserve(4);
-    auto dst_side = area.side() / 2;
+    auto dst_hside = area.hside_len() / 2;
+    auto dst_vside = area.vside_len() / 2;
     for (int d_x_i = 0; d_x_i < 2; ++d_x_i) {
       for (int d_y_i = 0; d_y_i < 2; ++d_y_i) {
         result.emplace_back(
-          area.bot() + ((d_y_i % 2 == 0) ? 0 : dst_side),
-          (d_y_i % 2 == 0) ? area.bot() + dst_side : area.top(),
-          area.left() + ((d_x_i % 2 == 0) ? 0 : dst_side),
-          (d_x_i % 2 == 0) ? area.left() + dst_side : area.right()
+          area.bot() + ((d_y_i % 2 == 0) ? 0 : dst_vside),
+          (d_y_i % 2 == 0) ? area.bot() + dst_vside : area.top(),
+          area.left() + ((d_x_i % 2 == 0) ? 0 : dst_hside),
+          (d_x_i % 2 == 0) ? area.left() + dst_hside : area.right()
         );
       }
     }
@@ -97,8 +98,8 @@ public:
       auto& tr_wn = best_node.translation_window;
       if (node_is_leaf) {
         // search is done
-        result_pose_delta = RobotPoseDelta{tr_wn.left() + tr_wn.side() / 2,
-                                           tr_wn.bot() + tr_wn.side() / 2,
+        result_pose_delta = RobotPoseDelta{tr_wn.left() + tr_wn.hside_len() / 2,
+                                           tr_wn.bot() + tr_wn.vside_len() / 2,
                                            best_node.theta};
         //std::cout << "M3RS End -> " << result_pose_delta << std::endl;
         return best_node.cost;
@@ -117,8 +118,8 @@ public:
         z_map.set_zoom_level(best_node.lvl - 1);
         auto branch_pdelta = RobotPoseDelta{0, 0, best_node.theta};
         for (auto& window : branched_windows) {
-          branch_pdelta.x = window.left() + window.side() / 2;
-          branch_pdelta.y = window.bot() + window.side() / 2;
+          branch_pdelta.x = window.left() + window.hside_len() / 2;
+          branch_pdelta.y = window.bot() + window.vside_len() / 2;
           auto branch_cost = sce->estimate_scan_cost(init_pose + branch_pdelta,
                                                      scan, z_map);
           unchecked_poses.emplace(branch_cost, best_node.theta, window,
