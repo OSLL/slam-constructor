@@ -38,7 +38,10 @@ public:
 
 template<typename CoreMapType, typename BranchingPolicy = Pow2BranchingPolicy>
 class ManyToManyMultiResoultionScanMatcher : public GridScanMatcher {
-private:
+private: // consts
+  static constexpr double _Max_Translation_Error = 0.1,
+                          _Max_Rotation_Error = deg2rad(2);
+private: // types
   struct BranchAndBoundNode {
     // TODO: map ptr/ref
     double cost;
@@ -65,17 +68,13 @@ private:
 
   using UncheckedPoses = std::priority_queue<BranchAndBoundNode>;
 public:
+  // TODO: do we need max_*_error setup in ctor?
   ManyToManyMultiResoultionScanMatcher(std::shared_ptr<ScanCostEstimator> est,
                                        double ang_step = deg2rad(0.1),
-                                       double ang_range = deg2rad(3),
-                                       double tr_error_factor = 2,
-                                       double translation_range_x = 0.2,
-                                       double translation_range_y = 0.2)
-    : GridScanMatcher(est)
-    , _ang_step{ang_step}, _ang_range{ang_range}
-    , _tr_error_factor{tr_error_factor}
-    , _translation_range_x{translation_range_x}
-    , _translation_range_y{translation_range_y} {}
+                                       double tr_error_factor = 2)
+    : GridScanMatcher{est, _Max_Translation_Error, _Max_Translation_Error,
+                      _Max_Rotation_Error}
+    , _ang_step{ang_step} , _tr_error_factor{tr_error_factor} {}
 
   double process_scan(const RobotPose &init_pose,
                       const TransformedLaserScan &scan,
@@ -162,24 +161,21 @@ private: // methods
 
     // generate pose ranges to be checked
     auto pose_delta = RobotPoseDelta{0, 0, 0};
-    auto translation_window = Rectangle{
-      -_translation_range_y / 2, _translation_range_y / 2,
-      -_translation_range_x / 2, _translation_range_x / 2
-    };
+    auto translation_window = Rectangle{-max_y_error(), max_y_error(),
+                                        -max_x_error(), max_x_error()};
     setup_init_zoom_level(map);
-    for (double d_th = -_ang_range/2; d_th <= _ang_range/2; d_th += _ang_step) {
-      pose_delta.theta = d_th;
+    for (double th = -max_th_error(); th <= max_th_error(); th += _ang_step) {
+      pose_delta.theta = th;
       auto cost = sce->estimate_scan_cost(pose + pose_delta, scan, map);
-      unchecked_poses.emplace(cost, d_th, translation_window, map.zoom_level());
+      unchecked_poses.emplace(cost, th, translation_window, map.zoom_level());
     }
 
     return unchecked_poses;
   }
 
 private:
-  double _ang_step, _ang_range;
+  double _ang_step;
   double _tr_error_factor;
-  double _translation_range_x, _translation_range_y;
 };
 
 #endif // include guard

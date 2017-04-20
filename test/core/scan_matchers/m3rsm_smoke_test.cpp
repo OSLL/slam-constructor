@@ -22,8 +22,10 @@ protected: // methods
     : ScanMatcherTestBase{std::make_shared<DiscrepancySumCostEstimator>(),
                           Map_Width, Map_Height, Map_Scale,
                           to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
-    , m3rsm{sce, SM_Ang_Step, SM_Ang_Range,
-            SM_Transl_Err_Factor, SM_Transl_Range, SM_Transl_Range} {}
+    , m3rsm{sce, SM_Ang_Step, SM_Transl_Err_Factor} {
+    m3rsm.set_lookup_ranges(SM_Max_Translation_Error, SM_Max_Translation_Error,
+                            SM_Max_Rotation_Error);
+  }
 protected: // consts
   // map patching params
   static constexpr int Cecum_Patch_W = 15, Cecum_Patch_H = 13;
@@ -39,9 +41,9 @@ protected: // consts
   static constexpr int LS_Pts_Nm = 10;
 
   // scan matcher
+  static constexpr double SM_Max_Rotation_Error = deg2rad(5);
+  static constexpr double SM_Max_Translation_Error = 1; // meters
   static constexpr double SM_Ang_Step = deg2rad(0.5);
-  static constexpr double SM_Ang_Range = deg2rad(10);
-  static constexpr double SM_Transl_Range = 1; // meter
   static constexpr double SM_Transl_Err_Factor = 2;
 
 protected: // fields
@@ -80,37 +82,40 @@ TEST_F(M3RScanMatcherSmokeTest, cecumNoPoseNoise) {
 
 TEST_F(M3RScanMatcherSmokeTest, cecumLinStepXLeftDrift) {
   init_pose_facing_top_cecum_bound();
-  test_scan_matcher(RobotPoseDelta{-SM_Transl_Range / 2, 0, 0});
+  test_scan_matcher(RobotPoseDelta{-SM_Max_Translation_Error / 2, 0, 0});
 }
 
 TEST_F(M3RScanMatcherSmokeTest, cecumLinStepXRightDrift) {
   init_pose_facing_top_cecum_bound();
-  test_scan_matcher(RobotPoseDelta{SM_Transl_Range / 2, 0, 0});
+  test_scan_matcher(RobotPoseDelta{SM_Max_Translation_Error / 2, 0, 0});
 }
 
 TEST_F(M3RScanMatcherSmokeTest, cecumLinStepYUpDrift) {
   init_pose_facing_top_cecum_bound();
-  test_scan_matcher(RobotPoseDelta{0, -SM_Transl_Range / 2, 0});
+  test_scan_matcher(RobotPoseDelta{0, -SM_Max_Translation_Error / 2, 0});
 }
 
 TEST_F(M3RScanMatcherSmokeTest, cecumLinStepYDownDrift) {
   init_pose_facing_top_cecum_bound();
-  test_scan_matcher(RobotPoseDelta{0, SM_Transl_Range / 2, 0});
+  test_scan_matcher(RobotPoseDelta{0, SM_Max_Translation_Error / 2, 0});
 }
 
 TEST_F(M3RScanMatcherSmokeTest, cecumAngStepThetaCcwDrift) {
   init_pose_facing_top_cecum_bound();
-  test_scan_matcher(RobotPoseDelta{0, 0, SM_Ang_Range});
+  test_scan_matcher(RobotPoseDelta{0, 0, SM_Max_Rotation_Error});
 }
 
 TEST_F(M3RScanMatcherSmokeTest, cecumAngStepThetaCwDrift) {
   init_pose_facing_top_cecum_bound();
-  test_scan_matcher(RobotPoseDelta{0, 0, -SM_Ang_Range});
+  test_scan_matcher(RobotPoseDelta{0, 0, -SM_Max_Rotation_Error});
 }
 
 TEST_F(M3RScanMatcherSmokeTest, cecumComboStepsDrift) {
   init_pose_facing_top_cecum_bound();
-  test_scan_matcher({-SM_Transl_Range/2, SM_Transl_Range/2, -SM_Ang_Range/2});
+  auto noise = RobotPoseDelta{-SM_Max_Translation_Error/2,
+                              SM_Max_Translation_Error/2,
+                              -SM_Max_Rotation_Error/2};
+  test_scan_matcher(noise);
 }
 
 //------------------------------------------------------------------------------
