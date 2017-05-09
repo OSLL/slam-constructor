@@ -39,7 +39,7 @@ TEST_F(UnboundedLazyTiledGridMapTest, readMapCopy) {
   static constexpr int Lim = 50;
   for (int i = -Lim; i != Lim; ++i) {
     for (int j = -Lim; j != Lim; ++j) {
-      map[{i, j}] += {true, {(double)Lim * i + j, 0}, {0, 0}, 0};
+      map.update({i, j}, {true, {(double)Lim * i + j, 0}, {0, 0}, 0});
     }
   }
   UnboundedLazyTiledGridMap map_copy = map;
@@ -57,13 +57,13 @@ TEST_F(UnboundedLazyTiledGridMapTest, modifyMapCopy) {
   static constexpr int Lim = 50;
   for (int i = -Lim; i != Lim; ++i) {
     for (int j = -Lim; j != Lim; ++j) {
-      map[{i, j}] += {true, {(double)Lim * i + j, 0}, {0, 0}, 0};
+      map.update({i, j}, {true, {(double)Lim * i + j, 0}, {0, 0}, 0});
     }
   }
   UnboundedLazyTiledGridMap map_copy = map;
   for (int i = -Lim; i != Lim; ++i) {
     for (int j = -Lim; j != Lim; ++j) {
-      map_copy[{i, j}] += {true, {(double)2*Lim * i + j, 0}, {0, 0}, 0};
+      map_copy.update({i, j}, {true, {(double)2*Lim * i + j, 0}, {0, 0}, 0});
     }
   }
 

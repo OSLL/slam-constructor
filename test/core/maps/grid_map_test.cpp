@@ -24,15 +24,9 @@ public:
     }
   }
 
-  GridCell &operator[] (const DPnt2D& c) override {
+  const GridCell &operator[](const Coord& c) const override {
     assert(has_cell(c));
-    DPnt2D coord = external2internal(c);
-    return *_cells[coord.y][coord.x];
-  }
-
-  const GridCell &operator[](const DPnt2D& c) const override {
-    assert(has_cell(c));
-    DPnt2D coord = external2internal(c);
+    auto coord = external2internal(c);
     return *_cells[coord.y][coord.x];
   }
 

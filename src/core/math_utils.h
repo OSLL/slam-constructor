@@ -26,12 +26,13 @@ constexpr inline double rad2deg(double angle_rad) {
   return angle_rad * 180 / M_PI;
 }
 
-constexpr int ge_2_pow(int i) {
-  int ge2p = 1;
-  while (ge2p < i) {
-    ge2p *= 2;
+template <unsigned N>
+constexpr int ge_pow(int i) {
+  int ge_p = 1;
+  while (ge_p < i) {
+    ge_p *= N;
   }
-  return ge2p;
+  return ge_p;
 }
 
 #endif

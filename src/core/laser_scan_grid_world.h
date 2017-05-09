@@ -70,11 +70,11 @@ protected:
                                  const Segment2D &beam) {
     auto &map = this->map();
     auto pts = map.world_to_cells(beam);
-    map[pts.back()] += sp2obs(pts.back(), is_occ, scan_quality, beam);
+    map.update(pts.back(), sp2obs(pts.back(), is_occ, scan_quality, beam));
     pts.pop_back();
 
     for (const auto &pt : pts) {
-      map[pt] += sp2obs(pt, false, scan_quality, beam);
+      map.update(pt, sp2obs(pt, false, scan_quality, beam));
     }
   }
 

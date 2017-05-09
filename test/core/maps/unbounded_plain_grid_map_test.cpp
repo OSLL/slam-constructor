@@ -37,47 +37,47 @@ std::ostream &operator<<(std::ostream &stream, const MapInfo &mi) {
 }
 
 TEST_F(UnboundedPlainGridMapTest, expandRight) {
-  map[{2, 0}] += data;
+  map.update({2, 0}, data);
   ASSERT_EQ(MapInfo(map), MapInfo(3, 1, 0, 0));
 }
 
 TEST_F(UnboundedPlainGridMapTest, expandTop) {
-  map[{0, 2}] += data;
+  map.update({0, 2}, data);
   ASSERT_EQ(MapInfo(map), MapInfo(1, 3, 0, 0));
 }
 
 TEST_F(UnboundedPlainGridMapTest, expandLeft) {
-  map[{-2, 0}] += data;
+  map.update({-2, 0}, data);
   ASSERT_EQ(MapInfo(map), MapInfo(3, 1, 2, 0));
 }
 
 TEST_F(UnboundedPlainGridMapTest, expandDown) {
-  map[{0, -2}] += data;
+  map.update({0, -2}, data);
   ASSERT_EQ(MapInfo(map), MapInfo(1, 3, 0, 2));
 }
 
 TEST_F(UnboundedPlainGridMapTest, expandRightTop) {
-  map[{2, 2}] += data;
+  map.update({2, 2}, data);
   ASSERT_EQ(MapInfo(map), MapInfo(3, 3, 0, 0));
 }
 
 TEST_F(UnboundedPlainGridMapTest, expandRightDown) {
-  map[{2, -2}] += data;
+  map.update({2, -2}, data);
   ASSERT_EQ(MapInfo(map), MapInfo(3, 3, 0, 2));
 }
 
 TEST_F(UnboundedPlainGridMapTest, expandLeftTop) {
-  map[{-2, 2}] += data;
+  map.update({-2, 2}, data);
   ASSERT_EQ(MapInfo(map), MapInfo(3, 3, 2, 0));
 }
 
 TEST_F(UnboundedPlainGridMapTest, expandLeftDown) {
-  map[{-2, -2}] += data;
+  map.update({-2, -2}, data);
   ASSERT_EQ(MapInfo(map), MapInfo(3, 3, 2, 2));
 }
 
 TEST_F(UnboundedPlainGridMapTest, noExpand) {
-  map[{0, 0}] += data;
+  map.update({0, 0}, data);
   ASSERT_EQ(MapInfo(map), MapInfo(1, 1, 0, 0));
 }
 
@@ -85,7 +85,7 @@ TEST_F(UnboundedPlainGridMapTest, valueStorage) {
   static constexpr int Lim = 50;
   for (int i = -Lim; i != Lim; ++i) {
     for (int j = -Lim; j != Lim; ++j) {
-      map[{i, j}] += {true, {(double)Lim * i + j, 0}, {0, 0}, 0};
+      map.update({i, j}, {true, {(double)Lim * i + j, 0}, {0, 0}, 0});
     }
   }
   for (int i = -Lim; i != Lim; ++i) {

@@ -89,11 +89,11 @@ private: // methods
   void apply_patches(MapType &dst_map,
                      const DiscretePoint2D &offset, const GMPatches &patches) {
 
-    auto val = AreaOccupancyObservation{true, Occupancy{0, 0},
+    auto aoo = AreaOccupancyObservation{true, Occupancy{0, 0},
                                         Point2D{0, 0}, 1 /* quality */};
     for (auto &upd_req : patches) {
-      val.occupancy = upd_req.occupancy;
-      dst_map[upd_req.coord + offset] += val;
+      aoo.occupancy = upd_req.occupancy;
+      dst_map.update(upd_req.coord + offset, aoo);
     }
   }
 

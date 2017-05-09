@@ -241,6 +241,24 @@ struct Rectangle {
     return intersections;
   }
 
+  std::vector<Rectangle> split4_evenly() const {
+    auto areas = std::vector<Rectangle>{};
+    areas.reserve(4);
+    auto dst_hside = hside_len() / 2;
+    auto dst_vside = vside_len() / 2;
+    for (int d_x_i = 0; d_x_i < 2; ++d_x_i) {
+      for (int d_y_i = 0; d_y_i < 2; ++d_y_i) {
+        areas.emplace_back(
+          bot() + ((d_y_i % 2 == 0) ? 0 : dst_vside),
+          (d_y_i % 2 == 0) ? bot() + dst_vside : top(),
+          left() + ((d_x_i % 2 == 0) ? 0 : dst_hside),
+          (d_x_i % 2 == 0) ? left() + dst_hside : right()
+        );
+      }
+    }
+    return areas;
+  }
+
   double bot() const { return _bot; }
   double top() const { return _top; }
   double left() const { return _left; }

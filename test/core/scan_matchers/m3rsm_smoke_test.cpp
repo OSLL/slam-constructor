@@ -7,8 +7,6 @@
 
 
 #include "../../../src/core/scan_matchers/many_to_many_multires_scan_matcher.h"
-
-#include "../../../src/core/maps/zoomable_grid_map.h"
 #include "../../../src/core/maps/plain_grid_map.h"
 
 //------------------------------------------------------------------------------
@@ -16,15 +14,18 @@
 // NB: the suit checks _fundamental_ abilities to find a correction.
 
 class M3RScanMatcherSmokeTest
-  :  public ScanMatcherTestBase<ZoomableGridMap<UnboundedPlainGridMap>> {
+  :  public ScanMatcherTestBase<UnboundedPlainGridMap> {
 protected: // methods
   M3RScanMatcherSmokeTest()
     : ScanMatcherTestBase{std::make_shared<DiscrepancySumCostEstimator>(),
                           Map_Width, Map_Height, Map_Scale,
                           to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
-    , m3rsm{sce, SM_Ang_Step, SM_Transl_Err_Factor} {
+    , policy{std::make_shared<PlainMaxApproximationPolicy>(0)}
+    , apprxr{std::make_shared<PowNCachedOGMA<UnboundedPlainGridMap, 2>>(policy)}
+    , m3rsm{sce, apprxr, SM_Ang_Step, SM_Transl_Err_Factor} {
     m3rsm.set_lookup_ranges(SM_Max_Translation_Error, SM_Max_Translation_Error,
                             SM_Max_Rotation_Error);
+    OccupancyGridMapApproximator::watch_master_map(map, apprxr);
   }
 protected: // consts
   // map patching params
@@ -69,7 +70,9 @@ protected: // fields
   }
 
 protected: // fields
-  ManyToManyMultiResoultionScanMatcher<UnboundedPlainGridMap> m3rsm;
+  std::shared_ptr<ApproximationPolicy> policy;
+  std::shared_ptr<OccupancyGridMapApproximator> apprxr;
+  ManyToManyMultiResoultionScanMatcher m3rsm;
 };
 
 //------------------------------------------------------------------------------

@@ -84,7 +84,7 @@ TEST_F(LaserScanGeneratorTest, emptyMap4beams) {
 TEST_F(LaserScanGeneratorTest, insideObstacle4beams) {
   auto occ_obs = AreaOccupancyObservation{true, Occupancy{1.0, 1.0},
                                           Point2D{rpose.x, rpose.y}, 1};
-  map[map.world_to_cell(rpose.x, rpose.y)] += occ_obs;
+  map.update(map.world_to_cell(rpose.x, rpose.y), occ_obs);
 
   auto scan = lsg.laser_scan_2D(map, rpose, 1);
   const auto Expected_SPs = ScanPoints {{0, deg2rad(-180)}, {0, deg2rad(-90)},

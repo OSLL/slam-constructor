@@ -23,15 +23,9 @@ public:
     }
   }
 
-  virtual GridCell &operator[] (const DPnt2D& c) override {
+  const GridCell &operator[](const Coord& c) const override {
     assert(has_cell(c));
-    DPnt2D coord = external2internal(c);
-    return *_cells[coord.y][coord.x];
-  }
-
-  virtual const GridCell &operator[](const DPnt2D& c) const override {
-    assert(has_cell(c));
-    DPnt2D coord = external2internal(c);
+    auto coord = external2internal(c);
     return *_cells[coord.y][coord.x];
   }
 
@@ -50,24 +44,25 @@ public: // methods
     : PlainGridMap{prototype, params}
     , _origin{GridMap::origin()}, _unknown_cell{prototype->clone()} {}
 
-  GridCell &operator[](const DPnt2D& c) override {
-    ensure_inside(c);
-    return PlainGridMap::operator[](c);
+  void update(const Coord& area_id,
+              const AreaOccupancyObservation &aoo) override {
+    ensure_inside(area_id);
+    PlainGridMap::update(area_id, aoo);
   }
 
-  const GridCell &operator[](const DPnt2D& c) const override {
+  const GridCell &operator[](const Coord& c) const override {
     if (!has_cell(c)) { return *_unknown_cell; }
     return PlainGridMap::operator[](c);
   }
 
-  DPnt2D origin() const override { return _origin; }
+  Coord origin() const override { return _origin; }
 
 protected: // methods
 
-  bool ensure_inside(const DPnt2D &c) {
+  bool ensure_inside(const Coord &c) {
     if (has_cell(c)) return false;
 
-    DPnt2D coord = external2internal(c);
+    auto coord = external2internal(c);
     unsigned w = width(), h = height();
     unsigned prep_x = 0, app_x = 0, prep_y = 0, app_y = 0;
     std::tie(prep_x, app_x) = determine_cells_nm(0, coord.x, w);
@@ -100,7 +95,7 @@ protected: // methods
     std::swap(_cells, new_cells);
     set_height(new_h);
     set_width(new_w);
-    _origin += DPnt2D(prep_x, prep_y);
+    _origin += Coord(prep_x, prep_y);
 
     assert(has_cell(c));
     return true;
@@ -119,7 +114,7 @@ protected: // methods
   }
 
 private: // fields
-  DPnt2D _origin;
+  Coord _origin;
   std::shared_ptr<GridCell> _unknown_cell;
 };
 
