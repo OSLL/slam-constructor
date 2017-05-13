@@ -1,15 +1,14 @@
-#ifndef SLAM_CTOR_VINY_SCAN_COST_ESTIMATOR_H_INCLUDED
-#define SLAM_CTOR_VINY_SCAN_COST_ESTIMATOR_H_INCLUDED
+#ifndef SLAM_CTOR_VINYSLAM_SCAN_COST_ESTIMATOR_H
+#define SLAM_CTOR_VINYSLAM_SCAN_COST_ESTIMATOR_H
 
 #include "../core/sensor_data.h"
 #include "../core/scan_matchers/grid_scan_matcher.h"
 
-class VinyScanCostEstimator : public ScanCostEstimator {
+class VinyScanProbabilityEstimator : public ScanProbabilityEstimator {
 public:
-  virtual double estimate_scan_cost(const RobotPose &pose,
-                                    const TransformedLaserScan &tr_scan,
-                                    const GridMap &map,
-                                    double min_cost) override {
+  double estimate_scan_probability(const TransformedLaserScan &tr_scan,
+                                   const RobotPose &pose,
+                                   const GridMap &map) const override {
     auto OCCUPIED_OBSERVATION = AreaOccupancyObservation{
       true, {1.0, 1.0}, {0, 0}, 1.0};
     double cost = 0;
@@ -33,15 +32,13 @@ public:
       cost_weight *= std::sqrt(sp.range());
       DiscretePoint2D cell_coord = map.world_to_cell(x_world, y_world);
       if (!map.has_cell(cell_coord)) {
-        cost += 1.0 * cost_weight;
         continue;
       }
 
-      cost += map[cell_coord].discrepancy(OCCUPIED_OBSERVATION) * cost_weight;
-      if (min_cost < cost) {
-        break;
-      }
+      cost += (1.0 - map[cell_coord].discrepancy(OCCUPIED_OBSERVATION))
+                 * cost_weight;
     }
+    // TODO: normalization
     return cost;
   }
 

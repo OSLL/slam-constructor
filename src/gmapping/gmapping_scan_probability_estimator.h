@@ -1,5 +1,5 @@
-#ifndef SLAM_CTOR_GMAPPING_COST_ESTIMATOR_H_INCLUDED
-#define SLAM_CTOR_GMAPPING_COST_ESTIMATOR_H_INCLUDED
+#ifndef SLAM_CTOR_GMAPPING_SCAN_PROBABILITY_ESTIMATOR_H_INCLUDED
+#define SLAM_CTOR_GMAPPING_SCAN_PROBABILITY_ESTIMATOR_H_INCLUDED
 
 #include <cmath>
 #include <limits>
@@ -12,33 +12,31 @@
 
 #include "gmapping_grid_cell.h"
 
-class GmappingCostEstimator : public ScanCostEstimator {
+class GmappingScanProbabilityEstimator : public ScanProbabilityEstimator {
 private:
   constexpr static double FULLNESS_TH = 0.5;
   constexpr static double SIGMA_SQ = 0.01;
   constexpr static double FREE_CELL_DIST = std::sqrt(2.0);
   constexpr static double DBL_INF = std::numeric_limits<double>::infinity();
 public:
-  GmappingCostEstimator() : _scan_margin(0), _pts_skip_rate(3), _window_sz(1) {}
+  GmappingScanProbabilityEstimator()
+    : _scan_margin(0), _pts_skip_rate(3), _window_sz(1) {}
 
-  virtual double estimate_scan_cost(const RobotPose &pose,
-                                    const TransformedLaserScan &tr_scan,
-                                    const GridMap &map,
-                                    double min_cost = 0) {
+  double estimate_scan_probability(const TransformedLaserScan &tr_scan,
+                                   const RobotPose &pose,
+                                   const GridMap &map) const override {
     auto sp_observation = AreaOccupancyObservation{true, {1.0, 1.0},
                                                    {0, 0}, 1.0};
 
-    double scan_weight = 0, last_dpoint_weight = -1;
+    double scan_probability = 0, last_dpoint_weight = -1;
     DiscretePoint2D last_handled_dpoint;
     tr_scan.scan.trig_cache->set_theta(pose.theta);
 
-    int best_scan_weight = 0;
     auto end_point_i = tr_scan.scan.points().size() - _scan_margin;
     for (size_t i = _scan_margin; i < end_point_i; ++i) {
       if (_pts_skip_rate && i % _pts_skip_rate) {
         continue;
       }
-      best_scan_weight += 1;
 
       auto &sp = tr_scan.scan.points()[i];
       double c = tr_scan.scan.trig_cache->cos(sp.angle());
@@ -48,7 +46,7 @@ public:
 
       auto sp_coord = map.world_to_cell(sp_observation.obstacle);
       if (sp_coord == last_handled_dpoint && last_dpoint_weight != -1) {
-        scan_weight += last_dpoint_weight;
+        scan_probability += last_dpoint_weight;
         continue;
       }
 
@@ -79,10 +77,11 @@ public:
       }
       double dist_sq = best_dist != DBL_INF ? best_dist : 9 * SIGMA_SQ;
       last_dpoint_weight = exp(-dist_sq / SIGMA_SQ);
-      scan_weight += last_dpoint_weight;
+      scan_probability += last_dpoint_weight;
     }
 
-    return best_scan_weight - scan_weight;
+    // TODO: normalize
+    return scan_probability;
   }
 
 private:

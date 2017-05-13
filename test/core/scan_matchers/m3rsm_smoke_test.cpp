@@ -17,12 +17,13 @@ class M3RScanMatcherSmokeTest
   :  public ScanMatcherTestBase<UnboundedPlainGridMap> {
 protected: // methods
   M3RScanMatcherSmokeTest()
-    : ScanMatcherTestBase{std::make_shared<DiscrepancySumCostEstimator>(),
-                          Map_Width, Map_Height, Map_Scale,
-                          to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
+    : ScanMatcherTestBase{
+        std::make_shared<DiscrepancySumProbabilityEstimator>(),
+          Map_Width, Map_Height, Map_Scale,
+          to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
     , policy{std::make_shared<PlainMaxApproximationPolicy>(0)}
     , apprxr{std::make_shared<PowNCachedOGMA<UnboundedPlainGridMap, 2>>(policy)}
-    , m3rsm{sce, apprxr, SM_Ang_Step, SM_Transl_Err_Factor} {
+    , m3rsm{spe, apprxr, SM_Ang_Step, SM_Transl_Err_Factor} {
     m3rsm.set_lookup_ranges(SM_Max_Translation_Error, SM_Max_Translation_Error,
                             SM_Max_Rotation_Error);
     OccupancyGridMapApproximator::watch_master_map(map, apprxr);

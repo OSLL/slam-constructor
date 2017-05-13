@@ -12,13 +12,13 @@ class MonteCarloScanMatcher : public GridScanMatcher {
 public:
   using ObsPtr = std::shared_ptr<GridScanMatcherObserver>;
 public:
-  MonteCarloScanMatcher(std::shared_ptr<ScanCostEstimator> estimator,
+  MonteCarloScanMatcher(SPE estimator,
                         unsigned failed_iter, unsigned max_iter):
     GridScanMatcher{estimator},
     _failed_tries_limit(failed_iter), _total_tries_limit(max_iter) {}
 
-  virtual double process_scan(const RobotPose &init_pose,
-                      const TransformedLaserScan &scan,
+  double process_scan(const TransformedLaserScan &scan,
+                      const RobotPose &init_pose,
                       const GridMap &map,
                       RobotPoseDelta &pose_delta) override {
     do_for_each_observer([&init_pose, &scan, &map](ObsPtr obs) {
@@ -26,49 +26,45 @@ public:
     });
 
     unsigned failed_tries = 0, total_tries = 0;
-    std::shared_ptr<ScanCostEstimator> sce = GridScanMatcher::cost_estimator();
-    double min_scan_cost = std::numeric_limits<double>::max();
-    RobotPose optimal_pose = init_pose;
+    RobotPose best_pose = init_pose;
 
-    min_scan_cost = sce->estimate_scan_cost(optimal_pose, scan,
-                                            map, min_scan_cost);
+    auto best_pose_prob = scan_probability(scan, best_pose, map);
 
-    do_for_each_observer([optimal_pose, scan, min_scan_cost](ObsPtr obs) {
-      obs->on_scan_test(optimal_pose, scan, min_scan_cost);
-      obs->on_pose_update(optimal_pose, scan, min_scan_cost);
+    do_for_each_observer([best_pose, scan, best_pose_prob](ObsPtr obs) {
+      obs->on_scan_test(best_pose, scan, best_pose_prob);
+      obs->on_pose_update(best_pose, scan, best_pose_prob);
     });
 
     while (failed_tries < _failed_tries_limit &&
            total_tries < _total_tries_limit) {
       total_tries++;
 
-      RobotPose sampled_pose = optimal_pose;
+      RobotPose sampled_pose = best_pose;
       sample_pose(sampled_pose);
-      double sampled_scan_cost = sce->estimate_scan_cost(sampled_pose, scan,
-                                                         map, min_scan_cost);
-      do_for_each_observer([sampled_pose, scan, sampled_scan_cost](ObsPtr obs) {
-        obs->on_scan_test(sampled_pose, scan, sampled_scan_cost);
+      double sampled_scan_prob = scan_probability(scan, sampled_pose, map);
+      do_for_each_observer([sampled_pose, scan, sampled_scan_prob](ObsPtr obs) {
+        obs->on_scan_test(sampled_pose, scan, sampled_scan_prob);
       });
 
-      if (min_scan_cost <= sampled_scan_cost) {
+      if (sampled_scan_prob <= best_pose_prob) {
         failed_tries++;
         continue;
       }
 
-      min_scan_cost = sampled_scan_cost;
-      optimal_pose = sampled_pose;
+      best_pose_prob = sampled_scan_prob;
+      best_pose = sampled_pose;
       failed_tries = on_estimate_update(failed_tries, _failed_tries_limit);
 
-      do_for_each_observer([optimal_pose, scan, min_scan_cost](ObsPtr obs) {
-        obs->on_pose_update(optimal_pose, scan, min_scan_cost);
+      do_for_each_observer([best_pose, scan, best_pose_prob](ObsPtr obs) {
+        obs->on_pose_update(best_pose, scan, best_pose_prob);
       });
     }
 
-    pose_delta = optimal_pose - init_pose;
-    do_for_each_observer([pose_delta, min_scan_cost](ObsPtr obs) {
-        obs->on_matching_end(pose_delta, min_scan_cost);
+    pose_delta = best_pose - init_pose;
+    do_for_each_observer([pose_delta, best_pose_prob](ObsPtr obs) {
+        obs->on_matching_end(pose_delta, best_pose_prob);
     });
-    return min_scan_cost;
+    return best_pose_prob;
   }
 
 protected:

@@ -13,6 +13,7 @@
 #include "../core/sensor_data.h"
 #include "../core/maps/grid_cell_strategy.h"
 
+#include "viny_scan_probability_estimator.h"
 #include "viny_world.h"
 #include "viny_grid_cell.h"
 
@@ -51,9 +52,9 @@ int main(int argc, char** argv) {
   // init viny slam
   VinyWorldParams params = init_common_world_params();
   GridMapParams map_params = init_grid_map_params();
-  auto cost_est = std::make_shared<VinyScanCostEstimator>();
+  auto prob_est = std::make_shared<VinyScanProbabilityEstimator>();
   auto gcs = std::make_shared<GridCellStrategy>(
-    init_cell_prototype(params), cost_est, init_occ_estimator());
+    init_cell_prototype(params), prob_est, init_occ_estimator());
   auto slam = std::make_shared<VinyWorld>(gcs, params, map_params);
 
   // connect the slam to a ros-topic based data provider

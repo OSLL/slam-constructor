@@ -13,12 +13,11 @@
 #include "../../../src/core/scan_matchers/grid_scan_matcher.h"
 
 // TODO: rm code duplication for cost estimators
-class DiscrepancySumCostEstimator : public ScanCostEstimator {
+class DiscrepancySumProbabilityEstimator : public ScanProbabilityEstimator {
 public:
-  double estimate_scan_cost(const RobotPose &pose,
-                            const TransformedLaserScan &tr_scan,
-                            const GridMap &map,
-                            double min_cost) override {
+  double estimate_scan_probability(const TransformedLaserScan &tr_scan,
+                                   const RobotPose &pose,
+                                   const GridMap &map) const override {
     auto OCCUPIED_OBSERVATION = AreaOccupancyObservation{
       true, Occupancy{1.0, 1.0}, Point2D{0, 0}, 1.0};
     double cost = 0;
@@ -28,7 +27,7 @@ public:
       }
       auto cell_coord = map.world_to_cell_by_vec(pose.x, pose.y, sp.range(),
                                                  pose.theta + sp.angle());
-      cost += map[cell_coord].discrepancy(OCCUPIED_OBSERVATION);
+      cost += 1.0 - map[cell_coord].discrepancy(OCCUPIED_OBSERVATION);
     }
     return cost;
   }
@@ -50,12 +49,12 @@ protected: // methods
         deg2rad(fow_deg / pts_nm), deg2rad(fow_deg / 2.0)};
   }
 
-  ScanMatcherTestBase(std::shared_ptr<ScanCostEstimator> scan_cost_estimator,
+  ScanMatcherTestBase(std::shared_ptr<ScanProbabilityEstimator> prob_est,
                       int map_w, int map_h, double map_scale,
                       const LaserScannerParams &dflt_lsp)
     : map{std::make_shared<MockGridCell>(), {map_w, map_h, map_scale}}
     , rpose{map.scale() / 2, map.scale() / 2, 0}
-    , sce{scan_cost_estimator}
+    , spe{prob_est}
     , default_lsp{dflt_lsp} {}
 
   virtual void add_primitive_to_map(const TextRasterMapPrimitive &mp,
@@ -70,11 +69,11 @@ protected: // methods
 
   virtual bool is_result_noise_acceptable(const TransformedLaserScan &scan,
                                           const RobotPoseDelta &init_noise,
-                                          const RobotPoseDelta &result_noise) {
-    auto no_noise_cost = sce->estimate_scan_cost(rpose, scan, map);
-    auto noise_cost = sce->estimate_scan_cost(rpose + result_noise, scan, map);
-    //std::cout << no_noise_cost << " vs " << noise_cost << std::endl;
-    return no_noise_cost == noise_cost;
+                                          const RobotPoseDelta &noise) {
+    auto no_noise_prob = spe->estimate_scan_probability(scan, rpose, map);
+    auto noise_prob = spe->estimate_scan_probability(scan, rpose + noise, map);
+    //std::cout << no_noise_prob << " vs " << noise_prob << std::endl;
+    return are_equal(no_noise_prob, noise_prob);
   }
 
   void test_scan_matcher(const LaserScannerParams &lsp,
@@ -88,13 +87,13 @@ protected: // methods
     ASSERT_TRUE(tr_scan.scan.points().size() != 0);
 
     auto correction = RobotPoseDelta{};
-    scan_matcher().process_scan(rpose + noise, tr_scan, map, correction);
+    scan_matcher().process_scan(tr_scan, rpose + noise,  map, correction);
     auto result_noise = noise + correction;
     if (is_result_noise_acceptable(tr_scan, noise, result_noise)) {
       return;
     }
 
-    // OR scan cost is the same as actual
+    // OR scan probability is the same as actual
     ASSERT_NEAR(0, std::abs(result_noise.x), acc_error.x);
     ASSERT_NEAR(0, std::abs(result_noise.y), acc_error.y);
     ASSERT_NEAR(0, std::abs(result_noise.theta), acc_error.theta);
@@ -112,7 +111,7 @@ protected: // methods
 protected: // fields
   MapType map;
   RobotPose rpose;
-  std::shared_ptr<ScanCostEstimator> sce;
+  std::shared_ptr<ScanProbabilityEstimator> spe;
   LaserScannerParams default_lsp;
 };
 

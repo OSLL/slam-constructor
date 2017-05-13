@@ -1,5 +1,5 @@
-#ifndef __VINY_WORLD_H
-#define __VINY_WORLD_H
+#ifndef SLAM_CTOR_VINYSLAM_VINY_WORLD_H
+#define SLAM_CTOR_VINYSLAM_VINY_WORLD_H
 
 #include <iostream>
 #include <cmath>
@@ -31,10 +31,11 @@ public:
 
   VinyWorld(std::shared_ptr<GridCellStrategy> gcs,
             const VinyWorldParams &params,
-            const GridMapParams &map_params) :
-    LaserScanGridWorld(gcs, map_params), _gcs(gcs), _params(params),
-    _scan_matcher(new VinyScanMatcher(_gcs->cost_est(), params.Viny_SM_Params)),
-    _map_update_ctx(_gcs->occupancy_est()) {}
+            const GridMapParams &map_params)
+    : LaserScanGridWorld(gcs, map_params), _gcs(gcs), _params(params)
+    , _scan_matcher{std::make_shared<VinyScanMatcher>(_gcs->prob_est(),
+                                                      params.Viny_SM_Params)}
+    , _map_update_ctx(_gcs->occupancy_est()) {}
 
   std::shared_ptr<GridScanMatcher> scan_matcher() override {
     return _scan_matcher;
@@ -46,7 +47,7 @@ protected:
     _scan_matcher->reset_state();
 
     RobotPoseDelta pose_delta;
-    _scan_matcher->process_scan(pose(), scan, map(), pose_delta);
+    _scan_matcher->process_scan(scan, pose(), map(), pose_delta);
     update_robot_pose(pose_delta);
 
     scan.quality = pose_delta ? _params.localized_scan_quality :

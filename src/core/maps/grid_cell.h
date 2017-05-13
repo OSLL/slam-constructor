@@ -25,6 +25,7 @@ public:
     _occupancy = aoo.occupancy;
   }
 
+  // must be in interval [0, 1.0]
   virtual double discrepancy(const AreaOccupancyObservation &aoo) const {
     return std::abs(_occupancy - aoo.occupancy);
   }

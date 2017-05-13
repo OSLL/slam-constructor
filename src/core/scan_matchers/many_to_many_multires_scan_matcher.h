@@ -1,5 +1,5 @@
-#ifndef SLAM_CTOR_CORE_MANU_TO_MANY_MULTIRES_SCAN_MANCHR_H_INCLUDED
-#define SLAM_CTOR_CORE_MANU_TO_MANY_MULTIRES_SCAN_MANCHR_H_INCLUDED
+#ifndef SLAM_CTOR_CORE_MANY_TO_MANY_MULTIRES_SCAN_MANCHR_H_INCLUDED
+#define SLAM_CTOR_CORE_MANY_TO_MANY_MULTIRES_SCAN_MANCHR_H_INCLUDED
 
 #include <limits>
 #include <queue>
@@ -28,25 +28,26 @@ private: // consts
 private: // types
   struct RobotPoseDeltas {
     // TODO: map ptr/ref
-    double cost_lower_bound;
+    double scan_prob_upper_bound;
     double rotation;
     Rectangle translations;
     int zoom_lvl;
 
-    RobotPoseDeltas(double c, double th, const Rectangle& t_wn, int l)
-      : cost_lower_bound{c}, rotation{th}, translations{t_wn}, zoom_lvl{l} {}
+    RobotPoseDeltas(double sp, double th, const Rectangle& t_wn, int l)
+      : scan_prob_upper_bound{sp}, rotation{th}, translations{t_wn}
+      , zoom_lvl{l} {}
     RobotPoseDeltas(const RobotPoseDeltas&) = default;
     RobotPoseDeltas(RobotPoseDeltas&&) = default;
     RobotPoseDeltas& operator=(const RobotPoseDeltas&) = default;
     RobotPoseDeltas& operator=(RobotPoseDeltas&&) = default;
 
-    // returns true if this node is less prepefable than a given one
+    // returns true if this node is _less_ prepefable than a given one
     bool operator<(const RobotPoseDeltas &other) const {
-      if (cost_lower_bound == other.cost_lower_bound) {
+      if (are_equal(scan_prob_upper_bound, other.scan_prob_upper_bound)) {
         return zoom_lvl > other.zoom_lvl; // finer is "better"
       }
-      // TODO: replace cost_lower_bound with probability in scan matcher
-      return cost_lower_bound > other.cost_lower_bound; // smaller is "better"
+      // greater is "better"
+      return scan_prob_upper_bound < other.scan_prob_upper_bound;
     }
   };
 
@@ -54,7 +55,7 @@ private: // types
   using MapApproximator = std::shared_ptr<OccupancyGridMapApproximator>;
 public:
   // TODO: do we need max_*_error setup in ctor?
-  ManyToManyMultiResoultionScanMatcher(std::shared_ptr<ScanCostEstimator> est,
+  ManyToManyMultiResoultionScanMatcher(SPE est,
                                        MapApproximator map_approximator,
                                        double ang_step = deg2rad(0.1),
                                        double tr_error_factor = 2)
@@ -63,8 +64,8 @@ public:
     , _ang_step{ang_step}, _tr_error_factor{tr_error_factor}
     , _map_approximator{map_approximator} {}
 
-  double process_scan(const RobotPose &init_pose,
-                      const TransformedLaserScan &scan,
+  double process_scan(const TransformedLaserScan &scan,
+                      const RobotPose &init_pose,
                       const GridMap &map,
                       RobotPoseDelta &result_pose_delta) override {
     // TODO: dynamic angle step estimate
@@ -76,7 +77,7 @@ public:
     auto translation = pose_deltas.translations.center();
     result_pose_delta = RobotPoseDelta{translation.x, translation.y,
                                        pose_deltas.rotation};
-    return pose_deltas.cost_lower_bound;
+    return pose_deltas.scan_prob_upper_bound;
   }
 
 private: // methods
@@ -96,11 +97,11 @@ private: // methods
                                  const TransformedLaserScan &scan,
                                  const GridMap &map, MapApproximator approx) {
     // TODO: check approximator look for a given map
-    auto sce = GridScanMatcher::cost_estimator();
 
     // add explicit "no correction" entry
-    auto cost = sce->estimate_scan_cost(pose, scan, map);
-    _unchecked_pose_deltas.emplace(cost, 0, Rectangle{0, 0, 0, 0}, 0);
+    // TODO: add base prob. for different angles
+    auto scan_prob = scan_probability(scan, pose, map);
+    _unchecked_pose_deltas.emplace(scan_prob, 0, Rectangle{0, 0, 0, 0}, 0);
 
     // generate pose ranges to be checked
     auto pose_delta = RobotPoseDelta{0, 0, 0};
@@ -110,8 +111,8 @@ private: // methods
     auto &coarse_map = approx->map(coarse_approx_lvl);
     for (double th = -max_th_error(); th <= max_th_error(); th += _ang_step) {
       pose_delta.theta = th;
-      auto cost = sce->estimate_scan_cost(pose + pose_delta, scan, coarse_map);
-      _unchecked_pose_deltas.emplace(cost, th, translations, coarse_approx_lvl);
+      auto sp = scan_probability(scan, pose + pose_delta, coarse_map);
+      _unchecked_pose_deltas.emplace(sp, th, translations, coarse_approx_lvl);
     }
   }
 
@@ -122,7 +123,6 @@ private: // methods
   RobotPoseDeltas find_best_pose_delta(const RobotPose &pose,
                                        const TransformedLaserScan &scan,
                                        const GridMap &map) {
-    auto sce = GridScanMatcher::cost_estimator();
     auto acceptable_transl_error = max_translation_error(map);
     // the best pose lookup
     while (!_unchecked_pose_deltas.empty()) {
@@ -152,11 +152,11 @@ private: // methods
         auto branch_delta = RobotPoseDelta{best_translation.x,
                                            best_translation.y,
                                            d_poses.rotation};
-        auto branch_cost = sce->estimate_scan_cost(pose + branch_delta,
-                                                   scan, coarse_map);
-        assert(d_poses.cost_lower_bound <= branch_cost &&
+        auto branch_best_prob = scan_probability(scan, pose + branch_delta,
+                                                 coarse_map);
+        assert(branch_best_prob <= d_poses.scan_prob_upper_bound &&
                "BUG: Bounding assumption is violated");
-        _unchecked_pose_deltas.emplace(branch_cost, d_poses.rotation, st,
+        _unchecked_pose_deltas.emplace(branch_best_prob, d_poses.rotation, st,
                                        d_poses.zoom_lvl - 1);
       }
     }

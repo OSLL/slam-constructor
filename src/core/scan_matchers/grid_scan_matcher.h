@@ -13,47 +13,42 @@
 
 class GridScanMatcherObserver {
 public:
-  virtual void on_matching_start(const RobotPose &,           /*pose*/
+  virtual void on_matching_start(const RobotPose &,            /*pose*/
                                  const TransformedLaserScan &, /*scan*/
                                  const GridMap &) {}    /*map*/
-  virtual void on_scan_test(const RobotPose &,           /*pose*/
+  virtual void on_scan_test(const RobotPose &,          /*pose*/
                             const TransformedLaserScan &, /*scan*/
-                            double) {};                  /*score*/
+                            double) {};                   /*score*/
   virtual void on_pose_update(const RobotPose &,            /*pose*/
-                              const TransformedLaserScan &,  /*scan*/
-                              double) {};                    /*score*/
+                              const TransformedLaserScan &, /*scan*/
+                              double) {};                   /*score*/
   virtual void on_matching_end(const RobotPose &, /*delta*/
-                               double) {};         /*best_score*/
+                               double) {};        /*best_score*/
 };
 
-class ScanCostEstimator {
+class ScanProbabilityEstimator {
 public:
-  double estimate_scan_cost(const RobotPose &pose,
-                            const TransformedLaserScan &scan,
-                            const GridMap &map) {
-    return estimate_scan_cost(pose, scan, map,
-                              std::numeric_limits<double>::max());
-  }
-
-  virtual double estimate_scan_cost(const RobotPose &pose,
-                                    const TransformedLaserScan &scan,
-                                    const GridMap &map,
-                                    double min_cost) = 0;
-  virtual ~ScanCostEstimator() = default;
+  virtual double estimate_scan_probability(const TransformedLaserScan &scan,
+                                           const RobotPose &pose,
+                                           const GridMap &map) const = 0;
+  virtual ~ScanProbabilityEstimator() = default;
 };
 
 class GridScanMatcher {
 public:
-  GridScanMatcher(std::shared_ptr<ScanCostEstimator> estimator,
+  using SPE = std::shared_ptr<ScanProbabilityEstimator>;
+public:
+  GridScanMatcher(SPE estimator,
                   double max_x_error = 0, double max_y_error = 0,
                   double max_th_error = 0)
-    : _cost_estimator{estimator}
+    : _scan_prob_estimator{estimator}
     , _max_x_error{max_x_error}, _max_y_error{max_y_error}
     , _max_th_error{max_th_error} {}
   virtual ~GridScanMatcher() = default;
 
-  virtual double process_scan(const RobotPose &init_pose,
-                              const TransformedLaserScan &scan,
+  // TODO: fix method's name; add pose_delta to return value
+  virtual double process_scan(const TransformedLaserScan &scan,
+                              const RobotPose &init_pose,
                               const GridMap &map,
                               RobotPoseDelta &pose_delta) = 0;
 
@@ -81,10 +76,21 @@ public:
     _max_th_error = th;
   }
 
-protected:
-  std::shared_ptr<ScanCostEstimator> cost_estimator() {
-    return _cost_estimator;
+  double scan_probability(const TransformedLaserScan &scan,
+                          const RobotPose &pose,
+                          const GridMap &map) const {
+    return _scan_prob_estimator->estimate_scan_probability(scan, pose, map);
   }
+
+  SPE scan_probability_estimator() const {
+    return _scan_prob_estimator;
+  }
+
+  void set_scan_probability_estimator(SPE spe) {
+    _scan_prob_estimator = spe;
+  }
+
+protected:
 
   std::vector<std::weak_ptr<GridScanMatcherObserver>> & observers() {
     return _observers;
@@ -96,7 +102,7 @@ protected:
 
 private:
   std::vector<std::weak_ptr<GridScanMatcherObserver>> _observers;
-  std::shared_ptr<ScanCostEstimator> _cost_estimator;
+  SPE _scan_prob_estimator;
   double _max_x_error = 0, _max_y_error = 0, _max_th_error = 0;
 };
 
