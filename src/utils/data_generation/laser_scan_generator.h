@@ -61,10 +61,11 @@ public:
         auto obst_pnt = Point2D{(inters[0].x + inters[1].x) / 2,
                                 (inters[0].y + inters[1].y) / 2};
         auto range = std::sqrt(robot_point.dist_sq(obst_pnt));
-        scan.points().emplace_back(range, a);
+        auto scan_point = ScanPoint2D::make_polar(range, a, true);
+        scan.points().push_back(scan_point);
 
-        auto sp_coord = map.world_to_cell_by_vec(pose.x, pose.y,
-                                                 range, pose.theta + a);
+        auto added_wp = scan_point.move_origin(pose.x, pose.y, pose.theta);
+        auto sp_coord = map.world_to_cell(added_wp);
         assert(coord == sp_coord &&
                "BUG! LS Gen: generated scan point is not occupied");
         //std::cout << "==> Add point " << range << " " << a << std::endl;

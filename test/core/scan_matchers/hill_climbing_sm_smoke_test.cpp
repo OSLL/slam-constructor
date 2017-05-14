@@ -37,10 +37,9 @@ protected: // consts
 
 protected: // methods
   HillClimbingScanMatcherSmokeTest()
-    : ScanMatcherTestBase{
-        std::make_shared<DiscrepancySumProbabilityEstimator>(),
-        Map_Width, Map_Height, Map_Scale,
-        to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
+    : ScanMatcherTestBase{std::make_shared<DefaultSPE>(),
+                          Map_Width, Map_Height, Map_Scale,
+                          to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
     , hcsm{spe, Max_SM_Shirnks_Nm, Init_Lin_Step, Init_Ang_Step} {}
 protected: // fields
 

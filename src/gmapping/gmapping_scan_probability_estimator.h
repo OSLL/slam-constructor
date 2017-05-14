@@ -28,16 +28,19 @@ public:
     auto sp_observation = AreaOccupancyObservation{true, {1.0, 1.0},
                                                    {0, 0}, 1.0};
 
-    double scan_probability = 0, last_dpoint_weight = -1;
+    double last_dpoint_weight = -1;
     DiscretePoint2D last_handled_dpoint;
     tr_scan.scan.trig_cache->set_theta(pose.theta);
 
+    double total_probability = 0;
+    double handled_pts_nm = 0;
     auto end_point_i = tr_scan.scan.points().size() - _scan_margin;
     for (size_t i = _scan_margin; i < end_point_i; ++i) {
       if (_pts_skip_rate && i % _pts_skip_rate) {
         continue;
       }
 
+      handled_pts_nm += 1;
       auto &sp = tr_scan.scan.points()[i];
       double c = tr_scan.scan.trig_cache->cos(sp.angle());
       double s = tr_scan.scan.trig_cache->sin(sp.angle());
@@ -46,7 +49,7 @@ public:
 
       auto sp_coord = map.world_to_cell(sp_observation.obstacle);
       if (sp_coord == last_handled_dpoint && last_dpoint_weight != -1) {
-        scan_probability += last_dpoint_weight;
+        total_probability += last_dpoint_weight;
         continue;
       }
 
@@ -77,11 +80,11 @@ public:
       }
       double dist_sq = best_dist != DBL_INF ? best_dist : 9 * SIGMA_SQ;
       last_dpoint_weight = exp(-dist_sq / SIGMA_SQ);
-      scan_probability += last_dpoint_weight;
+      total_probability += last_dpoint_weight;
     }
 
-    // TODO: normalize
-    return scan_probability;
+    if (handled_pts_nm == 0) { return unknown_probability(); }
+    return total_probability / handled_pts_nm;
   }
 
 private:

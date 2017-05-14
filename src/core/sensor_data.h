@@ -16,6 +16,10 @@ public:
   enum class PointType {Polar, Cartesian};
 public: // methods
 
+  static ScanPoint2D make_polar(double range, double angle, bool is_occ) {
+    return ScanPoint2D{PointType::Polar, range, angle, is_occ};
+  }
+
   ScanPoint2D(PointType type, double x_or_range, double y_or_angle, bool is_occ)
     : _type{type}, _is_occupied{is_occ} {
 
@@ -68,6 +72,13 @@ public: // methods
     return ScanPoint2D{PointType::Cartesian,
                        range() * cache->cos(a), range() * cache->sin(a),
                        _is_occupied};
+  }
+
+  Point2D move_origin(double d_x, double d_y, double d_angle) const {
+    auto patched = ScanPoint2D{PointType::Polar,
+                               range(), angle() + d_angle,
+                               is_occupied()};
+    return Point2D{patched.x() + d_x, patched.y() + d_y};
   }
 
   ScanPoint2D to_cartesian(double d_angle = 0, double d_range = 0) const {

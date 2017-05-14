@@ -11,30 +11,14 @@
 #include "../../../src/utils/data_generation/laser_scan_generator.h"
 
 #include "../../../src/core/scan_matchers/grid_scan_matcher.h"
+#include "../../../src/core/scan_matchers/\
+weighted_mean_discrepancy_sp_estimator.h"
 
-// TODO: rm code duplication for cost estimators
-class DiscrepancySumProbabilityEstimator : public ScanProbabilityEstimator {
-public:
-  double estimate_scan_probability(const TransformedLaserScan &tr_scan,
-                                   const RobotPose &pose,
-                                   const GridMap &map) const override {
-    auto OCCUPIED_OBSERVATION = AreaOccupancyObservation{
-      true, Occupancy{1.0, 1.0}, Point2D{0, 0}, 1.0};
-    double cost = 0;
-    for (const auto &sp : tr_scan.scan.points()) {
-      if (!sp.is_occupied()) {
-        continue;
-      }
-      auto cell_coord = map.world_to_cell_by_vec(pose.x, pose.y, sp.range(),
-                                                 pose.theta + sp.angle());
-      cost += 1.0 - map[cell_coord].discrepancy(OCCUPIED_OBSERVATION);
-    }
-    return cost;
-  }
-};
 
 template<typename MapType>
 class ScanMatcherTestBase : public ::testing::Test {
+protected: // type aliases
+  using DefaultSPE = WeightedMeanDiscrepancySPEstimator;
 protected: // consts
   static constexpr RobotPoseDelta Acceptable_Error = {
     std::numeric_limits<double>::epsilon(),

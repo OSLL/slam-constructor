@@ -43,13 +43,6 @@ public:
     return {scale() * (cell.x + 0.5), scale() * (cell.y + 0.5)};
   }
 
-  Coord world_to_cell_by_vec(double v_origin_x, double v_origin_y,
-                             double range, double direction_a) const {
-    double x_world = v_origin_x + range * std::cos(direction_a);
-    double y_world = v_origin_y + range * std::sin(direction_a);
-    return world_to_cell(x_world, y_world);
-  }
-
   std::vector<Coord> coords_in_area(const Rectangle &area) const {
     auto left_bot = world_to_cell(area.left(), area.bot());
     auto right_top = world_to_cell(area.right(), area.top());

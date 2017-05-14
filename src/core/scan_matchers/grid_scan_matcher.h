@@ -28,6 +28,14 @@ public:
 
 class ScanProbabilityEstimator {
 public:
+  constexpr static double unknown_probability() {
+    return std::numeric_limits<double>::quiet_NaN();
+  }
+
+  static bool is_prob_unknown(double probability) {
+    return probability == unknown_probability();
+  }
+
   virtual double estimate_scan_probability(const TransformedLaserScan &scan,
                                            const RobotPose &pose,
                                            const GridMap &map) const = 0;
