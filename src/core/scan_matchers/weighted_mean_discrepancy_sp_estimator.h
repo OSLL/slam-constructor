@@ -1,15 +1,15 @@
 #ifndef SLAM_CTOR_CORE_WEIGHTED_MEAN_DISCREPANCY_SP_ESTIMATOR
 #define SLAM_CTOR_CORE_WEIGHTED_MEAN_DISCREPANCY_SP_ESTIMATOR
 
+#include <cmath>
 #include "grid_scan_matcher.h"
 
 class WeightedMeanDiscrepancySPEstimator : public ScanProbabilityEstimator {
 public:
   double estimate_scan_probability(const TransformedLaserScan &tr_scan,
                                    const RobotPose &pose,
-                                   const GridMap &map) const override {
-    const auto OCCUPIED_AREA_OBS = expected_scan_point_observation();
-
+                                   const GridMap &map,
+                                   const SPEParams &params) const override {
     auto total_weight = double{0};
     auto total_probability = double{0};
     for (const auto &scan_point : tr_scan.scan.points()) {
@@ -18,9 +18,9 @@ public:
       auto area_id = map.world_to_cell(world_point);
       if (should_skip_point(scan_point, map, area_id)) { continue; }
 
-      auto sp_probability = 1.0 - map[area_id].discrepancy(OCCUPIED_AREA_OBS);
+      auto sp_prob = world_point_probability(world_point, pose, map, params);
       auto sp_weight = scan_point_weight(scan_point);
-      total_probability += sp_probability * sp_weight;
+      total_probability += sp_prob * sp_weight;
       total_weight += sp_weight;
     }
     if (total_weight == 0) { return unknown_probability(); }
@@ -41,6 +41,20 @@ protected:
   virtual double scan_point_weight(const ScanPoint2D &) const {
     return 1;
   }
+
+  double world_point_probability(const Point2D &wp,
+                                 const RobotPose &pose,
+                                 const GridMap &map,
+                                 const SPEParams &params) const {
+     const auto OCCUPIED_AREA_OBS = expected_scan_point_observation();
+     auto analysis_area = params.sp_analysis_area.move_to_center(wp);
+     double highest_probability = 0;
+     for (auto &area_id : map.coords_in_area(analysis_area)) {
+       double area_prob = 1.0 - map[area_id].discrepancy(OCCUPIED_AREA_OBS);
+       highest_probability = std::max(area_prob, highest_probability);
+     }
+     return highest_probability;
+   }
 };
 
 #endif

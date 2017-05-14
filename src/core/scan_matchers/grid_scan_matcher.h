@@ -27,6 +27,11 @@ public:
 };
 
 class ScanProbabilityEstimator {
+public: // types
+  struct SPEParams {
+    // area in the neighborhood of a scan point that should be analyzed
+    Rectangle sp_analysis_area = {0, 0, 0, 0};
+  };
 public:
   constexpr static double unknown_probability() {
     return std::numeric_limits<double>::quiet_NaN();
@@ -36,9 +41,17 @@ public:
     return probability == unknown_probability();
   }
 
+  double estimate_scan_probability(const TransformedLaserScan &scan,
+                                   const RobotPose &pose,
+                                   const GridMap &map) const {
+    return estimate_scan_probability(scan, pose, map, SPEParams{});
+  }
+
   virtual double estimate_scan_probability(const TransformedLaserScan &scan,
                                            const RobotPose &pose,
-                                           const GridMap &map) const = 0;
+                                           const GridMap &map,
+                                           const SPEParams &params) const = 0;
+
   virtual ~ScanProbabilityEstimator() = default;
 };
 

@@ -47,6 +47,8 @@ public:
     auto left_bot = world_to_cell(area.left(), area.bot());
     auto right_top = world_to_cell(area.right(), area.top());
 
+    if (left_bot == right_top) { return {left_bot}; }
+
     std::vector<Coord> coords;
     coords.reserve((right_top.x - left_bot.x) * (right_top.y - left_bot.y));
     for (int x = left_bot.x; x < right_top.x; ++x) {

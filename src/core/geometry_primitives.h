@@ -187,6 +187,12 @@ struct Rectangle {
     return {left() + hside_len() / 2, bot() + vside_len() / 2};
   }
 
+  Rectangle move_to_center(const Point2D &new_center) const {
+    double half_v = vside_len() / 2, half_h = hside_len() / 2;
+    return {new_center.y - half_v, new_center.y + half_v,
+            new_center.x - half_h, new_center.x + half_h};
+  }
+
   /* Inclusion predicates */
   bool contains(const Point2D &p) const {
     return are_ordered(bot(), p.y, top()) && are_ordered(left(), p.x, right());

@@ -24,11 +24,12 @@ public:
 
   double estimate_scan_probability(const TransformedLaserScan &tr_scan,
                                    const RobotPose &pose,
-                                   const GridMap &map) const override {
+                                   const GridMap &map,
+                                   const SPEParams &) const override {
     auto sp_observation = AreaOccupancyObservation{true, {1.0, 1.0},
                                                    {0, 0}, 1.0};
 
-    double last_dpoint_weight = -1;
+    double last_dpoint_prob = -1;
     DiscretePoint2D last_handled_dpoint;
     tr_scan.scan.trig_cache->set_theta(pose.theta);
 
@@ -48,8 +49,8 @@ public:
                                  pose.y + sp.range() * s};
 
       auto sp_coord = map.world_to_cell(sp_observation.obstacle);
-      if (sp_coord == last_handled_dpoint && last_dpoint_weight != -1) {
-        total_probability += last_dpoint_weight;
+      if (sp_coord == last_handled_dpoint && last_dpoint_prob != -1) {
+        total_probability += last_dpoint_prob;
         continue;
       }
 
@@ -79,8 +80,8 @@ public:
         }
       }
       double dist_sq = best_dist != DBL_INF ? best_dist : 9 * SIGMA_SQ;
-      last_dpoint_weight = exp(-dist_sq / SIGMA_SQ);
-      total_probability += last_dpoint_weight;
+      last_dpoint_prob = exp(-dist_sq / SIGMA_SQ);
+      total_probability += last_dpoint_prob;
     }
 
     if (handled_pts_nm == 0) { return unknown_probability(); }
