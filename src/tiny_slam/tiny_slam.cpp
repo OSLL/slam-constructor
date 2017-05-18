@@ -11,7 +11,7 @@
 
 #include "../core/sensor_data.h"
 #include "../core/maps/grid_cell_strategy.h"
-#include "../core/scan_matchers/weighted_mean_discrepancy_sp_estimator.h"
+#include "../core/scan_matchers/weighted_mean_discrepancy_spe.h"
 
 #include "tiny_world.h"
 #include "tiny_grid_cell.h"

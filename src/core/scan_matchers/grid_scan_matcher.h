@@ -103,6 +103,13 @@ public:
     return _scan_prob_estimator->estimate_scan_probability(scan, pose, map);
   }
 
+  double scan_probability(const TransformedLaserScan &scan,
+                          const RobotPose &pose,
+                          const GridMap &map,
+                          const ScanProbabilityEstimator::SPEParams &p) const {
+    return _scan_prob_estimator->estimate_scan_probability(scan, pose, map, p);
+  }
+
   SPE scan_probability_estimator() const {
     return _scan_prob_estimator;
   }

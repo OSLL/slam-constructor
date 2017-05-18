@@ -23,7 +23,9 @@ public:
       total_probability += sp_prob * sp_weight;
       total_weight += sp_weight;
     }
-    if (total_weight == 0) { return unknown_probability(); }
+    if (total_weight == 0) {
+      return unknown_probability();
+    }
     return total_probability / total_weight;
   }
 
@@ -43,8 +45,7 @@ protected:
   }
 
   double world_point_probability(const Point2D &wp,
-                                 const RobotPose &pose,
-                                 const GridMap &map,
+                                 const RobotPose &pose, const GridMap &map,
                                  const SPEParams &params) const {
      const auto OCCUPIED_AREA_OBS = expected_scan_point_observation();
      auto analysis_area = params.sp_analysis_area.move_to_center(wp);

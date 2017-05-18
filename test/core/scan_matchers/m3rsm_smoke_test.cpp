@@ -5,7 +5,6 @@
 #include "../mock_grid_cell.h"
 #include "scan_matcher_test_utils.h"
 
-
 #include "../../../src/core/scan_matchers/many_to_many_multires_scan_matcher.h"
 #include "../../../src/core/maps/plain_grid_map.h"
 
@@ -20,7 +19,7 @@ protected: // methods
     : ScanMatcherTestBase{std::make_shared<DefaultSPE>(),
                           Map_Width, Map_Height, Map_Scale,
                           to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
-    , policy{std::make_shared<PlainMaxApproximationPolicy>(0)}
+    , policy{std::make_shared<PlainMaxApproximationPolicy>(0.5)}
     , apprxr{std::make_shared<PowNCachedOGMA<UnboundedPlainGridMap, 2>>(policy)}
     , m3rsm{spe, apprxr, SM_Ang_Step, SM_Transl_Err_Factor} {
     m3rsm.set_lookup_ranges(SM_Max_Translation_Error, SM_Max_Translation_Error,
@@ -39,7 +38,7 @@ protected: // consts
   // laser scanner params
   static constexpr double LS_Max_Dist = 15;
   static constexpr int LS_FoW = 270;
-  static constexpr int LS_Pts_Nm = 10;
+  static constexpr int LS_Pts_Nm = 1000;
 
   // scan matcher
   static constexpr double SM_Max_Rotation_Error = deg2rad(5);

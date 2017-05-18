@@ -11,8 +11,7 @@
 #include "../../../src/utils/data_generation/laser_scan_generator.h"
 
 #include "../../../src/core/scan_matchers/grid_scan_matcher.h"
-#include "../../../src/core/scan_matchers/\
-weighted_mean_discrepancy_sp_estimator.h"
+#include "../../../src/core/scan_matchers/weighted_mean_discrepancy_spe.h"
 
 
 template<typename MapType>

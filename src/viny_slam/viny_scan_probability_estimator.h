@@ -1,7 +1,7 @@
 #ifndef SLAM_CTOR_VINYSLAM_SCAN_COST_ESTIMATOR_H
 #define SLAM_CTOR_VINYSLAM_SCAN_COST_ESTIMATOR_H
 
-#include "../core/scan_matchers/weighted_mean_discrepancy_sp_estimator.h"
+#include "../core/scan_matchers/weighted_mean_discrepancy_spe.h"
 
 class VinyScanProbabilityEstimator : public WeightedMeanDiscrepancySPEstimator {
 public:

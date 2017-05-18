@@ -10,6 +10,8 @@
 #include "../maps/grid_approximator.h"
 #include "../geometry_primitives.h"
 
+#include "../../utils/console_view.h"
+
 class Pow2BranchingPolicy {
 public:
 
@@ -23,8 +25,8 @@ public:
 
 class ManyToManyMultiResoultionScanMatcher : public GridScanMatcher {
 private: // consts
-  static constexpr double _Max_Translation_Error = 0.1,
-                          _Max_Rotation_Error = deg2rad(2);
+  static constexpr double _Max_Translation_Error = 1,
+                          _Max_Rotation_Error = deg2rad(5);
 private: // types
   struct RobotPoseDeltas {
     // TODO: map ptr/ref
@@ -36,10 +38,6 @@ private: // types
     RobotPoseDeltas(double sp, double th, const Rectangle& t_wn, int l)
       : scan_prob_upper_bound{sp}, rotation{th}, translations{t_wn}
       , zoom_lvl{l} {}
-    RobotPoseDeltas(const RobotPoseDeltas&) = default;
-    RobotPoseDeltas(RobotPoseDeltas&&) = default;
-    RobotPoseDeltas& operator=(const RobotPoseDeltas&) = default;
-    RobotPoseDeltas& operator=(RobotPoseDeltas&&) = default;
 
     // returns true if this node is _less_ prepefable than a given one
     bool operator<(const RobotPoseDeltas &other) const {
@@ -53,6 +51,7 @@ private: // types
 
   using UncheckedPoseDeltas = std::priority_queue<RobotPoseDeltas>;
   using MapApproximator = std::shared_ptr<OccupancyGridMapApproximator>;
+  using SPEParams = ScanProbabilityEstimator::SPEParams;
 public:
   // TODO: do we need max_*_error setup in ctor?
   ManyToManyMultiResoultionScanMatcher(SPE est,
@@ -111,7 +110,9 @@ private: // methods
     auto &coarse_map = approx->map(coarse_approx_lvl);
     for (double th = -max_th_error(); th <= max_th_error(); th += _ang_step) {
       pose_delta.theta = th;
-      auto sp = scan_probability(scan, pose + pose_delta, coarse_map);
+      auto sp = scan_probability(scan, pose + pose_delta, coarse_map,
+                                 SPEParams{translations});
+      //std::cout << th << " => " << sp << std::endl;
       _unchecked_pose_deltas.emplace(sp, th, translations, coarse_approx_lvl);
     }
   }
@@ -127,6 +128,8 @@ private: // methods
     // the best pose lookup
     while (!_unchecked_pose_deltas.empty()) {
       auto d_poses = _unchecked_pose_deltas.top();
+      //std::cout << d_poses.zoom_lvl << ": " << d_poses.rotation
+      //          << " -> " << d_poses.scan_prob_upper_bound << std::endl;
       if (d_poses.zoom_lvl == 0) {
          // search is done
         return d_poses;
@@ -145,7 +148,9 @@ private: // methods
 
       // update unchecked corrections
       _unchecked_pose_deltas.pop();
-      auto &coarse_map = _map_approximator->map(d_poses.zoom_lvl - 1);
+      //auto &coarse_map = _map_approximator->map(d_poses.zoom_lvl - 1);
+      //std::cout << "Scale: " << coarse_map.scale() << std::endl;
+      //show_grid_map(coarse_map, Point2D{pose.x, pose.y}, 5, 5);
       for (auto& st : splitted_translations) {
         // TODO: Robustness guarantee the translation is the best in the window
         Point2D best_translation = st.center();
@@ -153,7 +158,9 @@ private: // methods
                                            best_translation.y,
                                            d_poses.rotation};
         auto branch_best_prob = scan_probability(scan, pose + branch_delta,
-                                                 coarse_map);
+                                                 map, SPEParams{st});
+        //std::cout << "  ++ Add (" << d_poses.zoom_lvl - 1 << "): "
+        //          << branch_best_prob << " in " << st << std::endl;
         assert(branch_best_prob <= d_poses.scan_prob_upper_bound &&
                "BUG: Bounding assumption is violated");
         _unchecked_pose_deltas.emplace(branch_best_prob, d_poses.rotation, st,
