@@ -35,7 +35,7 @@ protected:
   void check_approximation_level_nm() const {
     auto map = UnboundedPlainGridMap{cell_proto, {W, H, 1}};
     auto approximator = create_approximator<UnboundedPlainGridMap>(map);
-    ASSERT_EQ(ExpectedMaxLvl, approximator->max_approximation_level());
+    ASSERT_EQ(ExpectedMaxLvl, approximator->max_approximation_level(map));
   }
 
   void smoke_map_init(GridMap &map) {
@@ -69,8 +69,9 @@ protected:
 
     // read values
     int scale = 1;
-    for (unsigned lvl = 0; lvl <= apprx->max_approximation_level(); ++lvl) {
-      auto &coarse_map = apprx->map(lvl);
+    for (unsigned lvl = 0; lvl <= apprx->max_approximation_level(fine_map);
+         ++lvl) {
+      auto &coarse_map = apprx->map(lvl, fine_map);
 
       auto raw_crd = DiscretePoint2D{0, 0};
       for (raw_crd.x = 0; raw_crd.x < coarse_map.width(); ++raw_crd.x) {
@@ -114,11 +115,12 @@ TEST_F(Pow2CachedPlainMaxApproximatorTest, initAutozoomHeightyMap) {
 
 TEST_F(Pow2CachedPlainMaxApproximatorTest, dimensionsSwitchingWithTheLevel) {
   unsigned prev_w = 32, prev_h = 32;
-  auto map = UnboundedPlainGridMap{cell_proto, {16, 16, 1}};
-  auto approx = create_approximator(map);
+  auto fine_map = UnboundedPlainGridMap{cell_proto, {16, 16, 1}};
+  auto approx = create_approximator(fine_map);
 
-  for (unsigned lvl = 0; lvl <= approx->max_approximation_level(); ++lvl) {
-    auto &map = approx->map(lvl);
+  for (unsigned lvl = 0; lvl <= approx->max_approximation_level(fine_map);
+       ++lvl) {
+    auto &map = approx->map(lvl, fine_map);
     ASSERT_LT(map.width(), prev_w);
     ASSERT_LT(map.height(), prev_h);
     prev_w = map.width();
@@ -131,7 +133,7 @@ TEST_F(Pow2CachedPlainMaxApproximatorTest, dimensionsSwitchingWithTheLevel) {
 TEST_F(Pow2CachedPlainMaxApproximatorTest, smokeTheCoarsestMapCheck) {
   auto map = UnboundedPlainGridMap{cell_proto, {16, 16, 1}};
   auto apxr = create_approximator(map);
-  auto &coarse_map = apxr->map(apxr->max_approximation_level());
+  auto &coarse_map = apxr->map(apxr->max_approximation_level(map), map);
 
   ASSERT_EQ(DiscretePoint2D(0, 0), coarse_map.world_to_cell(100000, 100000));
   ASSERT_EQ(DiscretePoint2D(0, 0), coarse_map.world_to_cell(-100000, 100000));
@@ -144,10 +146,10 @@ TEST_F(Pow2CachedPlainMaxApproximatorTest, smokeTheCoarsestMapCheck) {
 // Map reading writing
 
 TEST_F(Pow2CachedPlainMaxApproximatorTest, initDefaultValues) {
-  auto map = UnboundedPlainGridMap{cell_proto, {3, 15, 1}};
-  auto apxr = create_approximator(map);
-  for (unsigned lvl = 0; lvl < apxr->max_approximation_level(); ++lvl) {
-    auto &map = apxr->map(lvl);
+  auto fine_map = UnboundedPlainGridMap{cell_proto, {3, 15, 1}};
+  auto apxr = create_approximator(fine_map);
+  for (unsigned lvl = 0; lvl < apxr->max_approximation_level(fine_map); ++lvl) {
+    auto &map = apxr->map(lvl, fine_map);
     auto coord = DiscretePoint2D{0, 0};
     for (; coord.x < map.width(); ++coord.x) {
       for (; coord.y < map.height(); ++coord.y) {
@@ -200,7 +202,7 @@ TEST_F(Pow2CachedPlainMaxApproximatorTest, readWriteULTGM_1000x1000) {
 TEST_F(Pow2CachedPlainMaxApproximatorTest, approximationLevelExtension) {
   auto map = UnboundedPlainGridMap{cell_proto, {16, 16, 1}};
   auto apxr = create_approximator(map);
-  ASSERT_EQ(apxr->max_approximation_level(), 4);
+  ASSERT_EQ(apxr->max_approximation_level(map), 4);
 
   // init map
   auto val = AreaOccupancyObservation{true, Occupancy{128, 0},
@@ -208,13 +210,13 @@ TEST_F(Pow2CachedPlainMaxApproximatorTest, approximationLevelExtension) {
   {
     auto updated_point = Point2D{23, 23};
     map.update(map.world_to_cell(updated_point), val);
-    ASSERT_EQ(apxr->max_approximation_level(), 5);
+    ASSERT_EQ(apxr->max_approximation_level(map), 5);
   }
 
   {
     auto updated_point = Point2D{24, 24};
     map.update(map.world_to_cell(updated_point), val);
-    ASSERT_EQ(apxr->max_approximation_level(), 6);
+    ASSERT_EQ(apxr->max_approximation_level(map), 6);
   }
 }
 

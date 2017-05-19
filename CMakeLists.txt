@@ -220,8 +220,8 @@ catkin_add_gtest(sensor_data-test
 # Scan Matchers
 catkin_add_gtest(hill_climbing_sm-smoke_test
                  test/core/scan_matchers/hill_climbing_sm_smoke_test.cpp)
-catkin_add_gtest(m3rsm-smoke_test
-                 test/core/scan_matchers/m3rsm_smoke_test.cpp)
+catkin_add_gtest(bfmrsm-smoke_test
+                 test/core/scan_matchers/bf_multi_res_sm_smoke_test.cpp)
 
 # Utils common
 catkin_add_gtest(grid_map_patcher-test

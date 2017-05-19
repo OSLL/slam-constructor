@@ -247,22 +247,30 @@ struct Rectangle {
     return intersections;
   }
 
+  std::vector<Rectangle> split_horiz() const {
+    auto split_y = bot() + vside_len() / 2;
+    return std::vector<Rectangle>{
+      Rectangle{bot(), split_y, left(), right()},
+      Rectangle{split_y, top(), left(), right()}
+    };
+  }
+
+  std::vector<Rectangle> split_vert() const {
+    auto split_x = left() + hside_len() / 2;
+    return std::vector<Rectangle>{
+      Rectangle{bot(), top(), left(), split_x},
+      Rectangle{bot(), top(), split_x, right()}
+    };
+  }
+
   std::vector<Rectangle> split4_evenly() const {
-    auto areas = std::vector<Rectangle>{};
-    areas.reserve(4);
-    auto dst_hside = hside_len() / 2;
-    auto dst_vside = vside_len() / 2;
-    for (int d_x_i = 0; d_x_i < 2; ++d_x_i) {
-      for (int d_y_i = 0; d_y_i < 2; ++d_y_i) {
-        areas.emplace_back(
-          bot() + ((d_y_i % 2 == 0) ? 0 : dst_vside),
-          (d_y_i % 2 == 0) ? bot() + dst_vside : top(),
-          left() + ((d_x_i % 2 == 0) ? 0 : dst_hside),
-          (d_x_i % 2 == 0) ? left() + dst_hside : right()
-        );
+    auto rects = std::vector<Rectangle>{};
+    for (auto &hrect : split_horiz()) {
+      for (auto &rect : hrect.split_vert()) {
+        rects.push_back(rect);
       }
     }
-    return areas;
+    return rects;
   }
 
   double bot() const { return _bot; }

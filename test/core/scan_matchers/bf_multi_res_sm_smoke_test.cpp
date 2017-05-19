@@ -5,26 +5,24 @@
 #include "../mock_grid_cell.h"
 #include "scan_matcher_test_utils.h"
 
-#include "../../../src/core/scan_matchers/many_to_many_multires_scan_matcher.h"
+#include "../../../src/core/scan_matchers/bf_multi_res_scan_matcher.h"
 #include "../../../src/core/maps/plain_grid_map.h"
 
 //------------------------------------------------------------------------------
 // Smoke Tests Suite
 // NB: the suit checks _fundamental_ abilities to find a correction.
+//     The suit check raw (w/o a map approximator speed up) BFMRSM correctness.
 
-class M3RScanMatcherSmokeTest
+class BFMRScanMatcherSmokeTest
   :  public ScanMatcherTestBase<UnboundedPlainGridMap> {
 protected: // methods
-  M3RScanMatcherSmokeTest()
+  BFMRScanMatcherSmokeTest()
     : ScanMatcherTestBase{std::make_shared<DefaultSPE>(),
                           Map_Width, Map_Height, Map_Scale,
                           to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
-    , policy{std::make_shared<PlainMaxApproximationPolicy>(0.5)}
-    , apprxr{std::make_shared<PowNCachedOGMA<UnboundedPlainGridMap, 2>>(policy)}
-    , m3rsm{spe, apprxr, SM_Ang_Step, SM_Transl_Err_Factor} {
-    m3rsm.set_lookup_ranges(SM_Max_Translation_Error, SM_Max_Translation_Error,
+    , bfmrsm{spe, SM_Ang_Step, SM_Transl_Step} {
+    bfmrsm.set_lookup_ranges(SM_Max_Translation_Error, SM_Max_Translation_Error,
                             SM_Max_Rotation_Error);
-    OccupancyGridMapApproximator::watch_master_map(map, apprxr);
   }
 protected: // consts
   // map patching params
@@ -44,15 +42,14 @@ protected: // consts
   static constexpr double SM_Max_Rotation_Error = deg2rad(5);
   static constexpr double SM_Max_Translation_Error = 1; // meters
   static constexpr double SM_Ang_Step = deg2rad(0.5);
-  static constexpr double SM_Transl_Err_Factor = 2;
+  static constexpr double SM_Transl_Step = Map_Scale / 2;
 
 protected: // fields
 
-  GridScanMatcher& scan_matcher() override { return m3rsm; };
+  GridScanMatcher& scan_matcher() override { return bfmrsm; };
 
   RobotPoseDelta default_acceptable_error() override {
-    return {Map_Scale / SM_Transl_Err_Factor, Map_Scale / SM_Transl_Err_Factor,
-            SM_Ang_Step};
+    return {SM_Transl_Step, SM_Transl_Step, SM_Ang_Step};
   }
 
   void init_pose_facing_top_cecum_bound() {
@@ -69,50 +66,48 @@ protected: // fields
   }
 
 protected: // fields
-  std::shared_ptr<ApproximationPolicy> policy;
-  std::shared_ptr<OccupancyGridMapApproximator> apprxr;
-  ManyToManyMultiResoultionScanMatcher m3rsm;
+  BruteForceMultiResoultionScanMatcher bfmrsm;
 };
 
 //------------------------------------------------------------------------------
 // Tests
 
-TEST_F(M3RScanMatcherSmokeTest, cecumNoPoseNoise) {
+TEST_F(BFMRScanMatcherSmokeTest, cecumNoPoseNoise) {
   init_pose_facing_top_cecum_bound();
   test_scan_matcher(RobotPoseDelta{0, 0, 0});
 }
 
-TEST_F(M3RScanMatcherSmokeTest, cecumLinStepXLeftDrift) {
+TEST_F(BFMRScanMatcherSmokeTest, cecumLinStepXLeftDrift) {
   init_pose_facing_top_cecum_bound();
   test_scan_matcher(RobotPoseDelta{-SM_Max_Translation_Error / 2, 0, 0});
 }
 
-TEST_F(M3RScanMatcherSmokeTest, cecumLinStepXRightDrift) {
+TEST_F(BFMRScanMatcherSmokeTest, cecumLinStepXRightDrift) {
   init_pose_facing_top_cecum_bound();
   test_scan_matcher(RobotPoseDelta{SM_Max_Translation_Error / 2, 0, 0});
 }
 
-TEST_F(M3RScanMatcherSmokeTest, cecumLinStepYUpDrift) {
+TEST_F(BFMRScanMatcherSmokeTest, cecumLinStepYUpDrift) {
   init_pose_facing_top_cecum_bound();
   test_scan_matcher(RobotPoseDelta{0, -SM_Max_Translation_Error / 2, 0});
 }
 
-TEST_F(M3RScanMatcherSmokeTest, cecumLinStepYDownDrift) {
+TEST_F(BFMRScanMatcherSmokeTest, cecumLinStepYDownDrift) {
   init_pose_facing_top_cecum_bound();
   test_scan_matcher(RobotPoseDelta{0, SM_Max_Translation_Error / 2, 0});
 }
 
-TEST_F(M3RScanMatcherSmokeTest, cecumAngStepThetaCcwDrift) {
+TEST_F(BFMRScanMatcherSmokeTest, cecumAngStepThetaCcwDrift) {
   init_pose_facing_top_cecum_bound();
   test_scan_matcher(RobotPoseDelta{0, 0, SM_Max_Rotation_Error});
 }
 
-TEST_F(M3RScanMatcherSmokeTest, cecumAngStepThetaCwDrift) {
+TEST_F(BFMRScanMatcherSmokeTest, cecumAngStepThetaCwDrift) {
   init_pose_facing_top_cecum_bound();
   test_scan_matcher(RobotPoseDelta{0, 0, -SM_Max_Rotation_Error});
 }
 
-TEST_F(M3RScanMatcherSmokeTest, cecumComboStepsDrift) {
+TEST_F(BFMRScanMatcherSmokeTest, cecumComboStepsDrift) {
   init_pose_facing_top_cecum_bound();
   auto noise = RobotPoseDelta{-SM_Max_Translation_Error/2,
                               SM_Max_Translation_Error/2,
