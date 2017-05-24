@@ -27,10 +27,14 @@ private: // types
     // returns true if this node is _less_ prepefable than a given one
     bool operator<(const RobotPoseDeltas &other) const {
       if (are_equal(scan_prob_upper_bound, other.scan_prob_upper_bound)) {
-         // finer is "better"
+        if (are_equal(translations.area(), other.translations.area())) {
+          // smaller is "better" -> fixes "blindness" of scan prob estimator
+          return std::abs(rotation) > std::abs(other.rotation);
+        }
+         // finer is "better" -> speed up
         return translations.area() > other.translations.area();
       }
-      // greater is "better"
+      // greater is "better" -> correctness
       return scan_prob_upper_bound < other.scan_prob_upper_bound;
     }
   };
@@ -115,25 +119,21 @@ private: // methods
     // the best pose lookup
     while (!_unchecked_pose_deltas.empty()) {
       auto d_poses = _unchecked_pose_deltas.top();
-      if (d_poses.translations.side() < map.scale()) {
+      auto should_branch_hor = _transl_step < d_poses.translations.hside_len();
+      auto should_branch_vert = _transl_step < d_poses.translations.vside_len();
+      if (!should_branch_vert && !should_branch_hor) {
         // search is done
         return d_poses;
       }
 
       // branching
-      auto& translations = d_poses.translations;
-      auto splitted_translations = std::vector<Rectangle>{translations};
-      auto should_branch_horiz = _transl_step < translations.hside_len();
-      auto should_branch_vert = _transl_step < translations.vside_len();
-
-      if (should_branch_horiz && should_branch_horiz) {
-        splitted_translations = translations.split4_evenly();
-      } else if (should_branch_horiz) {
-        splitted_translations = translations.split_horiz();
+      auto splitted_translations = std::vector<Rectangle>{d_poses.translations};
+      if (should_branch_hor && should_branch_hor) {
+        splitted_translations = d_poses.translations.split4_evenly();
+      } else if (should_branch_hor) {
+        splitted_translations = d_poses.translations.split_horiz();
       } else if (should_branch_vert) {
-        splitted_translations = translations.split_vert();
-      } else {
-        splitted_translations.push_back(translations);
+        splitted_translations = d_poses.translations.split_vert();
       }
 
       // update unchecked corrections

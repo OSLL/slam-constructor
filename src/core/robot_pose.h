@@ -35,7 +35,7 @@ public: // methods
     #undef LESS_ABS
   }
   explicit operator bool() const {
-    return x != 0.0 || y != 0.0 || theta != 0.0;
+    return !are_equal(x, 0) || !are_equal(y, 0) || !are_equal(theta, 0);
   }
 
   RobotPoseDelta abs() const {
