@@ -3,11 +3,17 @@
 
 #include <cmath>
 
-inline bool are_equal(double a, double b) {
+constexpr inline bool are_equal(double a, double b) {
   // cmp doubles according to http://realtimecollisiondetection.net/blog/?p=89
   double eps_scale = std::max(1.0, std::max(std::abs(a), std::abs(b)));
   constexpr double Eps = 1e-7; // num_limits::epsilon is too small
   return std::abs(a - b) <= Eps * eps_scale;
+}
+
+constexpr inline bool is_multiple_of(double value, double factor) {
+  // TODO: verify numerical safety/bounds
+  double ratio = value / factor;
+  return are_equal(ratio, std::trunc(ratio));
 }
 
 inline bool less_or_equal(double a, double b) {

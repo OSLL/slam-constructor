@@ -39,21 +39,17 @@ public:
     return {cell_x, cell_y};
   }
 
-  Point2D cell_to_world(const Coord &cell) const {
-    return {scale() * (cell.x + 0.5), scale() * (cell.y + 0.5)};
-  }
-
   std::vector<Coord> coords_in_area(const Rectangle &area) const {
     auto left_bot = world_to_cell(area.left(), area.bot());
     auto right_top = world_to_cell(area.right(), area.top());
-
-    if (left_bot.x == right_top.x) { ++right_top.x; }
-    if (left_bot.y == right_top.y) { ++right_top.y; }
+    //NB: aligned top/right border is a part of a near cell
+    //    according to implemented geometry
 
     std::vector<Coord> coords;
-    coords.reserve((right_top.x - left_bot.x) * (right_top.y - left_bot.y));
-    for (int x = left_bot.x; x < right_top.x; ++x) {
-      for (int y = left_bot.y; y < right_top.y; ++y) {
+    coords.reserve((right_top.x - left_bot.x + 1) *
+                   (right_top.y - left_bot.y + 1));
+    for (int x = left_bot.x; x <= right_top.x; ++x) {
+      for (int y = left_bot.y; y <= right_top.y; ++y) {
         coords.emplace_back(x, y);
       } // y
     } // x
@@ -112,6 +108,10 @@ public:
       }
     }
     return cells;
+  }
+
+  Point2D cell_to_world(const Coord &cell) const {
+    return {scale() * (cell.x + 0.5), scale() * (cell.y + 0.5)};
   }
 
   Rectangle world_cell_bounds(const Coord &coord) const {
