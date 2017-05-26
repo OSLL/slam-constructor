@@ -48,7 +48,7 @@ protected:
                                  const RobotPose &pose, const GridMap &map,
                                  const SPEParams &params) const {
      const auto OCCUPIED_AREA_OBS = expected_scan_point_observation();
-     auto analysis_area = params.sp_analysis_area.move_to_center(wp);
+     auto analysis_area = params.sp_analysis_area.move_center(wp);
      double highest_probability = 0;
      for (auto &area_id : map.coords_in_area(analysis_area)) {
        double area_prob = 1.0 - map[area_id].discrepancy(OCCUPIED_AREA_OBS);

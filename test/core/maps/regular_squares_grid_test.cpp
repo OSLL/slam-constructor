@@ -322,7 +322,7 @@ protected: // methods
     auto half_side = side_len / 2;
     auto rect = Rectangle{-half_side, half_side, -half_side, half_side};
 
-    auto raw_area_ids = grid.coords_in_area(rect.move_to_center(center));
+    auto raw_area_ids = grid.coords_in_area(rect.move_center(center));
     return AreaIds{raw_area_ids.begin(), raw_area_ids.end()};
   }
 

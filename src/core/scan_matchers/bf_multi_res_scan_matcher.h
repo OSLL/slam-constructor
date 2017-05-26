@@ -26,18 +26,24 @@ private: // types
 
     // returns true if this node is _less_ prepefable than a given one
     bool operator<(const RobotPoseDeltas &other) const {
-      if (are_equal(scan_prob_upper_bound, other.scan_prob_upper_bound)) {
-        if (are_equal(translations.area(), other.translations.area())) {
-          // smaller is "better" -> fixes "blindness" of scan prob estimator
-          return std::abs(rotation) > std::abs(other.rotation);
-        }
-         // finer is "better" -> speed up
+      if (!are_equal(scan_prob_upper_bound, other.scan_prob_upper_bound)) {
+        // greater is "better" -> correctness
+        return scan_prob_upper_bound < other.scan_prob_upper_bound;
+      }
+      if (!are_equal(translations.area(), other.translations.area())) {
+        // finer is "better" -> speed up
         return translations.area() > other.translations.area();
       }
-      // greater is "better" -> correctness
-      return scan_prob_upper_bound < other.scan_prob_upper_bound;
+      // smaller is "better" -> fixes "blindness" of scan prob estimator
+      return std::abs(rotation) > std::abs(other.rotation);
     }
   };
+
+  std::ostream& print_pose(const RobotPoseDeltas &rbd) {
+    return std::cout << "[" << deg2rad(rbd.rotation) << "]"
+                     << "+ " << rbd.translations
+                     << " -> " << rbd.scan_prob_upper_bound;
+  }
 
   using UncheckedPoseDeltas = std::priority_queue<RobotPoseDeltas>;
   using SPEParams = ScanProbabilityEstimator::SPEParams;
@@ -59,19 +65,22 @@ public:
   }
 
   double process_scan(const TransformedLaserScan &scan,
-                      const RobotPose &init_pose,
+                      const RobotPose &pose,
                       const GridMap &map,
                       RobotPoseDelta &result_pose_delta) override {
     // TODO: dynamic angle step estimate
-    add_scan_matching_request(init_pose, scan, map);
+    add_scan_matching_request(pose, scan, map);
 
-    auto pose_deltas = find_best_pose_delta(init_pose, scan, map);
+    auto pose_deltas = find_best_pose_delta(pose, scan, map);
     reset_scan_matching_requests();
 
-    auto translation = pose_deltas.translations.center();
-    result_pose_delta = RobotPoseDelta{translation.x, translation.y,
-                                       pose_deltas.rotation};
-    return pose_deltas.scan_prob_upper_bound;
+    auto best_translation = pose_deltas.translations.center();
+    auto best_corr = RobotPoseDelta{best_translation.x, best_translation.y,
+                                    pose_deltas.rotation};
+    auto best_prob = scan_probability(scan, pose + best_corr, map);
+
+    result_pose_delta = best_corr;
+    return best_prob;
   }
 
 private: // methods
@@ -122,8 +131,24 @@ private: // methods
       auto should_branch_hor = _transl_step < d_poses.translations.hside_len();
       auto should_branch_vert = _transl_step < d_poses.translations.vside_len();
       if (!should_branch_vert && !should_branch_hor) {
-        // search is done
-        return d_poses;
+        if (are_equal(d_poses.translations.area(), 0)) {
+          return d_poses;
+        } else {
+          // replace the entry with actual points in the area
+          // NB: center doesn't guarentee the optimal translation pick
+          //     so (as a heuristic) test extra hypotheses in the rectangle.
+          _unchecked_pose_deltas.pop();
+          auto offsets = d_poses.translations.corners();
+          offsets.push_back(d_poses.translations.center());
+
+          for (const auto &offset : offsets) {
+            auto corr = RobotPoseDelta{offset.x, offset.y, d_poses.rotation};
+            auto prob = scan_probability(scan, pose + corr, map);
+            auto range = Rectangle{offset.y, offset.y, offset.x, offset.x};
+            _unchecked_pose_deltas.emplace(prob, d_poses.rotation, range);
+          }
+        }
+        continue;
       }
 
       // branching

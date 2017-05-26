@@ -40,7 +40,7 @@ protected: // consts
 
   // scan matcher
   static constexpr double SM_Max_Rotation_Error = deg2rad(5);
-  static constexpr double SM_Max_Translation_Error = 1; // meters
+  static constexpr double SM_Max_Translation_Error = Map_Scale * 10; // meters
   static constexpr double SM_Ang_Step = deg2rad(0.5);
   static constexpr double SM_Transl_Step = Map_Scale / 2;
 

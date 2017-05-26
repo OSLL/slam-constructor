@@ -1,5 +1,5 @@
-#ifndef SLAM_CTOR_CORE_GEOMETRY_PRIMITIVES_H_INCLUDED
-#define SLAM_CTOR_CORE_GEOMETRY_PRIMITIVES_H_INCLUDED
+#ifndef SLAM_CTOR_CORE_GEOMETRY_PRIMITIVES_H
+#define SLAM_CTOR_CORE_GEOMETRY_PRIMITIVES_H
 
 #include <cmath>
 #include <cassert>
@@ -187,7 +187,12 @@ struct Rectangle {
     return {left() + hside_len() / 2, bot() + vside_len() / 2};
   }
 
-  Rectangle move_to_center(const Point2D &new_center) const {
+  auto corners() const {
+    return std::vector<Point2D>{{left(), bot()}, {left(), top()},
+                                {right(), bot()}, {right(), top()}};
+  }
+
+  Rectangle move_center(const Point2D &new_center) const {
     double half_v = vside_len() / 2, half_h = hside_len() / 2;
     return {new_center.y - half_v, new_center.y + half_v,
             new_center.x - half_h, new_center.x + half_h};
