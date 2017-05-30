@@ -7,7 +7,6 @@
 #include <utility>
 
 #include "grid_scan_matcher.h"
-#include "../maps/grid_approximator.h"
 #include "../geometry_primitives.h"
 
 class BruteForceMultiResoultionScanMatcher : public GridScanMatcher {
@@ -55,10 +54,6 @@ public:
                       _Max_Rotation_Error}
     , _ang_step{ang_step}, _transl_step{transl_step} {}
 
-  void set_map_approximator(std::shared_ptr<OccupancyGridMapApproximator> ma) {
-    _map_approximator = ma;
-  }
-
   void set_target_accuracy(double angle_step, double translation_step) {
     _ang_step = angle_step;
     _transl_step = translation_step;
@@ -94,7 +89,7 @@ private: // methods
     const auto entire_trs_range = Rectangle{-max_y_error(), max_y_error(),
                                             -max_x_error(), max_x_error()};
 
-    auto &entire_map = coarse_map(map, entire_trs_range, _map_approximator);
+    auto &entire_map = coarse_map(map, entire_trs_range);
     for (double th = -max_th_error(); th <= max_th_error(); th += _ang_step) {
       rotation.theta = th;
       auto entire_sp = scan_probability(scan, pose + rotation, entire_map,
@@ -109,16 +104,7 @@ private: // methods
   }
 
   const GridMap& coarse_map(const GridMap &fine_map,
-                            const Rectangle &/*target_area*/,
-                            std::shared_ptr<OccupancyGridMapApproximator> apx) {
-    if (!apx.get()) {
-      return fine_map;
-    }
-
-    // TODO: add approximator retrieval, SPEED UP
-    /*
-    auto lvl = unsigned(std::ceil(std::log(max_y_error() / _transl_step)));
-    */
+                            const Rectangle &/*target_area*/) {
     return fine_map;
   }
 
@@ -164,7 +150,7 @@ private: // methods
       // update unchecked corrections
       _unchecked_pose_deltas.pop();
       for (auto& st : splitted_translations) {
-        auto &coarse_map = this->coarse_map(map, st, _map_approximator);
+        auto &coarse_map = this->coarse_map(map, st);
         Point2D best_translation = st.center();
         auto branch_delta = RobotPoseDelta{best_translation.x,
                                            best_translation.y,
@@ -187,7 +173,6 @@ private: // methods
 private:
   UncheckedPoseDeltas _unchecked_pose_deltas;
   double _ang_step, _transl_step;
-  std::shared_ptr<OccupancyGridMapApproximator> _map_approximator;
 };
 
 #endif // include guard

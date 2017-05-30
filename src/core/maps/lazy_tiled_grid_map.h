@@ -32,8 +32,25 @@ public:
     , _tiles_nm_y{(GridMap::height() + Tile_Size - 1) / Tile_Size}
     , _tiles{_tiles_nm_x * _tiles_nm_y, _unknown_tile} {}
 
-  void update(const Coord& area_id,
+  void update(const Coord &area_id,
               const AreaOccupancyObservation &aoo) override {
+    ensure_sole_owning(area_id);
+    GridMap::update(area_id, aoo);
+  }
+
+  void reset(const Coord &area_id, const GridCell &new_area) override {
+    ensure_sole_owning(area_id);
+    GridMap::reset(area_id, new_area);
+  }
+
+  const GridCell &operator[](const Coord& c) const override {
+    auto coord = external2internal(c);
+    return *tile(coord)->cell(coord);
+  }
+
+protected: // methods & types
+
+  void ensure_sole_owning(const Coord &area_id) {
     auto coord = external2internal(area_id);
     std::shared_ptr<Tile> &tile = this->tile(coord);
     if (!tile) {
@@ -47,15 +64,7 @@ public:
     if (1 < cell.use_count()) {
       cell = cell->clone();
     }
-    update_area_occupancy(area_id, *cell, aoo);
   }
-
-  const GridCell &operator[](const Coord& c) const override {
-    auto coord = external2internal(c);
-    return *tile(coord)->cell(coord);
-  }
-
-protected: // methods & types
 
   const std::shared_ptr<GridCell> unknown_cell() const { return _unknown_cell; }
   std::shared_ptr<Tile> unknown_tile() { return _unknown_tile; }
@@ -117,6 +126,11 @@ public:
               const AreaOccupancyObservation &aoo) override {
     ensure_inside(area_id);
     return LazyTiledGridMap::update(area_id, aoo);
+  }
+
+  void reset(const Coord &area_id, const GridCell &new_area) override {
+    ensure_inside(area_id);
+    LazyTiledGridMap::reset(area_id, new_area);
   }
 
   const GridCell &operator[](const Coord& c) const override {

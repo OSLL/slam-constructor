@@ -1,5 +1,5 @@
-#ifndef SLAM_CTOR_CORE_GRID_UTILS_H_INCLUDED
-#define SLAM_CTOR_CORE_GRID_UTILS_H_INCLUDED
+#ifndef SLAM_CTOR_CORE_REGULAR_SQUARES_GRID_H
+#define SLAM_CTOR_CORE_REGULAR_SQUARES_GRID_H
 
 #include <cmath>
 #include <cassert>
@@ -13,6 +13,8 @@
 class RegularSquaresGrid {
 public:
   using Coord = DiscretePoint2D;
+private: // consts
+  static constexpr double Dbl_Inf = std::numeric_limits<double>::infinity();
 public:
 
   RegularSquaresGrid(int w, int h, double scale) :
@@ -28,23 +30,35 @@ public:
   virtual int width() const { return _width; }
   virtual int height() const { return _height; }
   virtual double scale() const { return _m_per_cell; }
+  virtual void rescale(double /*cell_size*/) {}
 
   Coord world_to_cell(const Point2D &pt) const {
     return world_to_cell(pt.x, pt.y);
   }
 
   Coord world_to_cell(double x, double y) const {
+    // TODO: handle infinity
+    assert(x != Dbl_Inf &&  y != Dbl_Inf);
+
     int cell_x = std::floor(x / scale());
     int cell_y = std::floor(y / scale());
     return {cell_x, cell_y};
   }
 
-  std::vector<Coord> coords_in_area(const Rectangle &area) const {
-    auto left_bot = world_to_cell(area.left(), area.bot());
-    auto right_top = world_to_cell(area.right(), area.top());
-    //NB: aligned top/right border is a part of a near cell
-    //    according to implemented geometry
+  // FIXME: coords_in_area(world_cell_bounds(cell)) != { cell }
+  // WA: coords_in_area(world_cell_bounds(cell), false) == { cell }
+  std::vector<Coord> coords_in_area(const Rectangle &area,
+                                    bool include_border = true) const {
+    if (area.area() == Dbl_Inf) {
+      return valid_coords();
+    }
 
+    double offset = include_border ? 0 : 1e-9;
+    auto left_bot = world_to_cell(area.left() + offset, area.bot() + offset);
+    auto right_top = world_to_cell(area.right() - offset, area.top() - offset);
+
+    //NB: aligned top/right border is a part of a nearby cell
+    //    according to implemented geometry
     std::vector<Coord> coords;
     coords.reserve((right_top.x - left_bot.x + 1) *
                    (right_top.y - left_bot.y + 1));
@@ -114,11 +128,13 @@ public:
     return {scale() * (cell.x + 0.5), scale() * (cell.y + 0.5)};
   }
 
+  // TODO: consider renaming ~"occupied_space"
   Rectangle world_cell_bounds(const Coord &coord) const {
-    assert(has_cell(coord));
-
     auto m_per_cell = scale();
-    assert(m_per_cell != std::numeric_limits<double>::infinity());
+    if (m_per_cell == Dbl_Inf) {
+      return {-Dbl_Inf, Dbl_Inf, -Dbl_Inf, Dbl_Inf};
+    }
+
     return {m_per_cell * coord.y,        // bot
             m_per_cell * (coord.y + 1),  // top
             m_per_cell * coord.x,        // left

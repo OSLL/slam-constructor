@@ -206,8 +206,8 @@ catkin_add_gtest(unbounded_lazy_tiled_grid_maps-test
                  test/core/maps/unbounded_lazy_tiled_grid_map_test.cpp)
 catkin_add_gtest(regular_squares_grid-test
                  test/core/maps/regular_squares_grid_test.cpp)
-catkin_add_gtest(pow2cached_plain_max_approximator-test
-                 test/core/maps/pow2cached_plain_max_approximator_test.cpp)
+catkin_add_gtest(rescalable_caching_grid_map-test
+                 test/core/maps/rescalable_caching_grid_map_test.cpp)
 
 # Core common
 catkin_add_gtest(geom_utils-test

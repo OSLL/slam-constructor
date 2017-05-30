@@ -18,14 +18,6 @@ struct MapValues {
   static constexpr GridMapParams gmp{width, height, meters_per_cell};
 };
 
-class GridMap;
-
-class GridMapUpdateObserver {
-public:
-  virtual void on_grid_map_update(const GridMap& map,
-                                  const RegularSquaresGrid::Coord &area_id) = 0;
-};
-
 class GridMap : public RegularSquaresGrid {
 public:
   GridMap(std::shared_ptr<GridCell> prototype,
@@ -39,33 +31,29 @@ public:
   }
 
   // GridCell access
-  virtual void update(const Coord& area_id,
+  // NB: use update/reset to modify cells instead of operator[]
+  //     to prevent proxies usage in descendants that are interested in
+  //     modifications.
+  virtual void update(const Coord &area_id,
                       const AreaOccupancyObservation &aoo) {
     auto const_this = static_cast<const decltype(this)>(this);
     auto &area = const_cast<GridCell&>((*const_this)[area_id]);
-    update_area_occupancy(area_id, area, aoo);
+    area += aoo;
   }
+
+  virtual void reset(const Coord &area_id, const GridCell &new_area) {
+    auto const_this = static_cast<const decltype(this)>(this);
+    auto &area = const_cast<GridCell&>((*const_this)[area_id]);
+    area = new_area;
+  }
+
   virtual const GridCell &operator[](const Coord& coord) const = 0;
 
-  void observe_updates(std::shared_ptr<GridMapUpdateObserver> obs) const {
-    _update_observers.push_back(obs);
-  }
-
 protected:
-  inline void update_area_occupancy(const Coord& area_id, GridCell &area,
-                                    const AreaOccupancyObservation &aoo) {
-    area += aoo;
-    for (auto &obs : _update_observers) {
-      if (auto obs_ptr = obs.lock()) {
-        obs_ptr->on_grid_map_update(*this, area_id);
-      }
-    }
-  }
 
   std::shared_ptr<GridCell> cell_prototype() const { return _cell_prototype; }
 private: // fields
   std::shared_ptr<GridCell> _cell_prototype;
-  mutable std::vector<std::weak_ptr<GridMapUpdateObserver>> _update_observers;
 };
 
 #endif

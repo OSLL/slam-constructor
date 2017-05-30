@@ -44,10 +44,15 @@ public: // methods
     : PlainGridMap{prototype, params}
     , _origin{GridMap::origin()}, _unknown_cell{prototype->clone()} {}
 
-  void update(const Coord& area_id,
+  void update(const Coord &area_id,
               const AreaOccupancyObservation &aoo) override {
     ensure_inside(area_id);
     PlainGridMap::update(area_id, aoo);
+  }
+
+  void reset(const Coord &area_id, const GridCell &new_area) override {
+    ensure_inside(area_id);
+    PlainGridMap::reset(area_id, new_area);
   }
 
   const GridCell &operator[](const Coord& c) const override {
