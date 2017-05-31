@@ -61,14 +61,21 @@ public:
 
   double process_scan(const TransformedLaserScan &scan,
                       const RobotPose &pose,
-                      const GridMap &map,
+                      const GridMap &orig_map,
                       RobotPoseDelta &result_pose_delta) override {
+    double vanilla_scale = orig_map.scale();
+    // FIXME: API - const cast to be able to do rescaling
+    // NB: Do not make 'rescale' const (doing const_cast client probably
+    //     won't forget to save/restore current scale)
+    GridMap &map = const_cast<GridMap&>(orig_map);
+
     // TODO: dynamic angle step estimate
     add_scan_matching_request(pose, scan, map);
 
     auto pose_deltas = find_best_pose_delta(pose, scan, map);
     reset_scan_matching_requests();
 
+    map.rescale(vanilla_scale); // restore scale
     auto best_translation = pose_deltas.translations.center();
     auto best_corr = RobotPoseDelta{best_translation.x, best_translation.y,
                                     pose_deltas.rotation};
@@ -82,35 +89,32 @@ private: // methods
 
   void add_scan_matching_request(const RobotPose &pose,
                                  const TransformedLaserScan &scan,
-                                 const GridMap &map) {
+                                 GridMap &map) {
     auto rotation = RobotPoseDelta{0, 0, 0};
     // generate pose translation ranges to be checked
     const auto empty_trs_range = Rectangle{0, 0, 0, 0};
     const auto entire_trs_range = Rectangle{-max_y_error(), max_y_error(),
                                             -max_x_error(), max_x_error()};
 
-    auto &entire_map = coarse_map(map, entire_trs_range);
+    const double vanilla_scale = map.scale();
     for (double th = -max_th_error(); th <= max_th_error(); th += _ang_step) {
       rotation.theta = th;
-      auto entire_sp = scan_probability(scan, pose + rotation, entire_map,
+      map.rescale(entire_trs_range.side());
+      auto entire_sp = scan_probability(scan, pose + rotation, map,
                                         SPEParams{entire_trs_range});
       _unchecked_pose_deltas.emplace(entire_sp, th, entire_trs_range);
 
       // add explicit "no translation" entry
+      map.rescale(vanilla_scale);
       auto fine_sp = scan_probability(scan, pose + rotation, map,
                                       SPEParams{empty_trs_range});
       _unchecked_pose_deltas.emplace(fine_sp, th, empty_trs_range);
     }
   }
 
-  const GridMap& coarse_map(const GridMap &fine_map,
-                            const Rectangle &/*target_area*/) {
-    return fine_map;
-  }
-
   RobotPoseDeltas find_best_pose_delta(const RobotPose &pose,
                                        const TransformedLaserScan &scan,
-                                       const GridMap &map) {
+                                       GridMap &map) {
     // the best pose lookup
     while (!_unchecked_pose_deltas.empty()) {
       auto d_poses = _unchecked_pose_deltas.top();
@@ -150,13 +154,13 @@ private: // methods
       // update unchecked corrections
       _unchecked_pose_deltas.pop();
       for (auto& st : splitted_translations) {
-        auto &coarse_map = this->coarse_map(map, st);
+        map.rescale(st.side());
         Point2D best_translation = st.center();
         auto branch_delta = RobotPoseDelta{best_translation.x,
                                            best_translation.y,
                                            d_poses.rotation};
         auto branch_best_prob = scan_probability(scan, pose + branch_delta,
-                                                 coarse_map, SPEParams{st});
+                                                 map, SPEParams{st});
         assert(branch_best_prob <= d_poses.scan_prob_upper_bound &&
                "BUG: Bounding assumption is violated");
         _unchecked_pose_deltas.emplace(branch_best_prob, d_poses.rotation, st);

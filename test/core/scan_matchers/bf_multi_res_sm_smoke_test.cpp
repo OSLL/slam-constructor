@@ -7,20 +7,24 @@
 
 #include "../../../src/core/scan_matchers/bf_multi_res_scan_matcher.h"
 #include "../../../src/core/maps/plain_grid_map.h"
+#include "../../../src/core/maps/rescalable_caching_grid_map.h"
 
 //------------------------------------------------------------------------------
 // Smoke Tests Suite
 // NB: the suit checks _fundamental_ abilities to find a correction.
 //     The suit check raw (w/o a map approximator speed up) BFMRSM correctness.
 
+template <typename MapType>
 class BFMRScanMatcherSmokeTest
-  :  public ScanMatcherTestBase<UnboundedPlainGridMap> {
+  :  public ScanMatcherTestBase<MapType> {
+protected: // names
+  using typename ScanMatcherTestBase<MapType>::DefaultSPE;
 protected: // methods
   BFMRScanMatcherSmokeTest()
-    : ScanMatcherTestBase{std::make_shared<DefaultSPE>(),
-                          Map_Width, Map_Height, Map_Scale,
-                          to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
-    , bfmrsm{spe, SM_Ang_Step, SM_Transl_Step} {
+    : ScanMatcherTestBase<MapType>{std::make_shared<DefaultSPE>(),
+                                   Map_Width, Map_Height, Map_Scale,
+                                   this->to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
+    , bfmrsm{this->spe, SM_Ang_Step, SM_Transl_Step} {
     bfmrsm.set_lookup_ranges(SM_Max_Translation_Error, SM_Max_Translation_Error,
                             SM_Max_Rotation_Error);
   }
@@ -56,11 +60,11 @@ protected: // fields
     using CecumMp = CecumTextRasterMapPrimitive;
     auto bnd_pos = CecumMp::BoundPosition::Top;
     auto cecum_mp = CecumMp{Cecum_Patch_W, Cecum_Patch_H, bnd_pos};
-    add_primitive_to_map(cecum_mp, {}, Patch_Scale, Patch_Scale);
+    this->add_primitive_to_map(cecum_mp, {}, Patch_Scale, Patch_Scale);
 
-    rpose += RobotPoseDelta{
-      (cecum_mp.width() * Patch_Scale / 2) * map.scale(),
-      (-cecum_mp.height() * Patch_Scale + 1) * map.scale(),
+    this->rpose += RobotPoseDelta{
+      (cecum_mp.width() * Patch_Scale / 2) * this->map.scale(),
+      (-cecum_mp.height() * Patch_Scale + 1) * this->map.scale(),
       deg2rad(90)
     };
   }
@@ -72,47 +76,58 @@ protected: // fields
 //------------------------------------------------------------------------------
 // Tests
 
-TEST_F(BFMRScanMatcherSmokeTest, cecumNoPoseNoise) {
-  init_pose_facing_top_cecum_bound();
-  test_scan_matcher(RobotPoseDelta{0, 0, 0});
+using MapTs = ::testing::Types<UnboundedPlainGridMap,
+                               RescalableCachingGridMap<UnboundedPlainGridMap>>;
+TYPED_TEST_CASE(BFMRScanMatcherSmokeTest, MapTs);
+
+TYPED_TEST(BFMRScanMatcherSmokeTest, cecumNoPoseNoise) {
+  this->init_pose_facing_top_cecum_bound();
+  this->test_scan_matcher(RobotPoseDelta{0, 0, 0});
 }
 
-TEST_F(BFMRScanMatcherSmokeTest, cecumLinStepXLeftDrift) {
-  init_pose_facing_top_cecum_bound();
-  test_scan_matcher(RobotPoseDelta{-SM_Max_Translation_Error / 2, 0, 0});
+TYPED_TEST(BFMRScanMatcherSmokeTest, cecumLinStepXLeftDrift) {
+  const auto Translation_Error = this->SM_Max_Translation_Error / 2;
+  this->init_pose_facing_top_cecum_bound();
+  this->test_scan_matcher(RobotPoseDelta{-Translation_Error, 0, 0});
 }
 
-TEST_F(BFMRScanMatcherSmokeTest, cecumLinStepXRightDrift) {
-  init_pose_facing_top_cecum_bound();
-  test_scan_matcher(RobotPoseDelta{SM_Max_Translation_Error / 2, 0, 0});
+TYPED_TEST(BFMRScanMatcherSmokeTest, cecumLinStepXRightDrift) {
+  const auto Translation_Error = this->SM_Max_Translation_Error / 2;
+  this->init_pose_facing_top_cecum_bound();
+  this->test_scan_matcher(RobotPoseDelta{Translation_Error, 0, 0});
 }
 
-TEST_F(BFMRScanMatcherSmokeTest, cecumLinStepYUpDrift) {
-  init_pose_facing_top_cecum_bound();
-  test_scan_matcher(RobotPoseDelta{0, -SM_Max_Translation_Error / 2, 0});
+TYPED_TEST(BFMRScanMatcherSmokeTest, cecumLinStepYUpDrift) {
+  const auto Translation_Error = this->SM_Max_Translation_Error / 2;
+  this->init_pose_facing_top_cecum_bound();
+  this->test_scan_matcher(RobotPoseDelta{0, -Translation_Error, 0});
 }
 
-TEST_F(BFMRScanMatcherSmokeTest, cecumLinStepYDownDrift) {
-  init_pose_facing_top_cecum_bound();
-  test_scan_matcher(RobotPoseDelta{0, SM_Max_Translation_Error / 2, 0});
+TYPED_TEST(BFMRScanMatcherSmokeTest, cecumLinStepYDownDrift) {
+  const auto Translation_Error = this->SM_Max_Translation_Error / 2;
+  this->init_pose_facing_top_cecum_bound();
+  this->test_scan_matcher(RobotPoseDelta{0, Translation_Error, 0});
 }
 
-TEST_F(BFMRScanMatcherSmokeTest, cecumAngStepThetaCcwDrift) {
-  init_pose_facing_top_cecum_bound();
-  test_scan_matcher(RobotPoseDelta{0, 0, SM_Max_Rotation_Error});
+TYPED_TEST(BFMRScanMatcherSmokeTest, cecumAngStepThetaCcwDrift) {
+  const auto Rotation_Error = this->SM_Max_Rotation_Error;
+  this->init_pose_facing_top_cecum_bound();
+  this->test_scan_matcher(RobotPoseDelta{0, 0, Rotation_Error});
 }
 
-TEST_F(BFMRScanMatcherSmokeTest, cecumAngStepThetaCwDrift) {
-  init_pose_facing_top_cecum_bound();
-  test_scan_matcher(RobotPoseDelta{0, 0, -SM_Max_Rotation_Error});
+TYPED_TEST(BFMRScanMatcherSmokeTest, cecumAngStepThetaCwDrift) {
+  const auto Rotation_Error = this->SM_Max_Rotation_Error;
+  this->init_pose_facing_top_cecum_bound();
+  this->test_scan_matcher(RobotPoseDelta{0, 0, -Rotation_Error});
 }
 
-TEST_F(BFMRScanMatcherSmokeTest, cecumComboStepsDrift) {
-  init_pose_facing_top_cecum_bound();
-  auto noise = RobotPoseDelta{-SM_Max_Translation_Error/2,
-                              SM_Max_Translation_Error/2,
-                              -SM_Max_Rotation_Error/2};
-  test_scan_matcher(noise);
+TYPED_TEST(BFMRScanMatcherSmokeTest, cecumComboStepsDrift) {
+  const auto Translation_Error = this->SM_Max_Translation_Error / 2;
+  const auto Rotation_Error = this->SM_Max_Rotation_Error;
+  this->init_pose_facing_top_cecum_bound();
+  auto noise = RobotPoseDelta{-Translation_Error, Translation_Error,
+                              -Rotation_Error};
+  this->test_scan_matcher(noise);
 }
 
 //------------------------------------------------------------------------------
