@@ -59,9 +59,8 @@ public:
 
     //NB: aligned top/right border is a part of a nearby cell
     //    according to implemented geometry
-    std::vector<Coord> coords;
-    coords.reserve((right_top.x - left_bot.x + 1) *
-                   (right_top.y - left_bot.y + 1));
+    std::vector<Coord> coords((right_top.x - left_bot.x + 1) *
+                              (right_top.y - left_bot.y + 1));
     for (int x = left_bot.x; x <= right_top.x; ++x) {
       for (int y = left_bot.y; y <= right_top.y; ++y) {
         coords.emplace_back(x, y);
