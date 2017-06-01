@@ -56,16 +56,18 @@ public: // methods
   }
 
   const GridCell &operator[](const Coord& c) const override {
-    if (!has_cell(c)) { return *_unknown_cell; }
+    if (!PlainGridMap::has_cell(c)) { return *_unknown_cell; }
     return PlainGridMap::operator[](c);
   }
 
   Coord origin() const override { return _origin; }
 
+  bool has_cell(const Coord &) const override { return true; }
+
 protected: // methods
 
   bool ensure_inside(const Coord &c) {
-    if (has_cell(c)) return false;
+    if (PlainGridMap::has_cell(c)) return false;
 
     auto coord = external2internal(c);
     unsigned w = width(), h = height();
@@ -102,7 +104,7 @@ protected: // methods
     set_width(new_w);
     _origin += Coord(prep_x, prep_y);
 
-    assert(has_cell(c));
+    assert(PlainGridMap::has_cell(c));
     return true;
   }
 

@@ -63,6 +63,9 @@ public:
   int width() const override { return active_map().width(); }
   int height() const override { return active_map().height(); }
   double scale() const override { return active_map().scale(); }
+  bool has_cell(const Coord &c) const override {
+    return active_map().has_cell(c);
+  }
 
   void rescale(double target_scale) override {
     ensure_map_cache_is_continuous();

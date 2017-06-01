@@ -134,7 +134,7 @@ public:
   }
 
   const GridCell &operator[](const Coord& c) const override {
-    if (!has_cell(c)) {
+    if (!LazyTiledGridMap::has_cell(c)) {
       return *unknown_cell();
     }
 
@@ -142,11 +142,12 @@ public:
   }
 
   DiscretePoint2D origin() const override { return _origin; }
+  bool has_cell(const Coord &) const override { return true; }
 
 protected:
 
   bool ensure_inside(const DiscretePoint2D &c) {
-    if (has_cell(c)) return false;
+    if (LazyTiledGridMap::has_cell(c)) return false;
 
     auto coord = external2internal(c);
     unsigned prep_x = 0, app_x = 0, prep_y = 0, app_y = 0;
@@ -172,7 +173,7 @@ protected:
     set_width(_tiles_nm_x * Tile_Size);
     _origin += Coord(prep_x * Tile_Size, prep_y * Tile_Size);
 
-    assert(has_cell(c));
+    assert(LazyTiledGridMap::has_cell(c));
     return true;
   }
 

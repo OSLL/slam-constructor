@@ -24,6 +24,8 @@ public:
       total_weight += sp_weight;
     }
     if (total_weight == 0) {
+      // TODO: replace with writing to a proper logger
+      std::clog << "WARNING: unknown probability" << std::endl;
       return unknown_probability();
     }
     return total_probability / total_weight;
@@ -47,15 +49,15 @@ protected:
   double world_point_probability(const Point2D &wp,
                                  const RobotPose &pose, const GridMap &map,
                                  const SPEParams &params) const {
-     const auto OCCUPIED_AREA_OBS = expected_scan_point_observation();
-     auto analysis_area = params.sp_analysis_area.move_center(wp);
-     double highest_probability = 0;
-     for (auto &area_id : map.coords_in_area(analysis_area)) {
-       double area_prob = 1.0 - map[area_id].discrepancy(OCCUPIED_AREA_OBS);
-       highest_probability = std::max(area_prob, highest_probability);
-     }
-     return highest_probability;
-   }
+    const auto OCCUPIED_AREA_OBS = expected_scan_point_observation();
+    auto analysis_area = params.sp_analysis_area.move_center(wp);
+    double highest_probability = 0;
+    for (auto &area_id : map.coords_in_area(analysis_area)) {
+      double area_prob = 1.0 - map[area_id].discrepancy(OCCUPIED_AREA_OBS);
+      highest_probability = std::max(area_prob, highest_probability);
+    }
+    return highest_probability;
+  }
 };
 
 #endif
