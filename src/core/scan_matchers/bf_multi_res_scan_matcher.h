@@ -63,6 +63,8 @@ public:
                       const RobotPose &pose,
                       const GridMap &orig_map,
                       RobotPoseDelta &result_pose_delta) override {
+    auto no_translation_prob = scan_probability(scan, pose, orig_map);
+
     double vanilla_scale = orig_map.scale();
     // FIXME: API - const cast to be able to do rescaling
     // NB: Do not make 'rescale' const (doing const_cast client probably
@@ -70,9 +72,10 @@ public:
     GridMap &map = const_cast<GridMap&>(orig_map);
 
     // TODO: dynamic angle step estimate
-    add_scan_matching_request(pose, scan, map);
+    add_scan_matching_request(pose, scan, map, no_translation_prob);
 
-    auto pose_deltas = find_best_pose_delta(pose, scan, map);
+    auto pose_deltas = find_best_pose_delta(pose, scan, map,
+                                            no_translation_prob);
     reset_scan_matching_requests();
 
     map.rescale(vanilla_scale); // restore scale
@@ -89,7 +92,7 @@ private: // methods
 
   void add_scan_matching_request(const RobotPose &pose,
                                  const TransformedLaserScan &scan,
-                                 GridMap &map) {
+                                 GridMap &map, double threashold_sp) {
     auto rotation = RobotPoseDelta{0, 0, 0};
     // generate pose translation ranges to be checked
     const auto empty_trs_range = Rectangle{0, 0, 0, 0};
@@ -102,19 +105,24 @@ private: // methods
       map.rescale(entire_trs_range.side());
       auto entire_sp = scan_probability(scan, pose + rotation, map,
                                         SPEParams{entire_trs_range});
-      _unchecked_pose_deltas.emplace(entire_sp, th, entire_trs_range);
+      if (threashold_sp <= entire_sp) {
+        _unchecked_pose_deltas.emplace(entire_sp, th, entire_trs_range);
+      }
 
       // add explicit "no translation" entry
       map.rescale(vanilla_scale);
       auto fine_sp = scan_probability(scan, pose + rotation, map,
                                       SPEParams{empty_trs_range});
-      _unchecked_pose_deltas.emplace(fine_sp, th, empty_trs_range);
+      if (threashold_sp <= entire_sp) {
+        _unchecked_pose_deltas.emplace(fine_sp, th, empty_trs_range);
+      }
     }
   }
 
   RobotPoseDeltas find_best_pose_delta(const RobotPose &pose,
                                        const TransformedLaserScan &scan,
-                                       GridMap &map) {
+                                       GridMap &map, double threashold_sp) {
+
     // the best pose lookup
     while (!_unchecked_pose_deltas.empty()) {
       auto d_poses = _unchecked_pose_deltas.top();
@@ -135,6 +143,7 @@ private: // methods
             auto corr = RobotPoseDelta{offset.x, offset.y, d_poses.rotation};
             auto prob = scan_probability(scan, pose + corr, map);
             auto range = Rectangle{offset.y, offset.y, offset.x, offset.x};
+            if (prob <= threashold_sp) { continue; }
             _unchecked_pose_deltas.emplace(prob, d_poses.rotation, range);
           }
         }
@@ -163,6 +172,7 @@ private: // methods
                                                  map, SPEParams{st});
         assert(branch_best_prob <= d_poses.scan_prob_upper_bound &&
                "BUG: Bounding assumption is violated");
+        if (branch_best_prob <= threashold_sp) { continue; }
         _unchecked_pose_deltas.emplace(branch_best_prob, d_poses.rotation, st);
       }
     }
