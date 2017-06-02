@@ -31,6 +31,8 @@ public:
     auto coarsest_map = std::make_unique<BackGridMap>(prototype, coarsest_mp);
     _map_cache->push_back(std::move(coarsest_map));
     ensure_map_cache_is_continuous();
+
+    set_scale_id(finest_scale_id());
   }
 
   RescalableCachingGridMap(const RescalableCachingGridMap&) = delete;
@@ -54,6 +56,7 @@ public:
   void set_scale_id(unsigned scale_id) {
     assert(scale_id < scales_nm());
     _scale_id = scale_id;
+    _active_map = &map(_scale_id);
   }
 
   //----------------------------------------------------------------------------
@@ -133,7 +136,7 @@ private:
   }
 
   const GridMap& active_map() const {
-    return map(_scale_id);
+    return *_active_map;
   }
 
   GridMap& active_map() {
@@ -166,7 +169,8 @@ private:
   }
 
 private:
-  unsigned _scale_id = finest_scale_id();
+  GridMap *_active_map = nullptr;
+  unsigned _scale_id = -1;
   mutable std::shared_ptr<MapCache> _map_cache;
 };
 
