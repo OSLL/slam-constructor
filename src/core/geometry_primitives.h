@@ -162,29 +162,28 @@ private: // fields
   Point2D beg, delta;
 };
 
-struct Rectangle {
-  Rectangle() : Rectangle(0, 0, 0, 0) {}
-  Rectangle(double b, double t, double l, double r)
-    : _bot{b}, _top{t}, _left{l}, _right{r}
-    , bot_edge{{_left, _bot}, {_right, _bot}}
-    , top_edge{{_left, _top}, {_right, _top}}
-    , left_edge{{_left, _bot}, {_left, _top}}
-    , right_edge{{_right, _bot}, {_right, _top}} {
+struct LightWeightRectangle {
+private:
+  using LVRect = LightWeightRectangle;
+public:
+  LightWeightRectangle() : LightWeightRectangle(0, 0, 0, 0) {}
+  LightWeightRectangle(double b, double t, double l, double r)
+    : _bot{b}, _top{t}, _left{l}, _right{r} {
     assert(_bot <= _top);
     assert(_left <= _right);
   }
 
-  Rectangle(const Rectangle &) = default;
-  Rectangle(Rectangle &&) = default;
-  Rectangle& operator=(const Rectangle &rhs) = default;
-  Rectangle& operator=(Rectangle &&rhs) = default;
+  double bot() const { return _bot; }
+  double top() const { return _top; }
+  double left() const { return _left; }
+  double right() const { return _right; }
 
   double vside_len() const { return top() - bot(); }
   double hside_len() const { return right() - left(); }
   double side() const { return vside_len(); }
   double area() const { return (top() - bot()) * (right() - left()); }
   Point2D center() const {
-    return {left() + hside_len() / 2, bot() + vside_len() / 2};
+    return {(left() + right()) / 2, (bot() + top()) / 2};
   }
 
   auto corners() const {
@@ -192,11 +191,77 @@ struct Rectangle {
                                 {right(), bot()}, {right(), top()}};
   }
 
-  Rectangle move_center(const Point2D &new_center) const {
+  LVRect move_center(const Point2D &new_center) const {
     double half_v = vside_len() / 2, half_h = hside_len() / 2;
     return {new_center.y - half_v, new_center.y + half_v,
             new_center.x - half_h, new_center.x + half_h};
   }
+
+  auto split_horiz() const {
+    auto c = center();
+    return std::vector<LVRect>{
+      LVRect{bot(),   c.y, left(), right()},
+      LVRect{  c.y, top(), left(), right()}
+    };
+  }
+
+  auto split_vert() const {
+    auto c = center();
+    return std::vector<LVRect>{
+      LVRect{bot(), top(), left(),     c.x},
+      LVRect{bot(), top(),    c.x, right()}
+    };
+  }
+
+  auto split4_evenly() const {
+    auto c = center();
+    return std::vector<LVRect>{
+      LVRect{ bot(),   c.y, left(),     c.x}, // left-bot
+      LVRect{   c.y, top(), left(),     c.x}, // left-top
+      LVRect{ bot(),   c.y,    c.x, right()}, // right-bot
+      LVRect{   c.y, top(),    c.x, right()} // right-top
+    };
+  }
+
+private: // fields
+  double _bot, _top, _left, _right;
+};
+
+inline bool operator==(const LightWeightRectangle &lhs,
+                       const LightWeightRectangle &rhs) {
+  return are_equal(lhs.top(), rhs.top()) &&
+         are_equal(lhs.bot(), rhs.bot()) &&
+         are_equal(lhs.left(), rhs.left()) &&
+         are_equal(lhs.right(), rhs.right());
+}
+
+std::ostream &operator<<(std::ostream &stream, const LightWeightRectangle &r) {
+  stream << "LVRectangle [t:" << r.top() << ", b:" << r.bot();
+  return stream << ", l:" << r.left() << ", r:" << r.right() << "]";
+}
+
+struct Rectangle : LightWeightRectangle {
+private: // consts
+  static constexpr std::size_t BOT_EDGE_IDX = 0;
+  static constexpr std::size_t TOP_EDGE_IDX = 1;
+  static constexpr std::size_t LFT_EDGE_IDX = 2;
+  static constexpr std::size_t RHT_EDGE_IDX = 3;
+public: // methods
+
+  Rectangle() : Rectangle(0, 0, 0, 0) {}
+  Rectangle(double b, double t, double l, double r)
+    : LightWeightRectangle{b, t, l, r}
+    , _edges{
+        Segment2D{{ left(), bot()}, {right(), bot()}}, // 0 - bot
+        Segment2D{{ left(), top()}, {right(), top()}}, // 1 - top
+        Segment2D{{ left(), bot()}, { left(), top()}}, // 2 - left
+        Segment2D{{right(), bot()}, {right(), top()}}  // 3 - right
+      } {}
+
+  Rectangle(const Rectangle &) = default;
+  Rectangle(Rectangle &&) = default;
+  Rectangle& operator=(const Rectangle &rhs) = default;
+  Rectangle& operator=(Rectangle &&rhs) = default;
 
   /* Inclusion predicates */
   bool contains(const Point2D &p) const {
@@ -236,10 +301,10 @@ struct Rectangle {
     Intersections intersections;
 
     // NB: order matters for correct vertex intersection handling
-    ray.intersect(top_edge, Intersection::Location::Top, intersections);
-    ray.intersect(left_edge, Intersection::Location::Left, intersections);
-    ray.intersect(bot_edge, Intersection::Location::Bot, intersections);
-    ray.intersect(right_edge, Intersection::Location::Right, intersections);
+    ray.intersect(top_edge(), Intersection::Location::Top, intersections);
+    ray.intersect(left_edge(), Intersection::Location::Left, intersections);
+    ray.intersect(bot_edge(), Intersection::Location::Bot, intersections);
+    ray.intersect(right_edge(), Intersection::Location::Right, intersections);
 
     // filter dublicate intersection (intersection is a vertex)
     if (1 < intersections.size() &&
@@ -252,60 +317,17 @@ struct Rectangle {
     return intersections;
   }
 
-  std::vector<Rectangle> split_horiz() const {
-    auto split_y = bot() + vside_len() / 2;
-    return std::vector<Rectangle>{
-      Rectangle{bot(), split_y, left(), right()},
-      Rectangle{split_y, top(), left(), right()}
-    };
-  }
-
-  std::vector<Rectangle> split_vert() const {
-    auto split_x = left() + hside_len() / 2;
-    return std::vector<Rectangle>{
-      Rectangle{bot(), top(), left(), split_x},
-      Rectangle{bot(), top(), split_x, right()}
-    };
-  }
-
-  std::vector<Rectangle> split4_evenly() const {
-    auto rects = std::vector<Rectangle>{};
-    for (auto &hrect : split_horiz()) {
-      for (auto &rect : hrect.split_vert()) {
-        rects.push_back(rect);
-      }
-    }
-    return rects;
-  }
-
-  double bot() const { return _bot; }
-  double top() const { return _top; }
-  double left() const { return _left; }
-  double right() const { return _right; }
-
-private: // fields
-  double _bot, _top, _left, _right;
 private: // methods
-  std::vector<Segment2D> edges() const {
-    return {top_edge, bot_edge, left_edge, right_edge};
-  }
+  const Segment2D& bot_edge()   const { return edges()[BOT_EDGE_IDX]; }
+  const Segment2D& top_edge()   const { return edges()[TOP_EDGE_IDX]; }
+  const Segment2D& left_edge()  const { return edges()[LFT_EDGE_IDX]; }
+  const Segment2D& right_edge() const { return edges()[RHT_EDGE_IDX]; }
+
+  const std::vector<Segment2D> &edges() const { return _edges; }
 private: // fields
   // NB: edges as Segment2D were introduced for code clarity.
   //     They can be dropped for performance reasons
-  // TODO: vector of edges
-  Segment2D bot_edge, top_edge, left_edge, right_edge;
+  const std::vector<Segment2D> _edges;
 };
-
-inline bool operator==(const Rectangle &lhs, const Rectangle &rhs) {
-  return are_equal(lhs.top(), rhs.top()) &&
-         are_equal(lhs.bot(), rhs.bot()) &&
-         are_equal(lhs.left(), rhs.left()) &&
-         are_equal(lhs.right(), rhs.right());
-}
-
-std::ostream &operator<<(std::ostream &stream, const Rectangle &r) {
-  stream << "Rectangle [t:" << r.top() << ", b:" << r.bot();
-  return stream << ", l:" << r.left() << ", r:" << r.right() << "]";
-}
 
 #endif

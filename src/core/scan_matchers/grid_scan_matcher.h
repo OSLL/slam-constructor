@@ -30,7 +30,7 @@ class ScanProbabilityEstimator {
 public: // types
   struct SPEParams {
     // area in the neighborhood of a scan point that should be analyzed
-    Rectangle sp_analysis_area = {0, 0, 0, 0};
+    LightWeightRectangle sp_analysis_area = {0, 0, 0, 0};
   };
 public:
   constexpr static double unknown_probability() {

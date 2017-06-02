@@ -47,7 +47,7 @@ public:
 
   // FIXME: coords_in_area(world_cell_bounds(cell)) != { cell }
   // WA: coords_in_area(world_cell_bounds(cell), false) == { cell }
-  std::vector<Coord> coords_in_area(const Rectangle &area,
+  std::vector<Coord> coords_in_area(const LightWeightRectangle &area,
                                     bool include_border = true) const {
     if (area.area() == Dbl_Inf) {
       return valid_coords();
@@ -59,8 +59,9 @@ public:
 
     //NB: aligned top/right border is a part of a nearby cell
     //    according to implemented geometry
-    std::vector<Coord> coords((right_top.x - left_bot.x + 1) *
-                              (right_top.y - left_bot.y + 1));
+    std::vector<Coord> coords;
+    coords.reserve((right_top.x - left_bot.x + 1) *
+                   (right_top.y - left_bot.y + 1));
     for (int x = left_bot.x; x <= right_top.x; ++x) {
       for (int y = left_bot.y; y <= right_top.y; ++y) {
         coords.emplace_back(x, y);

@@ -14,13 +14,16 @@ private: // consts
   static constexpr double _Max_Translation_Error = 1,
                           _Max_Rotation_Error = deg2rad(5);
 private: // types
+  using SPEParams = ScanProbabilityEstimator::SPEParams;
+  using Rect = decltype(SPEParams{}.sp_analysis_area);
+
   struct RobotPoseDeltas {
     // TODO: store info about init_pose, scan, map, approximator in the node
     double scan_prob_upper_bound;
     double rotation;
-    Rectangle translations;
+    Rect translations;
 
-    RobotPoseDeltas(double sp, double th, const Rectangle& t_wn)
+    RobotPoseDeltas(double sp, double th, const Rect& t_wn)
       : scan_prob_upper_bound{sp}, rotation{th}, translations{t_wn} {}
 
     // returns true if this node is _less_ prepefable than a given one
@@ -45,7 +48,6 @@ private: // types
   }
 
   using UncheckedPoseDeltas = std::priority_queue<RobotPoseDeltas>;
-  using SPEParams = ScanProbabilityEstimator::SPEParams;
 public:
   BruteForceMultiResoultionScanMatcher(SPE est,
                                        double ang_step = deg2rad(0.1),
@@ -95,9 +97,9 @@ private: // methods
                                  GridMap &map, double threashold_sp) {
     auto rotation = RobotPoseDelta{0, 0, 0};
     // generate pose translation ranges to be checked
-    const auto empty_trs_range = Rectangle{0, 0, 0, 0};
-    const auto entire_trs_range = Rectangle{-max_y_error(), max_y_error(),
-                                            -max_x_error(), max_x_error()};
+    const auto empty_trs_range = Rect{0, 0, 0, 0};
+    const auto entire_trs_range = Rect{-max_y_error(), max_y_error(),
+                                       -max_x_error(), max_x_error()};
 
     const double vanilla_scale = map.scale();
     for (double th = -max_th_error(); th <= max_th_error(); th += _ang_step) {
@@ -122,6 +124,7 @@ private: // methods
   RobotPoseDeltas find_best_pose_delta(const RobotPose &pose,
                                        const TransformedLaserScan &scan,
                                        GridMap &map, double threashold_sp) {
+    double vanilla_scale = map.scale();
 
     // the best pose lookup
     while (!_unchecked_pose_deltas.empty()) {
@@ -139,11 +142,14 @@ private: // methods
           auto offsets = d_poses.translations.corners();
           offsets.push_back(d_poses.translations.center());
 
+          map.rescale(vanilla_scale);
           for (const auto &offset : offsets) {
             auto corr = RobotPoseDelta{offset.x, offset.y, d_poses.rotation};
             auto prob = scan_probability(scan, pose + corr, map);
-            auto range = Rectangle{offset.y, offset.y, offset.x, offset.x};
+            auto range = Rect{offset.y, offset.y, offset.x, offset.x};
             if (prob <= threashold_sp) { continue; }
+            // limit threashold with best-known-so-far probability
+            threashold_sp = std::max(threashold_sp, prob);
             _unchecked_pose_deltas.emplace(prob, d_poses.rotation, range);
           }
         }
@@ -151,7 +157,7 @@ private: // methods
       }
 
       // branching
-      auto splitted_translations = std::vector<Rectangle>{d_poses.translations};
+      auto splitted_translations = std::vector<Rect>{d_poses.translations};
       if (should_branch_hor && should_branch_hor) {
         splitted_translations = d_poses.translations.split4_evenly();
       } else if (should_branch_hor) {
@@ -163,7 +169,7 @@ private: // methods
       // update unchecked corrections
       _unchecked_pose_deltas.pop();
       for (auto& st : splitted_translations) {
-        map.rescale(st.side());
+        map.rescale(st.side()); // FIXME: non-squared areas handling
         Point2D best_translation = st.center();
         auto branch_delta = RobotPoseDelta{best_translation.x,
                                            best_translation.y,
@@ -177,7 +183,7 @@ private: // methods
       }
     }
     assert(0 && "BUG: no pose delta has been found");
-    return {std::numeric_limits<double>::quiet_NaN(), 0, Rectangle{}};
+    return {std::numeric_limits<double>::quiet_NaN(), 0, Rect{}};
   }
 
   void reset_scan_matching_requests() {
