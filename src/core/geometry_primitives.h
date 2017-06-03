@@ -183,7 +183,7 @@ public:
   double side() const { return vside_len(); }
   double area() const { return (top() - bot()) * (right() - left()); }
   Point2D center() const {
-    return {(left() + right()) / 2, (bot() + top()) / 2};
+    return {left() + hside_len() / 2, bot() + vside_len() / 2};
   }
 
   auto corners() const {
