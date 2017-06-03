@@ -15,10 +15,11 @@ public:
     : GridScanMatcher(est), _angular_delta(ang_delta), _linear_delta(lin_delta)
     , _max_step_shrinks(max_shrinks_nm) {}
 
-  double process_scan(const TransformedLaserScan &scan,
+  double process_scan(const TransformedLaserScan &raw_scan,
                       const RobotPose &init_pose,
                       const GridMap &map,
                       RobotPoseDelta &pose_delta) override {
+    auto scan = scan_probability_estimator()->filter_scan(raw_scan.scan, map);
     double a_step = _angular_delta, l_step = _linear_delta;
 
     // TODO: store pose as sampled value

@@ -81,6 +81,10 @@ public: // methods
     return Point2D{patched.x() + d_x, patched.y() + d_y};
   }
 
+  Point2D move_origin(double d_x, double d_y) const {
+    return Point2D{x() + d_x, y() + d_y};
+  }
+
   ScanPoint2D to_cartesian(double d_angle = 0, double d_range = 0) const {
     auto patched = ScanPoint2D{PointType::Polar,
                                range() + d_range, angle() + d_angle,

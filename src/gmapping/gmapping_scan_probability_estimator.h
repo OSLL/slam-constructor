@@ -22,7 +22,7 @@ public:
   GmappingScanProbabilityEstimator()
     : _scan_margin(0), _pts_skip_rate(3), _window_sz(1) {}
 
-  double estimate_scan_probability(const TransformedLaserScan &tr_scan,
+  double estimate_scan_probability(const LaserScan2D &scan,
                                    const RobotPose &pose,
                                    const GridMap &map,
                                    const SPEParams &) const override {
@@ -31,20 +31,20 @@ public:
 
     double last_dpoint_prob = -1;
     DiscretePoint2D last_handled_dpoint;
-    tr_scan.scan.trig_cache->set_theta(pose.theta);
+    scan.trig_cache->set_theta(pose.theta);
 
     double total_probability = 0;
     double handled_pts_nm = 0;
-    auto end_point_i = tr_scan.scan.points().size() - _scan_margin;
+    auto end_point_i = scan.points().size() - _scan_margin;
     for (size_t i = _scan_margin; i < end_point_i; ++i) {
       if (_pts_skip_rate && i % _pts_skip_rate) {
         continue;
       }
 
       handled_pts_nm += 1;
-      auto &sp = tr_scan.scan.points()[i];
-      double c = tr_scan.scan.trig_cache->cos(sp.angle());
-      double s = tr_scan.scan.trig_cache->sin(sp.angle());
+      auto &sp = scan.points()[i];
+      double c = scan.trig_cache->cos(sp.angle());
+      double s = scan.trig_cache->sin(sp.angle());
       sp_observation.obstacle = {pose.x + sp.range() * c,
                                  pose.y + sp.range() * s};
 

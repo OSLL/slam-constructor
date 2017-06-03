@@ -15,17 +15,26 @@ class GridScanMatcherObserver {
 public:
   virtual void on_matching_start(const RobotPose &,            /*pose*/
                                  const TransformedLaserScan &, /*scan*/
-                                 const GridMap &) {}    /*map*/
+                                 const GridMap &) {}           /*map*/
   virtual void on_scan_test(const RobotPose &,          /*pose*/
-                            const TransformedLaserScan &, /*scan*/
-                            double) {};                   /*score*/
-  virtual void on_pose_update(const RobotPose &,            /*pose*/
-                              const TransformedLaserScan &, /*scan*/
-                              double) {};                   /*score*/
+                            const LaserScan2D &,        /*scan*/
+                            double) {};                 /*score*/
+  virtual void on_pose_update(const RobotPose &,   /*pose*/
+                              const LaserScan2D &, /*scan*/
+                              double) {};          /*score*/
   virtual void on_matching_end(const RobotPose &, /*delta*/
                                double) {};        /*best_score*/
 };
 
+/* Client (e.g. a scan matcher) code example:
+ * ...
+ * ScanProbabilityEstimator &spe = spe();
+ * auto scan = spe.filter_scan(raw_scan, map);
+ * auto scan_prob = spe.enstimate_scan_probability(scan, ...);
+ * ...
+ * NB: the _filter_scan_ call isn't obligatory (depends on spe),
+ *     but it may improve _spe_ performance.
+ */
 class ScanProbabilityEstimator {
 public: // types
   struct SPEParams {
@@ -41,13 +50,18 @@ public:
     return probability == unknown_probability();
   }
 
-  double estimate_scan_probability(const TransformedLaserScan &scan,
+  virtual LaserScan2D filter_scan(const LaserScan2D &scan,
+                                  const GridMap &) {
+    return scan;
+  }
+
+  double estimate_scan_probability(const LaserScan2D &scan,
                                    const RobotPose &pose,
                                    const GridMap &map) const {
     return estimate_scan_probability(scan, pose, map, SPEParams{});
   }
 
-  virtual double estimate_scan_probability(const TransformedLaserScan &scan,
+  virtual double estimate_scan_probability(const LaserScan2D &scan,
                                            const RobotPose &pose,
                                            const GridMap &map,
                                            const SPEParams &params) const = 0;
@@ -97,13 +111,13 @@ public:
     _max_th_error = th;
   }
 
-  double scan_probability(const TransformedLaserScan &scan,
+  double scan_probability(const LaserScan2D &scan,
                           const RobotPose &pose,
                           const GridMap &map) const {
     return _scan_prob_estimator->estimate_scan_probability(scan, pose, map);
   }
 
-  double scan_probability(const TransformedLaserScan &scan,
+  double scan_probability(const LaserScan2D &scan,
                           const RobotPose &pose,
                           const GridMap &map,
                           const ScanProbabilityEstimator::SPEParams &p) const {

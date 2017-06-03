@@ -61,26 +61,29 @@ public:
     _transl_step = translation_step;
   }
 
-  double process_scan(const TransformedLaserScan &scan,
+  double process_scan(const TransformedLaserScan &raw_scan,
                       const RobotPose &pose,
-                      const GridMap &orig_map,
+                      const GridMap &map,
                       RobotPoseDelta &result_pose_delta) override {
-    auto no_translation_prob = scan_probability(scan, pose, orig_map);
+    double vanilla_scale = map.scale();
+    auto scan = scan_probability_estimator()->filter_scan(raw_scan.scan, map);
+    auto no_translation_prob = scan_probability(scan, pose, map);
 
-    double vanilla_scale = orig_map.scale();
     // FIXME: API - const cast to be able to do rescaling
     // NB: Do not make 'rescale' const (doing const_cast client probably
     //     won't forget to save/restore current scale)
-    GridMap &map = const_cast<GridMap&>(orig_map);
+    GridMap &rescalable_map = const_cast<GridMap&>(map);
 
     // TODO: dynamic angle step estimate
-    add_scan_matching_request(pose, scan, map, no_translation_prob);
+    add_scan_matching_request(pose, scan, rescalable_map, no_translation_prob);
 
-    auto pose_deltas = find_best_pose_delta(pose, scan, map,
+    auto pose_deltas = find_best_pose_delta(pose, scan, rescalable_map,
                                             no_translation_prob);
     reset_scan_matching_requests();
 
-    map.rescale(vanilla_scale); // restore scale
+    rescalable_map.rescale(vanilla_scale); // restore scale
+
+    /* estimate best translation */
     auto best_translation = pose_deltas.translations.center();
     auto best_corr = RobotPoseDelta{best_translation.x, best_translation.y,
                                     pose_deltas.rotation};
@@ -93,7 +96,7 @@ public:
 private: // methods
 
   void add_scan_matching_request(const RobotPose &pose,
-                                 const TransformedLaserScan &scan,
+                                 const LaserScan2D &scan,
                                  GridMap &map, double threashold_sp) {
     auto rotation = RobotPoseDelta{0, 0, 0};
     // generate pose translation ranges to be checked
@@ -122,7 +125,7 @@ private: // methods
   }
 
   RobotPoseDeltas find_best_pose_delta(const RobotPose &pose,
-                                       const TransformedLaserScan &scan,
+                                       const LaserScan2D &scan,
                                        GridMap &map, double threashold_sp) {
     double vanilla_scale = map.scale();
 

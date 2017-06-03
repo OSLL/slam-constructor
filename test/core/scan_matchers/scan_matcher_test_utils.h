@@ -50,9 +50,10 @@ protected: // methods
   virtual GridScanMatcher& scan_matcher() = 0;
   virtual RobotPoseDelta default_acceptable_error() { return Acceptable_Error; }
 
-  virtual bool is_result_noise_acceptable(const TransformedLaserScan &scan,
+  virtual bool is_result_noise_acceptable(const TransformedLaserScan &raw_scan,
                                           const RobotPoseDelta &init_noise,
                                           const RobotPoseDelta &noise) {
+    auto scan = spe->filter_scan(raw_scan.scan, map);
     auto no_noise_prob = spe->estimate_scan_probability(scan, rpose, map);
     auto noise_prob = spe->estimate_scan_probability(scan, rpose + noise, map);
     //std::cout << no_noise_prob << " vs " << noise_prob << std::endl;

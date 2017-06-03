@@ -17,13 +17,14 @@ public:
     GridScanMatcher{estimator},
     _failed_tries_limit(failed_iter), _total_tries_limit(max_iter) {}
 
-  double process_scan(const TransformedLaserScan &scan,
+  double process_scan(const TransformedLaserScan &raw_scan,
                       const RobotPose &init_pose,
                       const GridMap &map,
                       RobotPoseDelta &pose_delta) override {
-    do_for_each_observer([&init_pose, &scan, &map](ObsPtr obs) {
-      obs->on_matching_start(init_pose, scan, map);
+    do_for_each_observer([&init_pose, &raw_scan, &map](ObsPtr obs) {
+      obs->on_matching_start(init_pose, raw_scan, map);
     });
+    auto scan = scan_probability_estimator()->filter_scan(raw_scan.scan, map);
 
     unsigned failed_tries = 0, total_tries = 0;
     RobotPose best_pose = init_pose;
