@@ -71,7 +71,9 @@ protected: // methods
     ASSERT_TRUE(tr_scan.scan.points().size() != 0);
 
     auto correction = RobotPoseDelta{};
+    auto original_map_scale = map.scale();
     scan_matcher().process_scan(tr_scan, rpose + noise,  map, correction);
+    assert(map.scale() == original_map_scale);
     auto result_noise = noise + correction;
     if (is_result_noise_acceptable(tr_scan, noise, result_noise)) {
       return;

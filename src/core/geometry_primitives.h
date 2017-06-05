@@ -172,6 +172,8 @@ public:
     assert(_bot <= _top);
     assert(_left <= _right);
   }
+  LightWeightRectangle(const Point2D &p)
+    : LightWeightRectangle(p.y, p.y, p.x, p.x) {}
 
   double bot() const { return _bot; }
   double top() const { return _top; }

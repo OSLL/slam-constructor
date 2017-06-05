@@ -12,6 +12,9 @@ public: // methods
   RobotPoseDelta() : RobotPoseDelta(0, 0, 0){}
   constexpr RobotPoseDelta(double d_x, double d_y, double d_th) :
     x(d_x), y(d_y), theta(d_th) {}
+  constexpr RobotPoseDelta(const Point2D &offset, double d_th) :
+    x(offset.x), y(offset.y), theta(d_th) {}
+
   RobotPoseDelta& operator+=(const RobotPoseDelta& delta) {
     x += delta.x;
     y += delta.y;
