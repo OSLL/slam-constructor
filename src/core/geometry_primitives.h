@@ -199,7 +199,7 @@ public:
             new_center.x - half_h, new_center.x + half_h};
   }
 
-  auto split_horiz() const {
+  auto split_vert() const {
     auto c = center();
     return std::vector<LVRect>{
       LVRect{bot(),   c.y, left(), right()},
@@ -207,7 +207,7 @@ public:
     };
   }
 
-  auto split_vert() const {
+  auto split_horiz() const {
     auto c = center();
     return std::vector<LVRect>{
       LVRect{bot(), top(), left(),     c.x},

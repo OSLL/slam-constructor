@@ -1,5 +1,5 @@
-#ifndef SLAM_CTOR_CORE_MATH_UTILS_H_INCLUDED
-#define SLAM_CTOR_CORE_MATH_UTILS_H_INCLUDED
+#ifndef SLAM_CTOR_CORE_MATH_UTILS_H
+#define SLAM_CTOR_CORE_MATH_UTILS_H
 
 #include <cmath>
 
@@ -10,6 +10,11 @@ constexpr inline bool are_equal(double a, double b) {
   return std::abs(a - b) <= Eps * eps_scale;
 }
 
+constexpr inline bool less(double a, double b) {
+  constexpr double Eps = std::numeric_limits<double>::epsilon();
+  return a < b + Eps;
+}
+
 constexpr inline bool is_multiple_of(double value, double factor) {
   // TODO: verify numerical safety/bounds
   double ratio = value / factor;
@@ -17,7 +22,7 @@ constexpr inline bool is_multiple_of(double value, double factor) {
 }
 
 inline bool less_or_equal(double a, double b) {
-  return are_equal(a, b) || (a < b);
+  return are_equal(a, b) || less(a, b);
 }
 
 inline bool are_ordered(double a, double b, double c) {

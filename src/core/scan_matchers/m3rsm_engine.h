@@ -62,7 +62,7 @@ public:
   bool operator<(const Match &that) const {
     if (!are_equal(prob_upper_bound, that.prob_upper_bound)) {
       // greater is "better" -> correctness
-      return prob_upper_bound < that.prob_upper_bound;
+      return less(prob_upper_bound, that.prob_upper_bound);
     }
     if (!are_equal(_drift_amount, that._drift_amount)) {
       // finer is "better" -> speed up
@@ -93,11 +93,14 @@ public: // types
   using Rect = decltype(SPEParams{}.sp_analysis_area);
 public:
 
-  M3RSMEngine() { reset_engine_state(); }
+  M3RSMEngine(double max_finest_prob_diff = 0)
+    : _max_finest_prob_diff{max_finest_prob_diff} {
+    reset_engine_state();
+  }
 
   void reset_engine_state() {
     _matches = Matches{};
-    _best_finest_probability = 0;
+    _best_finest_probability = 0.0;
   }
 
   void set_translation_lookup_range(double max_x_error, double max_y_error) {
@@ -111,11 +114,12 @@ public:
   }
 
   void add_match(Match&& match) {
-    if ( match.prob_upper_bound < _best_finest_probability) { return; }
+    double match_prob = match.prob_upper_bound;
+    if (match_prob < _best_finest_probability) { return; }
 
     if (match.is_finest()) {
       _best_finest_probability = std::max(_best_finest_probability,
-                                          match.prob_upper_bound);
+                                          match_prob - _max_finest_prob_diff);
     }
     _matches.push(std::move(match));
   }
@@ -130,12 +134,13 @@ public:
 
     double rotation_drift = 0;
     auto scan = std::make_shared<LaserScan2D>(spe->filter_scan(raw_scan, map));
-    while (2 * rotation_drift <= _rotation_sector) {
+    auto rotation_resolution = _rotation_resolution;
+    while (less_or_equal(2 * rotation_drift, _rotation_sector)) {
       for (auto &rotation : std::set<double>{rotation_drift, -rotation_drift}) {
         add_match(Match{rotation, empty_trs_range, spe, scan, pose, map});
         add_match(Match{rotation, entire_trs_range, spe, scan, pose, map});
       }
-      rotation_drift += _rotation_resolution;
+      rotation_drift += rotation_resolution;
     }
   }
 
@@ -143,10 +148,11 @@ public:
     while (!_matches.empty()) {
       auto best_match = _matches.top();
       _matches.pop();
-
       auto coarse_drift = best_match.translation_drift;
-      auto should_branch_horz = translation_step < coarse_drift.hside_len();
-      auto should_branch_vert = translation_step < coarse_drift.vside_len();
+      auto should_branch_horz = less(translation_step,
+                                     coarse_drift.hside_len());
+      auto should_branch_vert = less(translation_step,
+                                     coarse_drift.vside_len());
       if (!should_branch_horz && !should_branch_vert) {
         return best_match;
       }
@@ -171,13 +177,15 @@ private:
     // update matches with finer ones
     for (auto& finer_drift : finer_drifts) {
       auto finer_match = Match{finer_drift, coarse_match};
-      assert(finer_match.prob_upper_bound <= coarse_match.prob_upper_bound &&
+      assert(less_or_equal(finer_match.prob_upper_bound,
+                           coarse_match.prob_upper_bound) &&
              "BUG: Bounding assumption is violated");
       add_match(std::move(finer_match));
     }
   }
 
 private:
+  double _max_finest_prob_diff;
   std::priority_queue<Match> _matches;
   double _best_finest_probability;
   double _max_x_error, _max_y_error;
