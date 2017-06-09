@@ -68,10 +68,16 @@ public: // methods
   bool is_occupied() const { return _is_occupied; }
 
   ScanPoint2D to_cartesian(std::shared_ptr<TrigonometricCache> cache) const {
-    const double a = angle();
-    return ScanPoint2D{PointType::Cartesian,
-                       range() * cache->cos(a), range() * cache->sin(a),
-                       _is_occupied};
+    auto point = move_origin(0, 0, cache);
+    return ScanPoint2D{PointType::Cartesian, point.x, point.y, _is_occupied};
+  }
+
+  // NB: a rotation is preset in a given trigonometric cache
+  Point2D move_origin(double d_x, double d_y,
+                      std::shared_ptr<TrigonometricCache> cache) const {
+    return Point2D{d_x + range() * cache->cos(angle()),
+                   d_y + range() * cache->sin(angle())};
+
   }
 
   Point2D move_origin(double d_x, double d_y, double d_angle) const {

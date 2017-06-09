@@ -30,11 +30,13 @@ public:
     auto total_weight = double{0};
     auto total_probability = double{0};
 
-    for (const auto &scan_point : scan.points()) {
+    scan.trig_cache->set_theta(pose.theta);
+    for (const auto &sp : scan.points()) {
       // FIXME: assumption - sensor pose is in robot's (0,0), dir - 0
-      auto world_point = scan_point.move_origin(pose.x, pose.y, pose.theta);
+      auto world_point = sp.move_origin(pose.x, pose.y, scan.trig_cache);
+
       auto sp_prob = world_point_probability(world_point, pose, map, params);
-      auto sp_weight = scan_point_weight(scan_point);
+      auto sp_weight = scan_point_weight(sp);
       total_probability += sp_prob * sp_weight;
       total_weight += sp_weight;
     }
@@ -74,56 +76,5 @@ protected:
     return highest_probability;
   }
 };
-
-// NB: experimental
-/*
-class FastMeanDiscrepancySPEstimator : public ScanProbabilityEstimator {
-public:
-  double estimate_scan_probability(const TransformedLaserScan &tr_scan,
-                                   const RobotPose &pose,
-                                   const GridMap &map,
-                                   const SPEParams &params) const override {
-    // TODO: filter non occupied points
-    auto total_weight = double{0};
-    auto total_probability = double{0};
-    tr_scan.scan.trig_cache->set_theta(pose.theta);
-    //int id = 0;
-    for (const auto &scan_point : tr_scan.scan.points()) {
-      //id++;
-      //      if (id % 5) { continue; }
-      // FIXME: assumption - sensor pose is in robot's (0,0), dir - 0
-      //auto world_point = scan_point.move_origin(pose.x, pose.y);
-      double c = tr_scan.scan.trig_cache->cos(scan_point.angle());
-      double s = tr_scan.scan.trig_cache->sin(scan_point.angle());
-      Point2D world_point = {pose.x + scan_point.range() * c,
-                             pose.y + scan_point.range() * s};
-
-
-      auto sp_prob = world_point_probability(world_point, pose, map, params);
-      total_probability += sp_prob;
-      total_weight += 1;
-    }
-    if (total_weight == 0) {
-      // TODO: replace with writing to a proper logger
-      std::clog << "WARNING: unknown probability" << std::endl;
-      return unknown_probability();
-    }
-    return total_probability / total_weight;
-  }
-
-protected:
-
-  double world_point_probability(const Point2D &wp,
-                                 const RobotPose &pose, const GridMap &map,
-                                 const SPEParams &params) const {
-    auto analysis_area = params.sp_analysis_area.move_center(wp);
-    double highest_probability = 0;
-    for (auto &area_id : map.coords_in_area(analysis_area)) {
-      highest_probability = std::max(double(map[area_id]), highest_probability);
-    }
-    return highest_probability;
-  }
-};
-*/
 
 #endif
