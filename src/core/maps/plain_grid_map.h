@@ -24,8 +24,8 @@ public:
   }
 
   const GridCell &operator[](const Coord& c) const override {
-    assert(has_cell(c));
     auto coord = external2internal(c);
+    assert(has_internal_cell(coord));
     return *_cells[coord.y][coord.x];
   }
 
@@ -67,9 +67,9 @@ public: // methods
 protected: // methods
 
   bool ensure_inside(const Coord &c) {
-    if (PlainGridMap::has_cell(c)) return false;
-
     auto coord = external2internal(c);
+    if (PlainGridMap::has_internal_cell(coord)) return false;
+
     unsigned w = width(), h = height();
     unsigned prep_x = 0, app_x = 0, prep_y = 0, app_y = 0;
     std::tie(prep_x, app_x) = determine_cells_nm(0, coord.x, w);

@@ -145,10 +145,7 @@ public:
   }
 
   virtual bool has_cell(const Coord &c) const {
-    DiscretePoint2D coord = external2internal(c);
-    return 0 <= coord.x && coord.x < width() &&
-           0 <= coord.y && coord.y < height();
-
+    return has_internal_cell(external2internal(c));
   }
 
   Coord internal2external(const Coord &coord) const {
@@ -156,6 +153,11 @@ public:
   }
 
 protected:
+
+  bool has_internal_cell(const Coord &c) const {
+    return (0 <= c.x && c.x < width()) and (0 <= c.y && c.y < height());
+  }
+
   // A cell coordinate determined outside of the map to the coord on the grid
   // Motivation: grid's structure changes after world_to_cell coord return
   //             can spoil the returned coord.

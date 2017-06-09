@@ -147,9 +147,9 @@ public:
 protected:
 
   bool ensure_inside(const DiscretePoint2D &c) {
-    if (LazyTiledGridMap::has_cell(c)) return false;
-
     auto coord = external2internal(c);
+    if (LazyTiledGridMap::has_internal_cell(coord)) return false;
+
     unsigned prep_x = 0, app_x = 0, prep_y = 0, app_y = 0;
     std::tie(prep_x, app_x) = extra_tiles_nm(0, coord.x, width());
     std::tie(prep_y, app_y) = extra_tiles_nm(0, coord.y, height());
