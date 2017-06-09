@@ -40,9 +40,8 @@ public:
     // TODO: handle infinity
     assert(x != Dbl_Inf &&  y != Dbl_Inf);
 
-    int cell_x = std::floor(x / scale());
-    int cell_y = std::floor(y / scale());
-    return {cell_x, cell_y};
+    auto curr_scale = scale();
+    return {int(std::floor(x / curr_scale)), int(std::floor(y / curr_scale))};
   }
 
   // FIXME: coords_in_area(world_cell_bounds(cell)) != { cell }
