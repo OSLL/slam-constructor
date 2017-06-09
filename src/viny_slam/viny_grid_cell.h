@@ -4,27 +4,6 @@
 #include "../core/maps/grid_cell.h"
 #include <ostream>
 
-class VinyCell : public GridCell {
-public:
-  VinyCell(): GridCell{Occupancy{-1, 1}}, _n(0) {}
-
-  // TODO: use CRTP
-  virtual std::unique_ptr<GridCell> clone() const {
-    return std::make_unique<VinyCell>(*this);
-  }
-
-  virtual void operator+=(const AreaOccupancyObservation &aoo) {
-    if (!aoo.occupancy.is_valid()) { return; }
-
-    _n += 1;
-    double that_p = 0.5 + (aoo.occupancy - 0.5) * aoo.quality;
-    occupancy.prob_occ = ((*this) * (_n - 1) + that_p) / _n;
-  }
-
-private:
-  double _n;
-};
-
 class BaseTBM {
 private:
   // TODO: use enum class
@@ -164,7 +143,7 @@ public:
 
     belief += aoo;
     belief.normalize_conflict();
-    occupancy.prob_occ = ((Occupancy) belief).prob_occ;
+    _occupancy.prob_occ = ((Occupancy) belief).prob_occ;
   }
 
   virtual double discrepancy(const AreaOccupancyObservation &aoo) const {

@@ -2,20 +2,14 @@
 
 #include <memory>
 
-#include "../../../src/core/maps/lazy_tiled_grid_map.h"
+#include "../mock_grid_cell.h"
 
-class TestGridCell : public GridCell {
-public:
-  TestGridCell() : GridCell{{0, 0}} {}
-  std::unique_ptr<GridCell> clone() const override {
-    return std::make_unique<TestGridCell>(*this);
-  }
-};
+#include "../../../src/core/maps/lazy_tiled_grid_map.h"
 
 class UnboundedLazyTiledGridMapTest : public ::testing::Test {
 protected: // methods
   UnboundedLazyTiledGridMapTest()
-    : map{std::make_shared<TestGridCell>(), {1, 1, 1}}
+    : map{std::make_shared<MockGridCell>(), {1, 1, 1}}
     , data{true, {0.5, 0.5}, {-1, -1}, 0} {}
 protected: // fields
   UnboundedLazyTiledGridMap map;
@@ -45,7 +39,7 @@ TEST_F(UnboundedLazyTiledGridMapTest, readMapCopy) {
   static constexpr int Lim = 50;
   for (int i = -Lim; i != Lim; ++i) {
     for (int j = -Lim; j != Lim; ++j) {
-      map[{i, j}] += {true, {(double)Lim * i + j, 0}, {0, 0}, 0};
+      map.update({i, j}, {true, {(double)Lim * i + j, 0}, {0, 0}, 0});
     }
   }
   UnboundedLazyTiledGridMap map_copy = map;
@@ -63,13 +57,13 @@ TEST_F(UnboundedLazyTiledGridMapTest, modifyMapCopy) {
   static constexpr int Lim = 50;
   for (int i = -Lim; i != Lim; ++i) {
     for (int j = -Lim; j != Lim; ++j) {
-      map[{i, j}] += {true, {(double)Lim * i + j, 0}, {0, 0}, 0};
+      map.update({i, j}, {true, {(double)Lim * i + j, 0}, {0, 0}, 0});
     }
   }
   UnboundedLazyTiledGridMap map_copy = map;
   for (int i = -Lim; i != Lim; ++i) {
     for (int j = -Lim; j != Lim; ++j) {
-      map_copy[{i, j}] += {true, {(double)2*Lim * i + j, 0}, {0, 0}, 0};
+      map_copy.update({i, j}, {true, {(double)2*Lim * i + j, 0}, {0, 0}, 0});
     }
   }
 

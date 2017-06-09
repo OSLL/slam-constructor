@@ -10,10 +10,9 @@
 #include "../core/maps/grid_cell.h"
 #include "../core/maps/grid_cell_strategy.h"
 #include "../core/maps/lazy_tiled_grid_map.h"
-#include "../core/gradient_walker_scan_matcher.h"
+#include "../core/scan_matchers/hill_climbing_scan_matcher.h"
 
 #include "gmapping_grid_cell.h"
-#include "gmapping_cost_estimator.h"
 
 struct GMappingParams {
 private:
@@ -44,7 +43,7 @@ public:
                 const GridMapParams& params,
                 const GMappingParams& gparams)
     : LaserScanGridWorld(gcs, params)
-    , _matcher{std::make_shared<GmappingCostEstimator>()}
+    , _matcher{gcs->prob_est()}
     , _rnd_engine(std::random_device{}())
     , _pose_guess_rv{gparams.pose_guess_rv}
     , _next_sm_delta_rv{gparams.next_sm_delta_rv} {
@@ -68,10 +67,9 @@ public:
     }
 
     RobotPoseDelta pose_delta;
-    double scan_score = _matcher.process_scan(pose(), scan, map(), pose_delta);
+    double scan_prob = _matcher.process_scan(scan, pose(), map(), pose_delta);
     update_robot_pose(pose_delta);
 
-    double scan_prob = scan_score / scan.points.size();
     // TODO: scan_prob threshold to params
     if (0.0 < scan_prob || _scan_is_first) {
       // map update accordig to original gmapping code (ref?)
@@ -104,7 +102,7 @@ private:
 private:
   bool _is_master = false;
   bool _scan_is_first = true;
-  GradientWalkerScanMatcher _matcher;
+  HillClimbingScanMatcher _matcher;
   std::mt19937 _rnd_engine;
   RobotPoseDeltaRV<std::mt19937> _pose_guess_rv, _next_sm_delta_rv;
   RobotPoseDelta _delta_since_last_sm, _next_sm_delta;

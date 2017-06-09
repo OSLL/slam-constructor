@@ -32,8 +32,26 @@ public:
     , _tiles_nm_y{(GridMap::height() + Tile_Size - 1) / Tile_Size}
     , _tiles{_tiles_nm_x * _tiles_nm_y, _unknown_tile} {}
 
-  GridCell &operator[](const DPnt2D& c) override {
-    DPnt2D coord = external2internal(c);
+  void update(const Coord &area_id,
+              const AreaOccupancyObservation &aoo) override {
+    ensure_sole_owning(area_id);
+    GridMap::update(area_id, aoo);
+  }
+
+  void reset(const Coord &area_id, const GridCell &new_area) override {
+    ensure_sole_owning(area_id);
+    GridMap::reset(area_id, new_area);
+  }
+
+  const GridCell &operator[](const Coord& c) const override {
+    auto coord = external2internal(c);
+    return *tile(coord)->cell(coord);
+  }
+
+protected: // methods & types
+
+  void ensure_sole_owning(const Coord &area_id) {
+    auto coord = external2internal(area_id);
     std::shared_ptr<Tile> &tile = this->tile(coord);
     if (!tile) {
       tile = std::make_shared<Tile>(_unknown_cell);
@@ -46,15 +64,7 @@ public:
     if (1 < cell.use_count()) {
       cell = cell->clone();
     }
-    return *cell;
   }
-
-  const GridCell &operator[](const DPnt2D& c) const override {
-    DPnt2D coord = external2internal(c);
-    return *tile(coord)->cell(coord);
-  }
-
-protected: // methods & types
 
   const std::shared_ptr<GridCell> unknown_cell() const { return _unknown_cell; }
   std::shared_ptr<Tile> unknown_tile() { return _unknown_tile; }
@@ -76,12 +86,12 @@ protected: // methods & types
       std::fill(_cells.begin(), _cells.end(), dflt);
     }
 
-    std::shared_ptr<GridCell> &cell(const DPnt2D& cell_coord) {
+    std::shared_ptr<GridCell> &cell(const Coord& cell_coord) {
       return const_cast<std::shared_ptr<GridCell> &>(
         static_cast<const Tile*>(this)->cell(cell_coord));
     }
 
-    const std::shared_ptr<GridCell> &cell(const DPnt2D& cell_coord) const {
+    const std::shared_ptr<GridCell> &cell(const Coord& cell_coord) const {
       return _cells[(cell_coord.x & Tile_Coord_Mask) * Tile_Size +
                     (cell_coord.y & Tile_Coord_Mask)];
     }
@@ -90,7 +100,7 @@ protected: // methods & types
   };
 
 private: // methods
-  std::shared_ptr<Tile> &tile(const DPnt2D &c) const {
+  std::shared_ptr<Tile> &tile(const Coord &c) const {
     return  _tiles[(c.y >> Tile_Size_Bits) * _tiles_nm_x +
                    (c.x >> Tile_Size_Bits)];
   }
@@ -112,13 +122,19 @@ public:
     : LazyTiledGridMap{prototype, params}
     , _origin{GridMap::origin()} {}
 
-  GridCell &operator[](const DPnt2D& c) override {
-    ensure_inside(c);
-    return LazyTiledGridMap::operator[](c);
+  void update(const Coord& area_id,
+              const AreaOccupancyObservation &aoo) override {
+    ensure_inside(area_id);
+    return LazyTiledGridMap::update(area_id, aoo);
   }
 
-  const GridCell &operator[](const DPnt2D& c) const override {
-    if (!has_cell(c)) {
+  void reset(const Coord &area_id, const GridCell &new_area) override {
+    ensure_inside(area_id);
+    LazyTiledGridMap::reset(area_id, new_area);
+  }
+
+  const GridCell &operator[](const Coord& c) const override {
+    if (!LazyTiledGridMap::has_cell(c)) {
       return *unknown_cell();
     }
 
@@ -126,13 +142,14 @@ public:
   }
 
   DiscretePoint2D origin() const override { return _origin; }
+  bool has_cell(const Coord &) const override { return true; }
 
 protected:
 
   bool ensure_inside(const DiscretePoint2D &c) {
-    if (has_cell(c)) return false;
+    auto coord = external2internal(c);
+    if (LazyTiledGridMap::has_internal_cell(coord)) return false;
 
-    DPnt2D coord = external2internal(c);
     unsigned prep_x = 0, app_x = 0, prep_y = 0, app_y = 0;
     std::tie(prep_x, app_x) = extra_tiles_nm(0, coord.x, width());
     std::tie(prep_y, app_y) = extra_tiles_nm(0, coord.y, height());
@@ -154,9 +171,9 @@ protected:
     std::swap(_tiles, new_tiles);
     set_height(_tiles_nm_y * Tile_Size);
     set_width(_tiles_nm_x * Tile_Size);
-    _origin += DPnt2D(prep_x * Tile_Size, prep_y * Tile_Size);
+    _origin += Coord(prep_x * Tile_Size, prep_y * Tile_Size);
 
-    assert(has_cell(c));
+    assert(LazyTiledGridMap::has_cell(c));
     return true;
   }
 

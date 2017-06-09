@@ -1,5 +1,5 @@
-#ifndef __GMAPPING_COST_ESTIMATOR
-#define __GMAPPING_COST_ESTIMATOR
+#ifndef SLAM_CTOR_GMAPPING_SCAN_PROBABILITY_ESTIMATOR_H_INCLUDED
+#define SLAM_CTOR_GMAPPING_SCAN_PROBABILITY_ESTIMATOR_H_INCLUDED
 
 #include <cmath>
 #include <limits>
@@ -7,44 +7,50 @@
 #include <utility>
 
 #include "../core/geometry_utils.h"
-#include "../core/grid_scan_matcher.h"
+#include "../core/scan_matchers/grid_scan_matcher.h"
 #include "../core/maps/grid_map.h"
 
 #include "gmapping_grid_cell.h"
 
-class GmappingCostEstimator : public ScanCostEstimator {
+class GmappingScanProbabilityEstimator : public ScanProbabilityEstimator {
 private:
   constexpr static double FULLNESS_TH = 0.5;
   constexpr static double SIGMA_SQ = 0.01;
   constexpr static double FREE_CELL_DIST = std::sqrt(2.0);
   constexpr static double DBL_INF = std::numeric_limits<double>::infinity();
 public:
-  GmappingCostEstimator() : _scan_margin(0), _pts_skip_rate(3), _window_sz(1) {}
+  GmappingScanProbabilityEstimator()
+    : _scan_margin(0), _pts_skip_rate(3), _window_sz(1) {}
 
-  virtual double estimate_scan_cost(const RobotPose &pose,
-                                    const TransformedLaserScan &scan,
-                                    const GridMap &map,
-                                    double min_cost = 0) {
+  double estimate_scan_probability(const LaserScan2D &scan,
+                                   const RobotPose &pose,
+                                   const GridMap &map,
+                                   const SPEParams &) const override {
     auto sp_observation = AreaOccupancyObservation{true, {1.0, 1.0},
                                                    {0, 0}, 1.0};
 
-    double scan_weight = 0, last_dpoint_weight = -1;
+    double last_dpoint_prob = -1;
     DiscretePoint2D last_handled_dpoint;
     scan.trig_cache->set_theta(pose.theta);
 
-    for (size_t i = _scan_margin; i < scan.points.size() - _scan_margin; ++i) {
+    double total_probability = 0;
+    double handled_pts_nm = 0;
+    auto end_point_i = scan.points().size() - _scan_margin;
+    for (size_t i = _scan_margin; i < end_point_i; ++i) {
       if (_pts_skip_rate && i % _pts_skip_rate) {
         continue;
       }
 
-      const ScanPoint &sp = scan.points[i];
-      double c = scan.trig_cache->cos(sp.angle);
-      double s = scan.trig_cache->sin(sp.angle);
-      sp_observation.obstacle = {pose.x + sp.range * c, pose.y + sp.range * s};
+      handled_pts_nm += 1;
+      auto &sp = scan.points()[i];
+      double c = scan.trig_cache->cos(sp.angle());
+      double s = scan.trig_cache->sin(sp.angle());
+      sp_observation.obstacle = {pose.x + sp.range() * c,
+                                 pose.y + sp.range() * s};
 
       auto sp_coord = map.world_to_cell(sp_observation.obstacle);
-      if (sp_coord == last_handled_dpoint && last_dpoint_weight != -1) {
-        scan_weight += last_dpoint_weight;
+      if (sp_coord == last_handled_dpoint && last_dpoint_prob != -1) {
+        total_probability += last_dpoint_prob;
         continue;
       }
 
@@ -74,11 +80,12 @@ public:
         }
       }
       double dist_sq = best_dist != DBL_INF ? best_dist : 9 * SIGMA_SQ;
-      last_dpoint_weight = exp(-dist_sq / SIGMA_SQ);
-      scan_weight += last_dpoint_weight;
+      last_dpoint_prob = exp(-dist_sq / SIGMA_SQ);
+      total_probability += last_dpoint_prob;
     }
 
-    return scan_weight;
+    if (handled_pts_nm == 0) { return unknown_probability(); }
+    return total_probability / handled_pts_nm;
   }
 
 private:

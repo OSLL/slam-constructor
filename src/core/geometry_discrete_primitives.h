@@ -1,5 +1,5 @@
-#ifndef __GEOMETRY_DISCRETE_PRIMITIVES_H_INCLUDED
-#define __GEOMETRY_DISCRETE_PRIMITIVES_H_INCLUDED
+#ifndef SLAM_CTOR_CORE_GEOMETRY_DISCRETE_PRIMITIVES_H_INCLUDED
+#define SLAM_CTOR_CORE_GEOMETRY_DISCRETE_PRIMITIVES_H_INCLUDED
 
 #include <cmath>
 #include <vector>
@@ -45,7 +45,8 @@ public: // functions
   }
 };
 
-inline std::ostream &operator<<(std::ostream &stream, const DiscretePoint2D &pnt) {
+inline std::ostream &operator<<(std::ostream &stream,
+                                const DiscretePoint2D &pnt) {
   return stream << "(" << pnt.x << ", " << pnt.y << ")";
 }
 

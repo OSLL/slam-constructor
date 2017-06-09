@@ -11,6 +11,7 @@
 
 #include "../core/sensor_data.h"
 #include "../core/maps/grid_cell_strategy.h"
+#include "../core/scan_matchers/weighted_mean_discrepancy_spe.h"
 
 #include "tiny_world.h"
 #include "tiny_grid_cell.h"
@@ -56,9 +57,10 @@ int main(int argc, char** argv) {
   // init tiny slam
   TinyWorldParams params = init_common_world_params();
   GridMapParams map_params = init_grid_map_params();
-  auto cost_est = std::make_shared<TinyScanCostEstimator>();
   auto gcs = std::make_shared<GridCellStrategy>(
-    init_cell_prototype(params), cost_est, init_occ_estimator());
+    init_cell_prototype(params),
+    std::make_shared<WeightedMeanDiscrepancySPEstimator>(),
+    init_occ_estimator());
   auto slam = std::make_shared<TinyWorld>(gcs, params, map_params);
 
   // connect the slam to a ros-topic based data provider

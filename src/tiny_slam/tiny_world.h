@@ -1,5 +1,5 @@
-#ifndef __TINY_WORLD_H
-#define __TINY_WORLD_H
+#ifndef SLAM_CTOR_TINYSLAM_TINY_WORLD_H
+#define SLAM_CTOR_TINYSLAM_TINY_WORLD_H
 
 #include <iostream>
 #include <cmath>
@@ -31,10 +31,11 @@ public:
 
   TinyWorld(std::shared_ptr<GridCellStrategy> gcs,
             const TinyWorldParams &params,
-            const GridMapParams &map_params) :
-    LaserScanGridWorld(gcs, map_params), _gcs(gcs), _params(params),
-    _scan_matcher(new TinyScanMatcher(_gcs->cost_est(), params.Tiny_SM_Params)),
-    _map_update_ctx(_gcs->occupancy_est()) {}
+            const GridMapParams &map_params)
+    : LaserScanGridWorld(gcs, map_params), _gcs(gcs), _params(params)
+    , _scan_matcher(std::make_shared<TinyScanMatcher>(_gcs->prob_est(),
+                                                    params.Tiny_SM_Params))
+    , _map_update_ctx(_gcs->occupancy_est()) {}
 
   std::shared_ptr<GridScanMatcher> scan_matcher() override {
     return _scan_matcher;
@@ -46,7 +47,7 @@ protected:
     _scan_matcher->reset_state();
 
     RobotPoseDelta pose_delta;
-    _scan_matcher->process_scan(pose(), scan, map(), pose_delta);
+    _scan_matcher->process_scan(scan, pose(), map(), pose_delta);
     update_robot_pose(pose_delta);
 
     scan.quality = pose_delta ? _params.localized_scan_quality :
@@ -112,7 +113,7 @@ protected:
 private:
   std::shared_ptr<GridCellStrategy> _gcs;
   const TinyWorldParams _params;
-  std::shared_ptr<TinyScanMatcher> _scan_matcher;
+  std::shared_ptr<GridScanMatcher> _scan_matcher;
 
   // a context set up for each map update with a scan point
   mutable MapUpdateCtx _map_update_ctx;

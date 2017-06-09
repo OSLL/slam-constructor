@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-SET(CMAKE_CXX_FLAGS "-std=c++14 -Wall -O3 -pthread")
+SET(CMAKE_CXX_FLAGS "-std=c++14 -Wall -O3 -pthread -fdiagnostics-color")
 project(slam_fmwk)
 
 ## Find catkin macros and libraries
@@ -197,16 +197,40 @@ target_link_libraries(viny_slam ${catkin_LIBRARIES})
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
 
+# Maps
 catkin_add_gtest(area_occupancy_estimator-test
                  test/core/maps/area_occupancy_estimator_test.cpp)
 catkin_add_gtest(unbounded_plain_grid_map-test
                  test/core/maps/unbounded_plain_grid_map_test.cpp)
 catkin_add_gtest(unbounded_lazy_tiled_grid_maps-test
                  test/core/maps/unbounded_lazy_tiled_grid_map_test.cpp)
-catkin_add_gtest(grid_map-test
-                 test/core/maps/grid_map_test.cpp)
+catkin_add_gtest(regular_squares_grid-test
+                 test/core/maps/regular_squares_grid_test.cpp)
+catkin_add_gtest(rescalable_caching_grid_map-test
+                 test/core/maps/rescalable_caching_grid_map_test.cpp)
+
+# Core common
+catkin_add_gtest(geom_utils-test
+                 test/core/geometry_utils_test.cpp)
 catkin_add_gtest(geom_dprimitives-test
                  test/core/geometry_discrete_primitives_test.cpp)
+catkin_add_gtest(sensor_data-test
+                 test/core/sensor_data_test.cpp)
+
+# Scan Matchers
+catkin_add_gtest(hill_climbing_sm-smoke_test
+                 test/core/scan_matchers/hill_climbing_sm_smoke_test.cpp)
+catkin_add_gtest(bfmrsm-smoke_test
+                 test/core/scan_matchers/bf_multi_res_sm_smoke_test.cpp)
+
+# Utils common
+catkin_add_gtest(grid_map_patcher-test
+                 test/utils/data_generation/grid_map_patcher_test.cpp)
+catkin_add_gtest(map_primitives-test
+                 test/utils/data_generation/map_primitives_test.cpp)
+
+catkin_add_gtest(lscan_generator-test
+                 test/utils/data_generation/laser_scan_generator_test.cpp)
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)

@@ -1,10 +1,9 @@
-#ifndef __TINY_SCAN_MATCHER_H
-#define __TINY_SCAN_MATCHER_H
+#ifndef SLAM_CTOR_TINYSLAM_TINY_SCAN_MATCHER_H_INCLUDED
+#define SLAM_CTOR_TINYSLAM_TINY_SCAN_MATCHER_H_INCLUDED
 
 #include <random>
 
-#include "../core/monte_carlo_scan_matcher.h"
-#include "tiny_scan_cost_estimator.h"
+#include "../core/scan_matchers/monte_carlo_scan_matcher.h"
 
 struct TinySMParams {
   const double Sig_XY;
@@ -18,21 +17,19 @@ struct TinySMParams {
 };
 
 class TinyScanMatcher : public MonteCarloScanMatcher {
-private:
-  using ScePtr = std::shared_ptr<ScanCostEstimator>;
 public:
-  TinyScanMatcher(ScePtr cost_estimator, const TinySMParams& params):
-   MonteCarloScanMatcher(cost_estimator, params.Bad_Lmt, params.Tot_Lmt),
-    _sigma_coord(params.Sig_XY), _sigma_angle(params.Sig_TH),
-    _curr_sigma_coord(_sigma_coord), _curr_sigma_angle(_sigma_angle) {}
+  TinyScanMatcher(SPE prob_estimator, const TinySMParams& params)
+    : MonteCarloScanMatcher(prob_estimator, params.Bad_Lmt, params.Tot_Lmt)
+    , _sigma_coord(params.Sig_XY), _sigma_angle(params.Sig_TH)
+    , _curr_sigma_coord(_sigma_coord), _curr_sigma_angle(_sigma_angle) {}
 
-  virtual void reset_state() override {
+  void reset_state() override {
     _curr_sigma_coord = _sigma_coord;
     _curr_sigma_angle = _sigma_angle;
   }
 
 protected:
-  virtual void sample_pose(RobotPose &base_pose) override {
+  void sample_pose(RobotPose &base_pose) override {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::normal_distribution<> d_coord(0.0, _curr_sigma_coord);
@@ -43,8 +40,8 @@ protected:
     base_pose.theta += d_angle(gen);
   }
 
-  virtual unsigned on_estimate_update(unsigned sample_num,
-                                      unsigned sample_limit) override {
+  unsigned on_estimate_update(unsigned sample_num,
+                              unsigned sample_limit) override {
     if (sample_num <= sample_limit / 3) {
       return sample_num;
     }

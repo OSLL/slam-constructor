@@ -10,6 +10,7 @@
 #include "../ros/laser_scan_observer.h"
 #include "../ros/init_utils.h"
 
+#include "gmapping_scan_probability_estimator.h"
 #include "gmapping_particle_filter.h"
 
 unsigned init_particles_nm() {
@@ -50,13 +51,12 @@ using ObservT = sensor_msgs::LaserScan;
 using GmappingMap = GmappingWorld::MapType;
 
 int main(int argc, char** argv) {
-  ros::init(argc, argv, "gMapping");
+  ros::init(argc, argv, "GMapping");
 
-  // TODO: setup CostEstimator and OccEstimator
   auto gcs = std::make_shared<GridCellStrategy>(
     std::make_shared<GmappingBaseCell>(),
-    std::shared_ptr<ScanCostEstimator>(nullptr),
-    std::shared_ptr<CellOccupancyEstimator>(nullptr)
+    std::make_shared<GmappingScanProbabilityEstimator>(),
+    init_occ_estimator()
   );
   auto slam = std::make_shared<GmappingParticleFilter>(
     gcs, init_grid_map_params(), init_gmapping_params(), init_particles_nm());

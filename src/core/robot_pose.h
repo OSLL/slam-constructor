@@ -1,20 +1,34 @@
 #ifndef SLAM_CTOR_CORE_ROBOT_POSE_H_INCLUDED
 #define SLAM_CTOR_CORE_ROBOT_POSE_H_INCLUDED
 
+#include <iostream>
 #include <memory>
+#include "math_utils.h"
 #include "random_utils.h"
 #include "geometry_utils.h"
 
 class RobotPoseDelta {
 public: // methods
   RobotPoseDelta() : RobotPoseDelta(0, 0, 0){}
-  RobotPoseDelta(double d_x, double d_y, double d_th) :
+  constexpr RobotPoseDelta(double d_x, double d_y, double d_th) :
     x(d_x), y(d_y), theta(d_th) {}
+  constexpr RobotPoseDelta(const Point2D &offset, double d_th) :
+    x(offset.x), y(offset.y), theta(d_th) {}
+
   RobotPoseDelta& operator+=(const RobotPoseDelta& delta) {
     x += delta.x;
     y += delta.y;
     theta += delta.theta;
     return *this;
+  }
+
+  bool operator==(const RobotPoseDelta &rhs) const {
+    return are_equal(x, rhs.x) && are_equal(y, rhs.y) &&
+           are_equal(theta, rhs.theta);
+  }
+
+  RobotPoseDelta operator+(const RobotPoseDelta &rhs) const {
+    return {x + rhs.x, y + rhs.y, theta + rhs.theta};
   }
 
   bool is_abs_less(const RobotPoseDelta& that) const {
@@ -24,7 +38,7 @@ public: // methods
     #undef LESS_ABS
   }
   explicit operator bool() const {
-    return x != 0.0 || y != 0.0 || theta != 0.0;
+    return !are_equal(x, 0) || !are_equal(y, 0) || !are_equal(theta, 0);
   }
 
   RobotPoseDelta abs() const {
@@ -36,6 +50,11 @@ public: // methods
 public: // fields
   double x, y, theta;
 };
+
+std::ostream& operator<<(std::ostream& os, const RobotPoseDelta& rpd) {
+  os << "PoseDelta{ x: " << rpd.x << ", y: " << rpd.y;
+  return os << ", th: " << rpd.theta << "}";
+}
 
 template <typename RandomEngineT>
 class RobotPoseDeltaRV {

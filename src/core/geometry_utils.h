@@ -1,5 +1,5 @@
-#ifndef __GEOMETRY_UTILS_H
-#define __GEOMETRY_UTILS_H
+#ifndef SLAM_CTOR_CORE_GEOMETRY_UTILS_H_INCLUDED
+#define SLAM_CTOR_CORE_GEOMETRY_UTILS_H_INCLUDED
 
 #include <vector>
 #include <cmath>
@@ -10,17 +10,20 @@
 
 class TrigonometricCache {
 public:
- TrigonometricCache() :
-    _sin_theta(0), _cos_theta(0),
-    _angle_min(0), _angle_max(0), _angle_delta(0) {}
+  TrigonometricCache() : _sin_theta(0), _cos_theta(0)
+                       , _angle_min(0), _angle_max(0), _angle_delta(0) {
+    set_theta(0);
+  }
 
   inline double sin(double angle) const {
-    int angle_idx = (angle - _angle_min) / _angle_delta;
+    // std::round is crucial to deal with inaccurate fp values
+    int angle_idx = std::round((angle - _angle_min) / _angle_delta);
     return _sin_theta * _cos[angle_idx] + _cos_theta * _sin[angle_idx];
   }
 
   inline double cos(double angle) const {
-    int angle_idx = (angle - _angle_min) / _angle_delta;
+    // std::round is crucial to deal with inaccurate fp values
+    int angle_idx = std::round((angle - _angle_min) / _angle_delta);
     return _cos_theta * _cos[angle_idx] - _sin_theta * _sin[angle_idx];
   }
 

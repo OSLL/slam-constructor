@@ -19,7 +19,7 @@ public:
     ++_tries;
     bool aoo_is_free = aoo.occupancy <= 0.5;
     double aoo_p = aoo_is_free ? 0.0 : aoo.occupancy.prob_occ;
-    occupancy.prob_occ = ((*this) * (_tries - 1) + aoo_p) / _tries;
+    _occupancy.prob_occ = ((*this) * (_tries - 1) + aoo_p) / _tries;
     if (aoo_is_free) return;
 
     ++_hits;
