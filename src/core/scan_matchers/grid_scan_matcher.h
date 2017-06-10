@@ -89,8 +89,8 @@ public:
 
   virtual void reset_state() {};
 
-  void set_scan_cost_estimator(std::shared_ptr<ScanCostEstimator> estimator) {
-      _cost_estimator = estimator;
+  void set_scan_cost_estimator(SPE estimator) {
+      _scan_prob_estimator = estimator;
   }
 
   void subscribe(std::shared_ptr<GridScanMatcherObserver> obs) {

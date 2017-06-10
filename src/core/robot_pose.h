@@ -51,7 +51,7 @@ public: // fields
   double x, y, theta;
 };
 
-std::ostream& operator<<(std::ostream& os, const RobotPoseDelta& rpd) {
+inline std::ostream& operator<<(std::ostream& os, const RobotPoseDelta& rpd) {
   os << "PoseDelta{ x: " << rpd.x << ", y: " << rpd.y;
   return os << ", th: " << rpd.theta << "}";
 }

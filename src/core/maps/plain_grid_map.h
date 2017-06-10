@@ -67,7 +67,7 @@ public: // methods
   std::vector<char> save_state() const override {
       size_t map_size_bytes = width() * height() * _unknown_cell->serialize().size();
 
-      Serializer s(sizeof(GridMapParams) + sizeof(DPnt2D) + map_size_bytes);
+      Serializer s(sizeof(GridMapParams) + sizeof(Coord) + map_size_bytes);
       s << height() << width() << scale() << origin().x << origin().y;
 
       Serializer ms(map_size_bytes);
@@ -98,7 +98,7 @@ public: // methods
       std::vector<char> map_data = Deserializer::decompress(data.data() + d.pos(), data.size() - d.pos(), w * h * _unknown_cell->serialize().size());
       size_t pos = 0;
 #else
-      std::vector<char> &map_data = data;
+      const std::vector<char> &map_data = data;
       size_t pos = d.pos();
 #endif
       _cells.clear();
