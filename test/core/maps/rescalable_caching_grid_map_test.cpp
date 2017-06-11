@@ -6,6 +6,7 @@
 
 #include "../mock_grid_cell.h"
 
+#include "../../../src/core/maps/grid_rasterization.h"
 #include "../../../src/core/maps/rescalable_caching_grid_map.h"
 #include "../../../src/core/maps/plain_grid_map.h"
 #include "../../../src/core/maps/lazy_tiled_grid_map.h"
@@ -46,7 +47,7 @@ protected:
 
   double estimate_max_value(const GridMap &map, const Rectangle &area) const {
     double expected = std::numeric_limits<double>::lowest();
-    for (auto &coord : map.coords_in_area(area, false)) {
+    for (auto &coord : GridRasterizedRectangle{map, area, false}.to_vector()) {
       expected = std::max(double(map[coord]), expected);
     }
 

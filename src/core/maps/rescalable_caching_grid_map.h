@@ -8,6 +8,7 @@
 
 #include "grid_cell.h"
 #include "grid_map.h"
+#include "grid_rasterization.h"
 
 template <typename BackGridMap>
 class RescalableCachingGridMap : public GridMap {
@@ -106,6 +107,7 @@ public:
 private:
 
   void on_area_update(const Coord &area_id) {
+    using GRRectangle = GridRasterizedRectangle;
     // TODO: update if a "non-finest" cell is updated?
     assert(_scale_id == finest_scale_id());
     auto modified_area = active_map()[area_id];
@@ -115,11 +117,13 @@ private:
          coarser_scale_id <= coarsest_scale_id(); ++coarser_scale_id) {
       auto& coarser_map = map(coarser_scale_id);
       bool coarser_area_is_updated = false;
-      for (const auto &c : coarser_map.coords_in_area(modified_space, false)) {
-        auto &coarser_area = coarser_map[c];
+      auto cm_coords = GRRectangle{coarser_map, modified_space, false};
+      while (cm_coords.has_next()) {
+        auto coord = cm_coords.next();
+        auto &coarser_area = coarser_map[coord];
         if (double(modified_area) <= double(coarser_area)) { continue; }
 
-        coarser_map.reset(c, modified_area);
+        coarser_map.reset(coord, modified_area);
         coarser_area_is_updated = true;
       }
       if (!coarser_area_is_updated) { break; }

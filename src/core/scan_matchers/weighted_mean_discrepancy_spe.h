@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include "grid_scan_matcher.h"
+#include "../maps/grid_rasterization.h"
 
 class WeightedMeanDiscrepancySPEstimator : public ScanProbabilityEstimator {
 public:
@@ -66,12 +67,14 @@ protected:
   double world_point_probability(const Point2D &wp,
                                  const RobotPose &pose, const GridMap &map,
                                  const SPEParams &params) const {
-    const auto OCCUPIED_AREA_OBS = expected_scan_point_observation();
+    const auto OCC_AREA = expected_scan_point_observation();
     auto analysis_area = params.sp_analysis_area.move_center(wp);
+    auto area_ids = GridRasterizedRectangle{map, analysis_area};
     double highest_probability = 0;
-    for (auto &area_id : map.coords_in_area(analysis_area)) {
-      double area_prob = 1.0 - map[area_id].discrepancy(OCCUPIED_AREA_OBS);
-      highest_probability = std::max(area_prob, highest_probability);
+
+    while (area_ids.has_next()) {
+      double point_prob = 1.0 - map[area_ids.next()].discrepancy(OCC_AREA);
+      highest_probability = std::max(point_prob, highest_probability);
     }
     return highest_probability;
   }

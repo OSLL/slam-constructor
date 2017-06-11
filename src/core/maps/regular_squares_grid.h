@@ -13,7 +13,6 @@
 class RegularSquaresGrid {
 public:
   using Coord = DiscretePoint2D;
-private: // consts
   static constexpr double Dbl_Inf = std::numeric_limits<double>::infinity();
 public:
 
@@ -44,38 +43,7 @@ public:
     return {int(std::floor(x / curr_scale)), int(std::floor(y / curr_scale))};
   }
 
-  // FIXME: coords_in_area(world_cell_bounds(cell)) != { cell }
-  // WA: coords_in_area(world_cell_bounds(cell), false) == { cell }
-  std::vector<Coord> coords_in_area(const LightWeightRectangle &area,
-                                    bool include_border = true) const {
-    if (area.area() == Dbl_Inf) {
-      return valid_coords();
-    }
-
-    double offset = include_border ? 0 : 1e-9;
-    auto left_bot = world_to_cell(area.left() + offset, area.bot() + offset);
-    auto right_top = world_to_cell(area.right() - offset, area.top() - offset);
-
-    //NB: aligned top/right border is a part of a nearby cell
-    //    according to implemented geometry
-    std::vector<Coord> coords;
-    coords.reserve((right_top.x - left_bot.x + 1) *
-                   (right_top.y - left_bot.y + 1));
-    for (int x = left_bot.x; x <= right_top.x; ++x) {
-      for (int y = left_bot.y; y <= right_top.y; ++y) {
-        coords.emplace_back(x, y);
-      } // y
-    } // x
-    return coords;
-  }
-
-  std::vector<Coord> valid_coords() const {
-    auto left_bot = cell_to_world(internal2external({0, 0}));
-    auto right_top = cell_to_world(internal2external({width(), height()}));
-    return coords_in_area({left_bot.y, right_top.y,
-                           left_bot.x, right_top.x});
-  }
-
+  // TODO: move resterization to a separate component
   std::vector<Coord> world_to_cells(const Segment2D &s) const {
     // returns a vector of cells intersected by a given segment.
     // The first cell contains start of the segment, the last - its end.
