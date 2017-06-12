@@ -40,15 +40,15 @@ public:
   bool has_next() {
     //NB: aligned top/right border is a part of a nearby cell
     //    according to implemented geometry
-    return _y <= _rt.y && _x <= _rt.x;
+    return _x <= _rt.x && _y <= _rt.y;
   }
 
   RegularSquaresGrid::Coord next() {
     auto area_id = RegularSquaresGrid::Coord{_x, _y};
-    ++_x;
-    if (_rt.x < _x) {
-      _x = _lb.x;
-      ++_y;
+    ++_y;
+    if (_rt.y < _y) {
+      _y = _lb.y;
+      ++_x;
     }
     return area_id;
   }
