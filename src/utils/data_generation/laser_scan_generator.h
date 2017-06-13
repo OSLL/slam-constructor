@@ -33,7 +33,7 @@ public:
     scan.trig_cache = std::make_shared<TrigonometricCache>();
     scan.trig_cache->update(-_lsp.h_hsector, _lsp.h_hsector + _lsp.h_angle_inc,
                             _lsp.h_angle_inc);
-    auto robot_point = Point2D{pose.x, pose.y};
+    auto robot_point = pose.point();
     auto robot_coord = map.world_to_cell(robot_point);
     assert(!are_equal(robot_point.x, robot_coord.x * map.scale()) &&
            !are_equal(robot_point.y, robot_coord.y * map.scale()) &&
@@ -44,13 +44,13 @@ public:
       if (2*M_PI <= hhsector + a) { break; }
       auto beam_dir = Point2D{_lsp.max_dist * std::cos(a + pose.theta),
                               _lsp.max_dist * std::sin(a + pose.theta)};
-      auto beam_end = robot_point + beam_dir;
-      for (auto& coord : map.world_to_cells(Segment2D{robot_point, beam_end})) {
-        if (map[coord] < occ_threshold) { continue; }
+      auto area_ids = map.world_to_cells({robot_point, robot_point + beam_dir});
+      for (auto& area_id : area_ids) {
+        if (map[area_id] < occ_threshold) { continue; }
         // NB: Beam-goes-through-the-cell-center assumption is not safe,
         //     so use more sophisticated analysis based on intersections.
         auto ray = Ray{robot_point.x, beam_dir.x, robot_point.y, beam_dir.y};
-        auto inters = map.world_cell_bounds(coord).find_intersections(ray);
+        auto inters = map.world_cell_bounds(area_id).find_intersections(ray);
         if (inters.size() == 1) { // Assume beam touches the cell.
           // NB: Ignores "pierce" case for simplicity,
           //     increase max_dist in this case.
@@ -65,9 +65,9 @@ public:
         scan.points().push_back(scan_point);
 
         auto added_wp = scan_point.move_origin(pose.x, pose.y, pose.theta);
-        auto sp_coord = map.world_to_cell(added_wp);
-        assert(coord == sp_coord &&
-               "BUG! LS Gen: generated scan point is not occupied");
+        auto sp_area_id = map.world_to_cell(added_wp);
+        assert(area_id == sp_area_id &&
+               "[BUG] Estimated scan point doesn't lie is expected area");
         //std::cout << "==> Add point " << range << " " << a << std::endl;
         break;
       }

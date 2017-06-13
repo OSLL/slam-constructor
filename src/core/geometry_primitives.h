@@ -199,6 +199,15 @@ public:
             new_center.x - half_h, new_center.x + half_h};
   }
 
+  auto shrink(double factor) const {
+    auto c = center();
+    auto new_hv = vside_len() / (factor * 2),
+         new_hh = hside_len() / (factor * 2);
+    return LVRect{c.y - new_hv, c.y + new_hv,
+                  c.x - new_hh, c.x + new_hh};
+
+  }
+
   auto split_vert() const {
     auto c = center();
     return std::vector<LVRect>{

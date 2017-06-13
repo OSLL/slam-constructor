@@ -20,6 +20,10 @@ public: // methods
     return ScanPoint2D{PointType::Polar, range, angle, is_occ};
   }
 
+  static ScanPoint2D make_cartesian(const Point2D &p, bool is_occ) {
+    return ScanPoint2D{PointType::Cartesian, p.x, p.y, is_occ};
+  }
+
   ScanPoint2D(PointType type, double x_or_range, double y_or_angle, bool is_occ)
     : _type{type}, _is_occupied{is_occ} {
 

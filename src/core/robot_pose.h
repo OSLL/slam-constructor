@@ -126,8 +126,14 @@ public: // methods
     return *this;
   }
 
+  auto point() const { return Point2D{x, y}; }
 public:
   double x, y, theta;
 };
+
+inline std::ostream& operator<<(std::ostream& os, const RobotPose& rp) {
+  return os << "Pose2D{ x: " << rp.x << ", y: " << rp.y
+            << ", th: " << rp.theta << "}";
+}
 
 #endif
