@@ -56,8 +56,8 @@ public:
     // NB: Do not make 'rescale' const (doing const_cast client probably
     //     won't forget to save/restore current scale)
     SafeRescalableMap rescalable_map{map};
-    _engine.add_scan_matching_request(scan_probability_estimator(),
-                                      pose, raw_scan.scan, rescalable_map);
+    _engine.add_scan_matching_request(scan_probability_estimator(), pose,
+                                      raw_scan.scan, rescalable_map, true);
     while (1) {
       auto best_match = _engine.next_best_match(_transl_step);
       assert(best_match.is_valid());
