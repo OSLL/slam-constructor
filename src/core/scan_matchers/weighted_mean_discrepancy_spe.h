@@ -34,7 +34,9 @@ public:
     scan.trig_cache->set_theta(pose.theta);
     for (const auto &sp : scan.points()) {
       // FIXME: assumption - sensor pose is in robot's (0,0), dir - 0
-      auto world_point = sp.move_origin(pose.x, pose.y, scan.trig_cache);
+      auto world_point = params.scan_is_prerotated ?
+        sp.move_origin(pose.x, pose.y) :
+        sp.move_origin(pose.x, pose.y, scan.trig_cache);
 
       auto sp_prob = world_point_probability(world_point, pose, map, params);
       auto sp_weight = scan_point_weight(sp);

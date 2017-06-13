@@ -25,6 +25,7 @@ public:
   // args
   std::shared_ptr<ScanProbabilityEstimator> spe;
   std::shared_ptr<LaserScan2D> filtered_scan;
+  bool scan_is_prerotated;
   const RobotPose *pose; // owner - user of the engine
   GridMap *map;          // owner - user of the engine
 
@@ -35,23 +36,31 @@ public:
 
   Match(double rot, const Rect &tdrift,
         std::shared_ptr<ScanProbabilityEstimator> scan_prob_est,
-        std::shared_ptr<LaserScan2D> filtered_lscan,
+        std::shared_ptr<LaserScan2D> filtered_lscan, bool is_rotated,
         const RobotPose &robot_pose, GridMap &grid_map)
       : rotation{rot}, translation_drift{tdrift}, spe{scan_prob_est}
-      , filtered_scan{filtered_lscan}, pose{&robot_pose}, map{&grid_map}
+      , filtered_scan{filtered_lscan}, scan_is_prerotated{is_rotated}
+      , pose{&robot_pose}, map{&grid_map}
       , _abs_rotation{std::abs(rotation)}
       , _drift_amount{tdrift.hside_len() + tdrift.vside_len()} {
 
     map->rescale(translation_drift.side()); // FIXME: non-squared areas handling
     Point2D avg_drift = translation_drift.center();
-    auto pose_delta = RobotPoseDelta{avg_drift.x, avg_drift.y, rotation};
+
+    auto drifted_pose = *pose;
+    if (scan_is_prerotated) {
+      drifted_pose = {pose->x + avg_drift.x, pose->y + avg_drift.y, 0};
+    } else {
+      drifted_pose += RobotPoseDelta{avg_drift.x, avg_drift.y, rotation};
+    }
     prob_upper_bound = spe->estimate_scan_probability(
-       *filtered_scan, *pose + pose_delta, *map, SPEParams{translation_drift});
+       *filtered_scan, drifted_pose, *map,
+       SPEParams{translation_drift, scan_is_prerotated});
   }
 
   Match(const Rect &tdrift, const Match &that)
-      : Match(that.rotation, tdrift, that.spe,
-              that.filtered_scan, *that.pose, *that.map) {}
+      : Match(that.rotation, tdrift, that.spe, that.filtered_scan,
+              that.scan_is_prerotated, *that.pose, *that.map) {}
 
   bool is_valid() const { return !std::isnan(prob_upper_bound); }
   double is_finest(double threashold = 0) const {
@@ -126,19 +135,25 @@ public:
 
   void add_scan_matching_request(std::shared_ptr<ScanProbabilityEstimator> spe,
                                  const RobotPose &pose,
-                                 const LaserScan2D &raw_scan, GridMap &map) {
+                                 const LaserScan2D &raw_scan, GridMap &map,
+                                 bool prerotate_scan = false) {
     // generate pose translation ranges to be checked
     const auto empty_trs_range = Rect{0, 0, 0, 0};
     const auto entire_trs_range = Rect{-_max_y_error, _max_y_error,
                                        -_max_x_error, _max_x_error};
 
     double rotation_drift = 0;
-    auto scan = std::make_shared<LaserScan2D>(spe->filter_scan(raw_scan, map));
+    auto fscan = std::make_shared<LaserScan2D>(spe->filter_scan(raw_scan, map));
     auto rotation_resolution = _rotation_resolution;
     while (less_or_equal(2 * rotation_drift, _rotation_sector)) {
-      for (auto &rotation : std::set<double>{rotation_drift, -rotation_drift}) {
-        add_match(Match{rotation, empty_trs_range, spe, scan, pose, map});
-        add_match(Match{rotation, entire_trs_range, spe, scan, pose, map});
+      for (auto &rot : std::set<double>{rotation_drift, -rotation_drift}) {
+        auto scan = prerotate_scan ?
+            std::make_shared<LaserScan2D>(fscan->to_cartesian(rot + pose.theta))
+          : fscan;
+        add_match(Match{rot, empty_trs_range, spe,
+                        scan, prerotate_scan, pose, map});
+        add_match(Match{rot, entire_trs_range, spe,
+                        scan, prerotate_scan, pose, map});
       }
       rotation_drift += rotation_resolution;
     }

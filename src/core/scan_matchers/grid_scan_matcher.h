@@ -40,6 +40,7 @@ public: // types
   struct SPEParams {
     // area in the neighborhood of a scan point that should be analyzed
     LightWeightRectangle sp_analysis_area = {0, 0, 0, 0};
+    bool scan_is_prerotated = false;
   };
 public:
   constexpr static double unknown_probability() {
