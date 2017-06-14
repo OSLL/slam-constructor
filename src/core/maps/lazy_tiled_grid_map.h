@@ -44,11 +44,14 @@ public:
   }
 
   const GridCell &operator[](const Coord& c) const override {
-    auto coord = external2internal(c);
-    return *tile(coord)->cell(coord);
+    return cell_internal(external2internal(c));
   }
 
 protected: // methods & types
+
+  const GridCell& cell_internal(const Coord& ic) const {
+    return *tile(ic)->cell(ic);
+  }
 
   void ensure_sole_owning(const Coord &area_id) {
     auto coord = external2internal(area_id);
@@ -133,12 +136,13 @@ public:
     LazyTiledGridMap::reset(area_id, new_area);
   }
 
-  const GridCell &operator[](const Coord& c) const override {
-    if (!LazyTiledGridMap::has_cell(c)) {
+  const GridCell &operator[](const Coord& ec) const override {
+    auto ic = external2internal(ec);
+    if (!LazyTiledGridMap::has_internal_cell(ic)) {
       return *unknown_cell();
     }
 
-    return LazyTiledGridMap::operator[](c);
+    return LazyTiledGridMap::cell_internal(ic);
   }
 
   DiscretePoint2D origin() const override { return _origin; }

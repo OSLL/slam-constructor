@@ -31,6 +31,7 @@ public:
     auto total_weight = double{0};
     auto total_probability = double{0};
 
+    const auto Observation = expected_scan_point_observation();
     scan.trig_cache->set_theta(pose.theta);
     for (const auto &sp : scan.points()) {
       // FIXME: assumption - sensor pose is in robot's (0,0), dir - 0
@@ -38,7 +39,8 @@ public:
         sp.move_origin(pose.x, pose.y) :
         sp.move_origin(pose.x, pose.y, scan.trig_cache);
 
-      auto sp_prob = world_point_probability(world_point, pose, map, params);
+      auto sp_prob = world_point_probability(world_point, pose, map,
+                                             Observation, params);
       auto sp_weight = scan_point_weight(sp);
       total_probability += sp_prob * sp_weight;
       total_weight += sp_weight;
@@ -68,14 +70,14 @@ protected:
 
   double world_point_probability(const Point2D &wp,
                                  const RobotPose &pose, const GridMap &map,
+                                 const AreaOccupancyObservation &obs,
                                  const SPEParams &params) const {
-    const auto OCC_AREA = expected_scan_point_observation();
     auto analysis_area = params.sp_analysis_area.move_center(wp);
     auto area_ids = GridRasterizedRectangle{map, analysis_area};
     double highest_probability = 0;
 
     while (area_ids.has_next()) {
-      double point_prob = 1.0 - map[area_ids.next()].discrepancy(OCC_AREA);
+      double point_prob = 1.0 - map[area_ids.next()].discrepancy(obs);
       highest_probability = std::max(point_prob, highest_probability);
     }
     return highest_probability;

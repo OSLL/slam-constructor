@@ -26,10 +26,15 @@ public:
   const GridCell &operator[](const Coord& c) const override {
     auto coord = external2internal(c);
     assert(has_internal_cell(coord));
-    return *_cells[coord.y][coord.x];
+    return cell_internal(coord);
   }
 
 protected: // fields
+
+  const GridCell& cell_internal(const Coord& ic) const {
+    return *_cells[ic.y][ic.x];
+  }
+
   std::vector<std::vector<std::unique_ptr<GridCell>>> _cells;
 };
 
@@ -55,9 +60,10 @@ public: // methods
     PlainGridMap::reset(area_id, new_area);
   }
 
-  const GridCell &operator[](const Coord& c) const override {
-    if (!PlainGridMap::has_cell(c)) { return *_unknown_cell; }
-    return PlainGridMap::operator[](c);
+  const GridCell &operator[](const Coord& ec) const override {
+    auto ic = external2internal(ec);
+    if (!PlainGridMap::has_internal_cell(ic)) { return *_unknown_cell; }
+    return PlainGridMap::cell_internal(ic);
   }
 
   Coord origin() const override { return _origin; }
