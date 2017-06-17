@@ -15,6 +15,7 @@
 struct Match {
 private: // types
   using SPEParams = ScanProbabilityEstimator::SPEParams;
+  using SPEPtr = std::shared_ptr<ScanProbabilityEstimator>;
   using Rect = decltype(SPEParams{}.sp_analysis_area);
 public:
   // result
@@ -23,7 +24,7 @@ public:
   double rotation;
   Rect translation_drift;
   // args
-  std::shared_ptr<ScanProbabilityEstimator> spe;
+  SPEPtr spe;
   std::shared_ptr<LaserScan2D> filtered_scan;
   bool scan_is_prerotated;
   const RobotPose *pose; // owner - user of the engine
@@ -34,8 +35,7 @@ public:
     return invalid_match;
   }
 
-  Match(double rot, const Rect &tdrift,
-        std::shared_ptr<ScanProbabilityEstimator> scan_prob_est,
+  Match(double rot, const Rect &tdrift, SPEPtr scan_prob_est,
         std::shared_ptr<LaserScan2D> filtered_lscan, bool is_rotated,
         const RobotPose &robot_pose, GridMap &grid_map)
       : rotation{rot}, translation_drift{tdrift}, spe{scan_prob_est}
@@ -143,7 +143,8 @@ public:
                                        -_max_x_error, _max_x_error};
 
     double rotation_drift = 0;
-    auto fscan = std::make_shared<LaserScan2D>(spe->filter_scan(raw_scan, map));
+    auto fscan = std::make_shared<LaserScan2D>(spe->filter_scan(raw_scan, pose,
+                                                                map));
     auto rotation_resolution = _rotation_resolution;
     while (less_or_equal(2 * rotation_drift, _rotation_sector)) {
       for (auto &rot : std::set<double>{rotation_drift, -rotation_drift}) {
@@ -180,7 +181,8 @@ private:
 
   void branch(const Match &coarse_match, bool is_horz, bool is_vert) {
     auto coarse_drift = coarse_match.translation_drift;
-    auto finer_drifts = std::vector<Rect>{coarse_drift};
+    auto finer_drifts = std::vector<Rect>{};
+
     if (is_horz && is_vert) {
       finer_drifts = coarse_drift.split4_evenly();
     } else if (is_horz) {

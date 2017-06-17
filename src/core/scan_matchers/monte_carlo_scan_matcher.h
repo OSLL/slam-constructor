@@ -24,7 +24,7 @@ public:
     do_for_each_observer([&init_pose, &raw_scan, &map](ObsPtr obs) {
       obs->on_matching_start(init_pose, raw_scan, map);
     });
-    auto scan = scan_probability_estimator()->filter_scan(raw_scan.scan, map);
+    auto scan = filter_scan(raw_scan.scan, init_pose, map);
 
     unsigned failed_tries = 0, total_tries = 0;
     RobotPose best_pose = init_pose;

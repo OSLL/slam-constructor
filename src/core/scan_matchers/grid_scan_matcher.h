@@ -51,7 +51,7 @@ public:
     return probability == unknown_probability();
   }
 
-  virtual LaserScan2D filter_scan(const LaserScan2D &scan,
+  virtual LaserScan2D filter_scan(const LaserScan2D &scan, const RobotPose &,
                                   const GridMap &) {
     return scan;
   }
@@ -73,6 +73,7 @@ public:
 class GridScanMatcher {
 public:
   using SPE = std::shared_ptr<ScanProbabilityEstimator>;
+  using SPEParams = ScanProbabilityEstimator::SPEParams;
 public:
   GridScanMatcher(SPE estimator,
                   double max_x_error = 0, double max_y_error = 0,
@@ -116,16 +117,18 @@ public:
     _max_th_error = th;
   }
 
-  double scan_probability(const LaserScan2D &scan,
-                          const RobotPose &pose,
+  LaserScan2D filter_scan(const LaserScan2D &scan, const RobotPose &pose,
+                          const GridMap &map) {
+    return scan_probability_estimator()->filter_scan(scan, pose, map);
+  }
+
+  double scan_probability(const LaserScan2D &scan, const RobotPose &pose,
                           const GridMap &map) const {
     return _scan_prob_estimator->estimate_scan_probability(scan, pose, map);
   }
 
-  double scan_probability(const LaserScan2D &scan,
-                          const RobotPose &pose,
-                          const GridMap &map,
-                          const ScanProbabilityEstimator::SPEParams &p) const {
+  double scan_probability(const LaserScan2D &scan, const RobotPose &pose,
+                          const GridMap &map, const SPEParams &p) const {
     return _scan_prob_estimator->estimate_scan_probability(scan, pose, map, p);
   }
 

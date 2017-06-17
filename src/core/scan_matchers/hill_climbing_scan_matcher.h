@@ -19,7 +19,7 @@ public:
                       const RobotPose &init_pose,
                       const GridMap &map,
                       RobotPoseDelta &pose_delta) override {
-    auto scan = scan_probability_estimator()->filter_scan(raw_scan.scan, map);
+    auto scan = filter_scan(raw_scan.scan, init_pose, map);
     double a_step = _angular_delta, l_step = _linear_delta;
 
     // TODO: store pose as sampled value

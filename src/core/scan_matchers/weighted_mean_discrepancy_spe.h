@@ -8,19 +8,20 @@
 class WeightedMeanDiscrepancySPEstimator : public ScanProbabilityEstimator {
 public:
 
-  virtual LaserScan2D filter_scan(const LaserScan2D &raw_scan,
-                                  const GridMap &map) {
+  LaserScan2D filter_scan(const LaserScan2D &raw_scan, const RobotPose &pose,
+                          const GridMap &map) override {
     LaserScan2D scan;
     scan.trig_cache = raw_scan.trig_cache;
+    scan.trig_cache->set_theta(pose.theta);
 
     auto &scan_pts = scan.points();
-    for (const auto &scan_point : raw_scan.points()) {
-      auto area_id = map.world_to_cell(scan_point.x(), scan_point.y());
-      if (should_skip_point(scan_point, map, area_id)) { continue; }
+    for (const auto &sp : raw_scan.points()) {
+      auto world_point = sp.move_origin(pose.x, pose.y, scan.trig_cache);
+      auto area_id = map.world_to_cell(world_point);
+      if (should_skip_point(sp, map, area_id)) { continue; }
 
-      scan_pts.push_back(scan_point);
+      scan_pts.push_back(sp);
     }
-
     return scan;
   }
 
