@@ -37,14 +37,13 @@ public:
 
   Match(double rot, const Rect &tdrift, SPEPtr scan_prob_est,
         std::shared_ptr<LaserScan2D> filtered_lscan, bool is_rotated,
-        const RobotPose &robot_pose, GridMap &grid_map)
+        const RobotPose &robot_pose, GridMap &grid_map, bool is_root = true)
       : rotation{rot}, translation_drift{tdrift}, spe{scan_prob_est}
       , filtered_scan{filtered_lscan}, scan_is_prerotated{is_rotated}
       , pose{&robot_pose}, map{&grid_map}
       , _abs_rotation{std::abs(rotation)}
       , _drift_amount{tdrift.hside_len() + tdrift.vside_len()} {
 
-    map->rescale(translation_drift.side()); // FIXME: non-squared areas handling
     Point2D avg_drift = translation_drift.center();
 
     auto drifted_pose = *pose;
@@ -53,6 +52,8 @@ public:
     } else {
       drifted_pose += RobotPoseDelta{avg_drift.x, avg_drift.y, rotation};
     }
+    if (scan_is_prerotated && is_root) { filter_prerotated_scan(); }
+    map->rescale(translation_drift.side()); // FIXME: non-squared areas handling
     prob_upper_bound = spe->estimate_scan_probability(
        *filtered_scan, drifted_pose, *map,
        SPEParams{translation_drift, scan_is_prerotated});
@@ -60,7 +61,7 @@ public:
 
   Match(const Rect &tdrift, const Match &that)
       : Match(that.rotation, tdrift, that.spe, that.filtered_scan,
-              that.scan_is_prerotated, *that.pose, *that.map) {}
+              that.scan_is_prerotated, *that.pose, *that.map, false) {}
 
   bool is_valid() const { return !std::isnan(prob_upper_bound); }
   double is_finest(double threashold = 0) const {
@@ -83,6 +84,40 @@ public:
 
 private: // methods
   Match(double prob) : prob_upper_bound{prob}  {}
+
+  void filter_prerotated_scan() {
+    return;
+    /*
+    GridMap::Coord curr_area_id;
+    auto points_in_area = std::vector<ScanPoint2D>{};
+
+    map->rescale(0);
+    auto scan = filtered_scan;
+    auto filtered_pts = std::vector<ScanPoint2D>{};
+    for (const auto &sp : scan->points()) {
+      auto world_point = sp.move_origin(pose->x, pose->y);
+      auto area_id = map->world_to_cell(world_point);
+
+      if (points_in_area.size() == 0 || area_id == curr_area_id) {
+        curr_area_id = area_id;
+        points_in_area.push_back(sp);
+      } else {
+        auto effective_sp = points_in_area[0].set_factor(points_in_area.size());
+        filtered_pts.push_back(effective_sp);
+        //std::cout << points_in_area.size() << std::endl;
+        curr_area_id = area_id;
+        points_in_area.clear();
+      }
+    }
+    if (points_in_area.size()) {
+      auto effective_sp = points_in_area[0].set_factor(points_in_area.size());
+      filtered_pts.push_back(effective_sp);
+    }
+    //std::cout << scan->points().size() << " -> " << filtered_pts.size() << std::endl;
+    scan->points() = std::move(filtered_pts);
+    */
+  }
+
 private: // fields
   double _abs_rotation, _drift_amount;
 };

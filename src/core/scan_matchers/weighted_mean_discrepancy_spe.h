@@ -43,7 +43,7 @@ public:
       auto sp_prob = world_point_probability(world_point, pose, map,
                                              Observation, params);
       auto sp_weight = scan_point_weight(sp);
-      total_probability += sp_prob * sp_weight;
+      total_probability += sp_prob * sp_weight * sp.factor();
       total_weight += sp_weight;
     }
     if (total_weight == 0) {

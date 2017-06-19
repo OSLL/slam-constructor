@@ -25,7 +25,7 @@ public: // methods
   }
 
   ScanPoint2D(PointType type, double x_or_range, double y_or_angle, bool is_occ)
-    : _type{type}, _is_occupied{is_occ} {
+    : _type{type}, _factor{1.0}, _is_occupied{is_occ} {
 
     switch (_type) {
     case PointType::Polar:
@@ -70,6 +70,9 @@ public: // methods
     return _data.polar.range * std::sin(_data.polar.angle);
   }
   bool is_occupied() const { return _is_occupied; }
+
+  ScanPoint2D& set_factor(double factor) { _factor = factor; return *this; }
+  double factor() const { return _factor; }
 
   ScanPoint2D to_cartesian(std::shared_ptr<TrigonometricCache> cache) const {
     auto point = move_origin(0, 0, cache);
@@ -123,6 +126,7 @@ private: // data structs
 private: // data
   PointType  _type;
   PointData _data;
+  double _factor;
   bool _is_occupied;
 };
 

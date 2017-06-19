@@ -14,6 +14,7 @@
 #include "../core/maps/grid_cell.h"
 
 #include "tiny_scan_matcher.h"
+#include "../core/scan_matchers/bf_multi_res_scan_matcher.h"
 
 struct TinyWorldParams {
   double localized_scan_quality, raw_scan_quality;
@@ -33,8 +34,8 @@ public:
             const TinyWorldParams &params,
             const GridMapParams &map_params)
     : LaserScanGridWorld(gcs, map_params), _gcs(gcs), _params(params)
-    , _scan_matcher(std::make_shared<TinyScanMatcher>(_gcs->prob_est(),
-                                                    params.Tiny_SM_Params))
+    , _scan_matcher(std::make_shared<BruteForceMultiResoultionScanMatcher>(
+      _gcs->prob_est()))
     , _map_update_ctx(_gcs->occupancy_est()) {}
 
   std::shared_ptr<GridScanMatcher> scan_matcher() override {
@@ -45,9 +46,11 @@ protected:
 
   void handle_observation(TransformedLaserScan &scan) override {
     _scan_matcher->reset_state();
-
+    static int scan_id = 0;
     RobotPoseDelta pose_delta;
-    _scan_matcher->process_scan(scan, pose(), map(), pose_delta);
+    if (scan_id++ % 5 == 0) {
+      _scan_matcher->process_scan(scan, pose(), map(), pose_delta);
+    }
     update_robot_pose(pose_delta);
 
     scan.quality = pose_delta ? _params.localized_scan_quality :
