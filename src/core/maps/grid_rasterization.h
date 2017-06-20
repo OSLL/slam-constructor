@@ -23,16 +23,19 @@ public:
    * }
   */
   GridRasterizedRectangle(const RegularSquaresGrid &grid,
-                          const LightWeightRectangle &rect,
+                          const LightWeightRectangle &r,
                           bool include_border = true) {
     double offset = include_border ? 0 : 1e-9;
-    bool area_is_infin = rect.area() == RegularSquaresGrid::Dbl_Inf,
-         area_is_empty = rect.area() == 0;
+    bool area_is_infin = r.area() == RegularSquaresGrid::Dbl_Inf,
+         area_is_empty = r.area() == 0;
+    double scale = grid.scale();
     if (!area_is_empty && !area_is_infin) {
-      _lb = grid.world_to_cell(rect.left() + offset, rect.bot() + offset);
-      _rt = grid.world_to_cell(rect.right() - offset, rect.top() - offset);
+      _lb = grid.world_to_cell(r.left() + offset, r.bot() + offset, scale);
+      _rt = grid.world_to_cell(r.right() - offset, r.top() - offset, scale);
     } else if (area_is_empty) {
-      _rt = _lb = grid.world_to_cell(rect.left(), rect.bot());
+      // TODO: do not pass scale as an argument. This causes slight slow down.
+      //       Find out the reason.
+      _rt = _lb = grid.world_to_cell(r.left(), r.bot());
     } else if (area_is_infin) {
       _lb = grid.internal2external({0, 0});
       _rt = grid.internal2external({grid.width() - 1, grid.height() - 1});

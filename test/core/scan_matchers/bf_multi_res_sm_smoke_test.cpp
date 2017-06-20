@@ -7,16 +7,17 @@
 
 #include "../../../src/core/scan_matchers/bf_multi_res_scan_matcher.h"
 #include "../../../src/core/maps/plain_grid_map.h"
+#include "../../../src/core/maps/lazy_tiled_grid_map.h"
 #include "../../../src/core/maps/rescalable_caching_grid_map.h"
 
 template <typename MapType>
 class BFMRScanMatcherTestBase
   :  public ScanMatcherTestBase<MapType> {
 protected: // names
-  using typename ScanMatcherTestBase<MapType>::DefaultSPE;
+  using SPE = typename ScanMatcherTestBase<MapType>::DefaultSPE;
 protected: // methods
   BFMRScanMatcherTestBase()
-    : ScanMatcherTestBase<MapType>{std::make_shared<DefaultSPE>(),
+    : ScanMatcherTestBase<MapType>{std::make_shared<SPE>(),
                                    Map_Width, Map_Height, Map_Scale,
                                    this->to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
     , bfmrsm{this->spe, SM_Ang_Step, SM_Transl_Step} {
@@ -28,14 +29,15 @@ protected: // consts
   static constexpr int Cecum_Patch_W = 15, Cecum_Patch_H = 13;
   static constexpr int Patch_Scale = 1;
 
-  static constexpr double Map_Scale = 0.1;
+  // NB: use 1/2^n is order to increase perfromance
+  static constexpr double Map_Scale = 0.125;
   static constexpr int Map_Width = 100;
   static constexpr int Map_Height = 100;
 
   // laser scanner params
   static constexpr double LS_Max_Dist = 15;
   static constexpr int LS_FoW = 270;
-  static constexpr int LS_Pts_Nm = 1000;
+  static constexpr int LS_Pts_Nm = 10000;
 
   // scan matcher
   static constexpr double SM_Max_Rotation_Error = deg2rad(5);

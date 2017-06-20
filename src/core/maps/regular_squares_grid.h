@@ -35,12 +35,21 @@ public:
     return world_to_cell(pt.x, pt.y);
   }
 
+  // FIXME: code duplication for perfromance reasons.
+  //        Find out the reason why world_to_cell(x, y, scale) runs slower
   Coord world_to_cell(double x, double y) const {
     // TODO: handle infinity
     assert(x != Dbl_Inf &&  y != Dbl_Inf);
 
     auto curr_scale = scale();
     return {int(std::floor(x / curr_scale)), int(std::floor(y / curr_scale))};
+  }
+
+  Coord world_to_cell(double x, double y, double scale) const {
+    // TODO: handle infinity
+    assert(x != Dbl_Inf &&  y != Dbl_Inf);
+
+    return {int(std::floor(x / scale)), int(std::floor(y / scale))};
   }
 
   // TODO: move resterization to a separate component
