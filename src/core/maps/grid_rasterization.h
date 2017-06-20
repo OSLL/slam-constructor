@@ -26,12 +26,18 @@ public:
                           const LightWeightRectangle &rect,
                           bool include_border = true) {
     double offset = include_border ? 0 : 1e-9;
-    if (rect.area() == RegularSquaresGrid::Dbl_Inf) {
+    bool area_is_infin = rect.area() == RegularSquaresGrid::Dbl_Inf,
+         area_is_empty = rect.area() == 0;
+    if (!area_is_empty && !area_is_infin) {
+      _lb = grid.world_to_cell(rect.left() + offset, rect.bot() + offset);
+      _rt = grid.world_to_cell(rect.right() - offset, rect.top() - offset);
+    } else if (area_is_empty) {
+      _rt = _lb = grid.world_to_cell(rect.left(), rect.bot());
+    } else if (area_is_infin) {
       _lb = grid.internal2external({0, 0});
       _rt = grid.internal2external({grid.width() - 1, grid.height() - 1});
     } else {
-      _lb = grid.world_to_cell(rect.left() + offset, rect.bot() + offset);
-      _rt = grid.world_to_cell(rect.right() - offset, rect.top() - offset);
+      assert("BUG: rectangle area is both empty and infinite");
     }
     _y = _lb.y;
     _x = _lb.x;

@@ -3,6 +3,9 @@
 
 #include <cmath>
 
+// TODO: add unit tests for math utils
+
+// FIXME: are_equal(infinity, 0) is true
 constexpr inline bool are_equal(double a, double b) {
   // cmp doubles according to http://realtimecollisiondetection.net/blog/?p=89
   double eps_scale = std::max(1.0, std::max(std::abs(a), std::abs(b)));
