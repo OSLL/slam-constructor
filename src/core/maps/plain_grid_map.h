@@ -71,52 +71,55 @@ public: // methods
   bool has_cell(const Coord &) const override { return true; }
 
   std::vector<char> save_state() const override {
-      size_t map_size_bytes = width() * height() * _unknown_cell->serialize().size();
+    auto w = width(), h = height();
+    size_t map_size_bytes = w * h * _unknown_cell->serialize().size();
 
-      Serializer s(sizeof(GridMapParams) + sizeof(Coord) + map_size_bytes);
-      s << height() << width() << scale() << origin().x << origin().y;
+    Serializer s(sizeof(GridMapParams) + sizeof(Coord) + map_size_bytes);
+    s << h << w << scale() << origin().x << origin().y;
 
-      Serializer ms(map_size_bytes);
-      for (auto &row : _cells) {
-          for (auto &cell : row) {
-              ms.append(cell->serialize());
-          }
+    Serializer ms(map_size_bytes);
+    for (auto &row : _cells) {
+      for (auto &cell : row) {
+        ms.append(cell->serialize());
       }
-#ifdef COMPRESSED_SERIALIZATION
-      s.append(ms.compressed());
-#else
-      s.append(ms.result());
-#endif
-      return s.result();
+    }
+  #ifdef COMPRESSED_SERIALIZATION
+    s.append(ms.compressed());
+  #else
+    s.append(ms.result());
+  #endif
+    return s.result();
   }
 
   void load_state(const std::vector<char>& data) override {
-      int w, h;
-      double s;
+    decltype(width()) w, h;
+    decltype(scale()) s;
 
-      Deserializer d(data);
-      d >> h >> w >> s >> _origin.x >> _origin.y;
+    Deserializer d(data);
+    d >> h >> w >> s >> _origin.x >> _origin.y;
 
-      set_width(w);
-      set_height(h);
-      set_scale(s);
-#ifdef COMPRESSED_SERIALIZATION
-      std::vector<char> map_data = Deserializer::decompress(data.data() + d.pos(), data.size() - d.pos(), w * h * _unknown_cell->serialize().size());
-      size_t pos = 0;
-#else
-      const std::vector<char> &map_data = data;
-      size_t pos = d.pos();
-#endif
-      _cells.clear();
-      _cells.resize(h);
-      for (auto &row : _cells) {
-          row.reserve(w);
-          for (int i = 0; i < w; ++i) {
-              auto cell = new_cell();
-              pos = cell->deserialize(map_data, pos);
-              row.push_back(std::move(cell));
-          }
+    set_width(w);
+    set_height(h);
+    set_scale(s);
+  #ifdef COMPRESSED_SERIALIZATION
+    std::vector<char> map_data = Deserializer::decompress(
+        data.data() + d.pos(), data.size() - d.pos(),
+        w * h * _unknown_cell->serialize().size());
+    size_t pos = 0;
+  #else
+    const std::vector<char> &map_data = data;
+    size_t pos = d.pos();
+  #endif
+    _cells.clear();
+    _cells.resize(h);
+    for (auto &row : _cells) {
+      row.reserve(w);
+      for (int i = 0; i < w; ++i) {
+        auto cell = new_cell();
+        pos = cell->deserialize(map_data, pos);
+        row.push_back(std::move(cell));
       }
+    }
   }
 
 protected: // methods
