@@ -68,9 +68,9 @@ public:
       if (best_match.is_finest()) {
         result_pose_delta = {best_match.translation_drift.center(),
                              best_match.rotation};
-        auto scan_prob = best_match.prob_upper_bound;
-        do_for_each_observer([&result_pose_delta, &scan_prob](ObsPtr obs) {
-          obs->on_matching_end(result_pose_delta, scan_prob);
+        do_for_each_observer([&result_pose_delta, &best_match](ObsPtr obs) {
+            obs->on_matching_end(result_pose_delta, *best_match.filtered_scan,
+                                 best_match.prob_upper_bound);
         });
         return best_match.prob_upper_bound;
       }

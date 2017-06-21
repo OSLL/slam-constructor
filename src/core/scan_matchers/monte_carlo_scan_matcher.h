@@ -41,7 +41,8 @@ public:
       RobotPose sampled_pose = best_pose;
       sample_pose(sampled_pose);
       double sampled_scan_prob = scan_probability(scan, sampled_pose, map);
-      do_for_each_observer([sampled_pose, scan, sampled_scan_prob](ObsPtr obs) {
+      do_for_each_observer([&sampled_pose, &scan,
+                            &sampled_scan_prob](ObsPtr obs) {
         obs->on_scan_test(sampled_pose, scan, sampled_scan_prob);
       });
 
@@ -54,14 +55,14 @@ public:
       best_pose = sampled_pose;
       failed_tries = on_estimate_update(failed_tries, _failed_tries_limit);
 
-      do_for_each_observer([best_pose, scan, best_pose_prob](ObsPtr obs) {
+      do_for_each_observer([&best_pose, &scan, &best_pose_prob](ObsPtr obs) {
         obs->on_pose_update(best_pose, scan, best_pose_prob);
       });
     }
 
     pose_delta = best_pose - init_pose;
-    do_for_each_observer([pose_delta, best_pose_prob](ObsPtr obs) {
-        obs->on_matching_end(pose_delta, best_pose_prob);
+    do_for_each_observer([&scan, &pose_delta, &best_pose_prob](ObsPtr obs) {
+        obs->on_matching_end(pose_delta, scan, best_pose_prob);
     });
     return best_pose_prob;
   }

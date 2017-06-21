@@ -22,8 +22,9 @@ public:
   virtual void on_pose_update(const RobotPose &,   /*pose*/
                               const LaserScan2D &, /*scan*/
                               double) {};          /*score*/
-  virtual void on_matching_end(const RobotPose &, /*delta*/
-                               double) {};        /*best_score*/
+  virtual void on_matching_end(const RobotPose &,   /*delta*/
+                               const LaserScan2D &, /* applied scan */
+                               double) {};          /*best_score*/
 };
 
 /* Client (e.g. a scan matcher) code example:
