@@ -72,6 +72,7 @@ public:
 
 class GridScanMatcher {
 public:
+  using ObsPtr = std::shared_ptr<GridScanMatcherObserver>;
   using SPE = std::shared_ptr<ScanProbabilityEstimator>;
   using SPEParams = ScanProbabilityEstimator::SPEParams;
 public:
@@ -144,6 +145,14 @@ protected:
 
   std::vector<std::weak_ptr<GridScanMatcherObserver>> & observers() {
     return _observers;
+  }
+
+  void do_for_each_observer(std::function<void(ObsPtr)> op) {
+    for (auto &obs : observers()) {
+      if (auto obs_ptr = obs.lock()) {
+        op(obs_ptr);
+      }
+    }
   }
 
   double max_x_error() { return _max_x_error; }

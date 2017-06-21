@@ -10,8 +10,6 @@
 // TODO: move publish transform to observer
 class MonteCarloScanMatcher : public GridScanMatcher {
 public:
-  using ObsPtr = std::shared_ptr<GridScanMatcherObserver>;
-public:
   MonteCarloScanMatcher(SPE estimator,
                         unsigned failed_iter, unsigned max_iter):
     GridScanMatcher{estimator},
@@ -72,15 +70,6 @@ protected:
   virtual void sample_pose(RobotPose &base_pose) = 0;
   virtual unsigned on_estimate_update(unsigned sample_num,
                                       unsigned sample_limit) = 0;
-
-private:
-  void do_for_each_observer(std::function<void(ObsPtr)> op) {
-    for (auto &obs : GridScanMatcher::observers()) {
-      if (auto obs_ptr = obs.lock()) {
-        op(obs_ptr);
-      }
-    }
-  }
 
 private:
   unsigned _failed_tries_limit;

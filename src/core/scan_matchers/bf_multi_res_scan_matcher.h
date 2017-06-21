@@ -46,6 +46,10 @@ public:
                       const RobotPose &pose,
                       const GridMap &map,
                       RobotPoseDelta &result_pose_delta) override {
+    do_for_each_observer([&pose, &raw_scan, &map](ObsPtr obs) {
+      obs->on_matching_start(pose, raw_scan, map);
+    });
+
     /* setup engine */
     _engine.reset_engine_state();
     _engine.set_translation_lookup_range(max_x_error(), max_y_error());
@@ -64,6 +68,10 @@ public:
       if (best_match.is_finest()) {
         result_pose_delta = {best_match.translation_drift.center(),
                              best_match.rotation};
+        auto scan_prob = best_match.prob_upper_bound;
+        do_for_each_observer([&result_pose_delta, &scan_prob](ObsPtr obs) {
+          obs->on_matching_end(result_pose_delta, scan_prob);
+        });
         return best_match.prob_upper_bound;
       }
       // Add exact translation candidates as matches
