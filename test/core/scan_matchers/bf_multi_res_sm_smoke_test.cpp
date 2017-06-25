@@ -37,7 +37,7 @@ protected: // consts
   // laser scanner params
   static constexpr double LS_Max_Dist = 15;
   static constexpr int LS_FoW = 270;
-  static constexpr int LS_Pts_Nm = 10000;
+  static constexpr int LS_Pts_Nm = 5000;
 
   // scan matcher
   static constexpr double SM_Max_Rotation_Error = deg2rad(5);
@@ -67,7 +67,7 @@ protected: // fields
   }
 
 protected: // fields
-  BruteForceMultiResoultionScanMatcher bfmrsm;
+  BruteForceMultiResolutionScanMatcher bfmrsm;
 };
 
 

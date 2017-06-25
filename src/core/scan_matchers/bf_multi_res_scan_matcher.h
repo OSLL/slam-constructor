@@ -7,7 +7,7 @@
 #include "m3rsm_engine.h"
 #include "../geometry_primitives.h"
 
-class BruteForceMultiResoultionScanMatcher : public GridScanMatcher {
+class BruteForceMultiResolutionScanMatcher : public GridScanMatcher {
 private: // consts
   static constexpr double _Max_Translation_Error = 1,
                           _Max_Rotation_Error = deg2rad(5);
@@ -30,7 +30,7 @@ private: // types
     GridMap &_map;
   };
 public:
-  BruteForceMultiResoultionScanMatcher(SPE est,
+  BruteForceMultiResolutionScanMatcher(SPE est,
                                        double ang_step = deg2rad(0.1),
                                        double transl_step = 0.05)
     : GridScanMatcher{est, _Max_Translation_Error, _Max_Translation_Error,

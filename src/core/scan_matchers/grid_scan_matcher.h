@@ -93,10 +93,6 @@ public:
 
   virtual void reset_state() {};
 
-  void set_scan_cost_estimator(SPE estimator) {
-      _scan_prob_estimator = estimator;
-  }
-
   void subscribe(std::shared_ptr<GridScanMatcherObserver> obs) {
     _observers.push_back(obs);
   }
