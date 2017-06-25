@@ -42,7 +42,11 @@ public:
   GmappingWorld(std::shared_ptr<GridCellStrategy> gcs,
                 const GridMapParams& params,
                 const GMappingParams& gparams)
-    : LaserScanGridWorld(gcs, params)
+    // FIXME: [Performance] The adder does extra computations
+    //        related to blurring that are not actually used
+    : LaserScanGridWorld{gcs, std::make_shared<WallDistanceBlurringScanAdder>(
+                                gcs->occupancy_est(), 0),
+                         params}
     , _matcher{gcs->prob_est()}
     , _rnd_engine(std::random_device{}())
     , _pose_guess_rv{gparams.pose_guess_rv}

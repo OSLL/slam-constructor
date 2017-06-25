@@ -87,6 +87,12 @@ public: // methods
 
   }
 
+  Point2D move_origin(const Point2D &p,
+                      std::shared_ptr<TrigonometricCache> cache) const {
+    return move_origin(p.x, p.y, cache);
+
+  }
+
   Point2D move_origin(double d_x, double d_y, double d_angle) const {
     auto patched = ScanPoint2D{PointType::Polar,
                                range(), angle() + d_angle,
