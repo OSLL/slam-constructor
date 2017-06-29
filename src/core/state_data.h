@@ -1,5 +1,5 @@
-#ifndef __STATE_DATA_H_INCLUDED
-#define __STATE_DATA_H_INCLUDED
+#ifndef SLAM_CTOR_CORE_STATE_DATA_H
+#define SLAM_CTOR_CORE_STATE_DATA_H
 
 #include <ostream>
 #include "geometry_utils.h"
@@ -9,8 +9,8 @@ struct Occupancy {
   double estimation_quality;
 
   // TODO: is NaN better for as a dflt value?
-  Occupancy(double prob = 0, double quality = 0) :
-    prob_occ(prob), estimation_quality(quality) {}
+  constexpr Occupancy(double prob = 0, double quality = 0)
+    : prob_occ(prob), estimation_quality(quality) {}
 
   operator double() const { return prob_occ; }
 

@@ -1,5 +1,5 @@
-#ifndef SLAM_CTOR_CORE_GEOMETRY_DISCRETE_PRIMITIVES_H_INCLUDED
-#define SLAM_CTOR_CORE_GEOMETRY_DISCRETE_PRIMITIVES_H_INCLUDED
+#ifndef SLAM_CTOR_CORE_GEOMETRY_DISCRETE_PRIMITIVES_H
+#define SLAM_CTOR_CORE_GEOMETRY_DISCRETE_PRIMITIVES_H
 
 #include <cmath>
 #include <vector>
@@ -11,8 +11,8 @@ struct DiscretePoint2D {
 public: // fields
   int x, y;
 public: // functions
-  DiscretePoint2D(int x_coord = 0, int y_coord = 0):
-    x{x_coord}, y{y_coord} {}
+  constexpr DiscretePoint2D(int x_coord = 0, int y_coord = 0)
+    : x{x_coord}, y{y_coord} {}
 
   DiscretePoint2D &operator+=(const DiscretePoint2D &p) {
     x += p.x;

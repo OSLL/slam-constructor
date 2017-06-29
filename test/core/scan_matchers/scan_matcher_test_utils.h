@@ -26,12 +26,6 @@ protected: // consts
   };
 protected: // methods
 
-  static LaserScannerParams to_lsp(double max_dist,
-                                   double fow_deg, int pts_nm) {
-    return LaserScannerParams{max_dist,
-        deg2rad(fow_deg / pts_nm), deg2rad(fow_deg / 2.0)};
-  }
-
   ScanMatcherTestBase(std::shared_ptr<ScanProbabilityEstimator> prob_est,
                       int map_w, int map_h, double map_scale,
                       const LaserScannerParams &dflt_lsp)

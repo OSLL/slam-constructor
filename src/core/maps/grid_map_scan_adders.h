@@ -14,12 +14,14 @@ public:
   GridMapScanAdder(std::shared_ptr<CellOccupancyEstimator> e)
     : _occ_est{e} {}
 
+  // TODO: replace transformed scan with LaserScan2D and weight/quality
   GridMap& append_scan(GridMap &map, const RobotPose &pose,
                        const TransformedLaserScan &tscan,
-                       double scan_margin) const {
+                       double scan_margin = 0.0) const {
     auto &scan = tscan.scan;
-    const auto rp = pose.point();
+    if (scan.points().empty()) { return map; }
 
+    const auto rp = pose.point();
     scan.trig_cache->set_theta(pose.theta);
     size_t last_pt_i = scan.points().size() - scan_margin - 1;
     for (size_t pt_i = scan_margin; pt_i <= last_pt_i; ++pt_i) {
