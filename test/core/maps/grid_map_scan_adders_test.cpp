@@ -96,17 +96,14 @@ TEST_F(PlainScanIntegrationTest, smokeScanAdditionTest) {
   pose += RobotPoseDelta{src_map.scale() / 2, src_map.scale() / 2, deg2rad(90)};
 
   constexpr auto lsp = to_lsp(MAP_WIDTH * 2, 270, 100);
-  auto tr_scan = TransformedLaserScan{
-    RobotPoseDelta{pose.x, pose.y, pose.theta},
-    LaserScanGenerator{lsp}.laser_scan_2D(src_map, pose, 1),
-    1.0};
+  auto scan = LaserScanGenerator{lsp}.laser_scan_2D(src_map, pose, 1);
 
   // test
-  plain_adder()->append_scan(dst_map, pose, tr_scan, 0);
+  plain_adder()->append_scan(dst_map, pose, scan, 1.0 /* quality */, 0);
   ASSERT_TRUE(map_was_modified(dst_map));
 
-  tr_scan.scan.trig_cache->set_theta(pose.theta);
-  ASSERT_TRUE(map_contains_scan(dst_map, tr_scan.scan));
+  scan.trig_cache->set_theta(pose.theta);
+  ASSERT_TRUE(map_contains_scan(dst_map, scan));
   ASSERT_TRUE(map_includes(src_map, dst_map));
 }
 
@@ -145,18 +142,15 @@ TEST_F(DistanceBasedWallBlurringTest, smokeDistanceBaseBlurringTest) {
 
   // setup scan
   constexpr auto lsp = to_lsp(MAP_WIDTH * 2, 360, 100);
-  auto tr_scan = TransformedLaserScan{
-    RobotPoseDelta{pose.x, pose.y, pose.theta},
-    LaserScanGenerator{lsp}.laser_scan_2D(src_map, pose, 1),
-    1.0};
+  auto scan = LaserScanGenerator{lsp}.laser_scan_2D(src_map, pose, 1);
 
   // test
   constexpr double Blur_Distance = 3;
-  adder(Blur_Distance)->append_scan(dst_map, pose, tr_scan, 0);
+  adder(Blur_Distance)->append_scan(dst_map, pose, scan, 1.0, 0);
   ASSERT_TRUE(map_was_modified(dst_map));
 
-  tr_scan.scan.trig_cache->set_theta(pose.theta);
-  ASSERT_TRUE(map_contains_scan(dst_map, tr_scan.scan));
+  scan.trig_cache->set_theta(pose.theta);
+  ASSERT_TRUE(map_contains_scan(dst_map, scan));
 
   double prev_prob = 0;
   auto beam_coord = dst_map.world_to_cell(pose.point());

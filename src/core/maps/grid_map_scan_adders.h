@@ -14,11 +14,10 @@ public:
   GridMapScanAdder(std::shared_ptr<CellOccupancyEstimator> e)
     : _occ_est{e} {}
 
-  // TODO: replace transformed scan with LaserScan2D and weight/quality
   GridMap& append_scan(GridMap &map, const RobotPose &pose,
-                       const TransformedLaserScan &tscan,
+                       const LaserScan2D &scan,
+                       double scan_quality,
                        double scan_margin = 0.0) const {
-    auto &scan = tscan.scan;
     if (scan.points().empty()) { return map; }
 
     const auto rp = pose.point();
@@ -28,7 +27,7 @@ public:
       const auto &sp = scan.points()[pt_i];
       // move to world frame assume sensor is in robots' (0,0)
       const auto &wp = sp.move_origin(rp, scan.trig_cache);
-      handle_scan_point(map, sp.is_occupied(), tscan.quality, {rp, wp});
+      handle_scan_point(map, sp.is_occupied(), scan_quality, {rp, wp});
     }
 
     return map;

@@ -53,7 +53,8 @@ protected:
 
   virtual void handle_observation(TransformedLaserScan &tr_scan) {
     const RobotPose& pose = World<TransformedLaserScan, MapType>::pose();
-    _adder->append_scan(_map, pose, tr_scan, _scan_margin);
+    _adder->append_scan(_map, pose, tr_scan.scan,
+                        tr_scan.quality, _scan_margin);
   }
 
 private: // fields
