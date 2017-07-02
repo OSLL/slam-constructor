@@ -59,23 +59,11 @@ protected:
                          const Segment2D &beam) const override {
 
     // TODO: simplify, consider performance if _blur_dist is not set
-
+    //       (a static factory method)
     auto robot_pt = map.world_to_cell(beam.beg());
     auto obst_pt = map.world_to_cell(beam.end());
     auto obst_dist_sq = robot_pt.dist_sq(obst_pt);
-    // TODO: hope dist estimation -> move to method
-    auto hole_dist = _blur_dist / map.scale();
-    if (hole_dist < 0) {
-      // dynamic wall blurring, Hole_Width is a scaling coefficient
-      double dist_sq = beam.length_sq();
-      hole_dist *= -dist_sq;
-    }
-    if (!is_occ) {
-      // no wall -> no blurring
-      hole_dist = 0;
-    }
-
-    auto hole_dist_sq = std::pow(hole_dist, 2);
+    auto hole_dist_sq = std::pow(blur_cell_dist(map, beam, is_occ), 2);
 
     auto pts = map.world_to_cells(beam);
     auto pt_bounds = map.world_cell_bounds(pts.back());
@@ -99,6 +87,23 @@ protected:
       }
       map.update(pt, empty_aoo);
     }
+  }
+
+private:
+  // return obstacle blur distance in cells
+  double blur_cell_dist(const GridMap &map, const Segment2D &beam,
+                        bool is_occ) const {
+    if (!is_occ) { // no wall -> no blurring
+      return 0;
+    }
+
+    auto blur_dist = _blur_dist / map.scale();
+    if (blur_dist < 0) {
+      // dynamic wall blurring, Hole_Width is a scaling coefficient
+      double dist_sq = beam.length_sq();
+      blur_dist *= -dist_sq;
+    }
+    return blur_dist;
   }
 
 private:
