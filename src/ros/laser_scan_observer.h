@@ -33,15 +33,16 @@ public: //methods
     transformed_scan.scan.points().reserve(msg->ranges.size());
     transformed_scan.quality = 1.0;
     transformed_scan.scan.trig_cache = _cache;
-    double a_max = msg->angle_min + msg->angle_increment * msg->ranges.size();
-    _cache->update(msg->angle_min, a_max, msg->angle_increment);
+    _cache->update(msg->angle_min, msg->angle_max + msg->angle_increment,
+                   msg->angle_increment);
 
-    double sp_angle = msg->angle_min;
+    double sp_angle = msg->angle_min - msg->angle_increment;
     for (const auto &range : msg->ranges) {
       bool sp_is_occupied = true;
       double sp_range = range;
       sp_angle += msg->angle_increment;
 
+      // filter points by range/angle
       if (sp_range < msg->range_min) {
         continue;
       } else if (msg->range_max <= sp_range) {
@@ -51,10 +52,12 @@ public: //methods
           continue;
         }
       }
+
+      // add a scan point to a scan
       transformed_scan.scan.points().emplace_back(sp_range, sp_angle,
                                                   sp_is_occupied);
     }
-    assert(are_equal(sp_angle, a_max));
+    assert(are_equal(sp_angle, msg->angle_max));
 
     transformed_scan.pose_delta = new_pose - _prev_pose;
     _prev_pose = new_pose;
