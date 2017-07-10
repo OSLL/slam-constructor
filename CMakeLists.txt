@@ -200,6 +200,8 @@ target_link_libraries(viny_slam ${catkin_LIBRARIES})
 # Maps
 catkin_add_gtest(area_occupancy_estimator-test
                  test/core/maps/area_occupancy_estimator_test.cpp)
+catkin_add_gtest(gm_scan_adders-test
+                 test/core/maps/grid_map_scan_adders_test.cpp)
 catkin_add_gtest(unbounded_plain_grid_map-test
                  test/core/maps/unbounded_plain_grid_map_test.cpp)
 catkin_add_gtest(unbounded_lazy_tiled_grid_maps-test

@@ -3,7 +3,7 @@
 #include <limits>
 
 #include "../mock_grid_cell.h"
-
+#include "../data_generation_utils.h"
 #include "scan_matcher_test_utils.h"
 
 #include "../../../src/core/scan_matchers/hill_climbing_scan_matcher.h"

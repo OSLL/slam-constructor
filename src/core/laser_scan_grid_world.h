@@ -1,5 +1,5 @@
-#ifndef __LASER_SCAN_GRID_WORLD_H
-#define __LASER_SCAN_GRID_WORLD_H
+#ifndef SLAM_CTOR_CORE_LASER_SCAN_GRID_WORLD_H
+#define SLAM_CTOR_CORE_LASER_SCAN_GRID_WORLD_H
 
 #include <memory>
 #include <utility>
@@ -8,6 +8,7 @@
 #include "world.h"
 #include "maps/grid_cell_strategy.h"
 #include "maps/grid_map.h"
+#include "maps/grid_map_scan_adders.h"
 
 template <typename Map>
 class LaserScanGridWorld : public World<TransformedLaserScan, Map> {
@@ -16,13 +17,14 @@ public: //types
   using ScanType = TransformedLaserScan;
   using DPoint = DiscretePoint2D;
   using ScanMatcherObsPtr = std::shared_ptr<GridScanMatcherObserver>;
+  using ScanAdder = std::shared_ptr<GridMapScanAdder>;
 public: // methods
 
   LaserScanGridWorld(std::shared_ptr<GridCellStrategy> gcs,
-                     const GridMapParams& params,
-                     size_t scan_margin = 0) :
-    _map(gcs->cell_prototype(), params), _scan_margin(scan_margin) {}
-
+                     ScanAdder scan_adder, const GridMapParams& params,
+                     size_t scan_margin = 0)
+    : _map(gcs->cell_prototype(), params), _adder{scan_adder}
+    , _scan_margin(scan_margin) {}
 
   virtual std::shared_ptr<GridScanMatcher> scan_matcher() { return nullptr; }
 
@@ -51,43 +53,13 @@ protected:
 
   virtual void handle_observation(TransformedLaserScan &tr_scan) {
     const RobotPose& pose = World<TransformedLaserScan, MapType>::pose();
-
-    tr_scan.scan.trig_cache->set_theta(pose.theta);
-    size_t last_pt_i = tr_scan.scan.points().size() - _scan_margin - 1;
-    for (size_t pt_i = _scan_margin; pt_i <= last_pt_i; ++pt_i) {
-      const auto &sp = tr_scan.scan.points()[pt_i];
-      // move to world frame assume sensor is in robots' (0,0)
-      double c = tr_scan.scan.trig_cache->cos(sp.angle());
-      double s = tr_scan.scan.trig_cache->sin(sp.angle());
-
-      double x_world = pose.x + sp.range() * c;
-      double y_world = pose.y + sp.range() * s;
-
-      handle_scan_point(sp.is_occupied(), tr_scan.quality,
-                        {{pose.x, pose.y}, {x_world, y_world}});
-    }
-  }
-
-  virtual void handle_scan_point(bool is_occ, double scan_quality,
-                                 const Segment2D &beam) {
-    auto &map = this->map();
-    auto pts = map.world_to_cells(beam);
-    map.update(pts.back(), sp2obs(pts.back(), is_occ, scan_quality, beam));
-    pts.pop_back();
-
-    for (const auto &pt : pts) {
-      map.update(pt, sp2obs(pt, false, scan_quality, beam));
-    }
-  }
-
-  virtual AreaOccupancyObservation sp2obs(
-    const DPoint &, bool is_occ, double quality, const Segment2D &beam) const {
-    return AreaOccupancyObservation{is_occ, {(double)is_occ, 1.0},
-                                    beam.end(), quality};
+    _adder->append_scan(_map, pose, tr_scan.scan,
+                        tr_scan.quality, _scan_margin);
   }
 
 private: // fields
   MapType _map;
+  ScanAdder _adder;
   size_t _scan_margin;
 };
 

@@ -35,17 +35,21 @@ std::shared_ptr<GridCell> init_cell_prototype(TinyWorldParams &params) {
 }
 
 TinyWorldParams init_common_world_params() {
-  double sig_XY, sig_T, width;
+  double sig_XY, sig_T;
   int lim_bad, lim_totl;
   ros::param::param<double>("~slam/scmtch/MC/sigma_XY", sig_XY, 0.2);
   ros::param::param<double>("~slam/scmtch/MC/sigma_theta", sig_T, 0.1);
   ros::param::param<int>("~slam/scmtch/MC/limit_of_bad_attempts", lim_bad, 20);
   ros::param::param<int>("~slam/scmtch/MC/limit_of_total_attempts",
                          lim_totl, 100);
-  ros::param::param<double>("~tinySLAM/hole_width", width, 0.5);
+  return TinyWorldParams({sig_XY, sig_T,
+                          unsigned(lim_bad), unsigned(lim_totl)});
+}
 
-  return TinyWorldParams({sig_XY, sig_T, unsigned(lim_bad), unsigned(lim_totl)},
-                         width);
+double init_hole_width() {
+  double hole_width;
+  ros::param::param<double>("~tinySLAM/hole_width", hole_width, 0.5);
+  return hole_width;
 }
 
 using ObservT = sensor_msgs::LaserScan;
@@ -61,7 +65,9 @@ int main(int argc, char** argv) {
     init_cell_prototype(params),
     std::make_shared<WeightedMeanDiscrepancySPEstimator>(),
     init_occ_estimator());
-  auto slam = std::make_shared<TinyWorld>(gcs, params, map_params);
+  auto scan_adder = std::make_shared<WallDistanceBlurringScanAdder>(
+    gcs->occupancy_est(), init_hole_width());
+  auto slam = std::make_shared<TinyWorld>(gcs, scan_adder, params, map_params);
 
   // connect the slam to a ros-topic based data provider
   ros::NodeHandle nh;

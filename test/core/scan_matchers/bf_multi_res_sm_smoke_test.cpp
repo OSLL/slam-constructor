@@ -3,6 +3,7 @@
 #include <limits>
 
 #include "../mock_grid_cell.h"
+#include "../data_generation_utils.h"
 #include "scan_matcher_test_utils.h"
 
 #include "../../../src/core/scan_matchers/bf_multi_res_scan_matcher.h"
@@ -19,7 +20,7 @@ protected: // methods
   BFMRScanMatcherTestBase()
     : ScanMatcherTestBase<MapType>{std::make_shared<SPE>(),
                                    Map_Width, Map_Height, Map_Scale,
-                                   this->to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
+                                   to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
     , bfmrsm{this->spe, SM_Ang_Step, SM_Transl_Step} {
     bfmrsm.set_lookup_ranges(SM_Max_Translation_Error, SM_Max_Translation_Error,
                             SM_Max_Rotation_Error);
