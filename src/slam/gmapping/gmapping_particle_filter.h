@@ -109,7 +109,7 @@ private:
     bool master_survived = prts.end() !=
       std::find_if(prts.begin(), prts.end(), master_pred);
 
-    if (master_survived) {
+    if (!master_survived) {
       _pf.heaviest_particle().mark_master();
     }
   }
