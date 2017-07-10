@@ -5,10 +5,10 @@
 #include <sensor_msgs/LaserScan.h>
 #include <nav_msgs/OccupancyGrid.h>
 
-#include "../core/sensor_data.h"
-#include "../ros/topic_with_transform.h"
-#include "../ros/laser_scan_observer.h"
-#include "../ros/init_utils.h"
+#include "../../core/sensor_data.h"
+#include "../../ros/topic_with_transform.h"
+#include "../../ros/laser_scan_observer.h"
+#include "../../ros/init_utils.h"
 
 #include "gmapping_scan_probability_estimator.h"
 #include "gmapping_particle_filter.h"

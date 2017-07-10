@@ -132,9 +132,9 @@ include_directories(
 ## Declare a C++ executable
 
 add_executable(wg_pr2_bag_adapter src/ros/wg_pr2_bag_adapter.cpp)
-add_executable(gmapping src/gmapping/gmapping.cpp)
-add_executable(tiny_slam src/tiny_slam/tiny_slam.cpp)
-add_executable(viny_slam src/viny_slam/viny_slam.cpp)
+add_executable(gmapping src/slam/gmapping/gmapping.cpp)
+add_executable(tiny_slam src/slam/tiny/tiny_slam.cpp)
+add_executable(viny_slam src/slam/viny/viny_slam.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above

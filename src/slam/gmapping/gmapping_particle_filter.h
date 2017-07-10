@@ -1,5 +1,5 @@
-#ifndef SLAM_CTOR_GMAPPING_PARTICLE_FILTER_H_INCLUDED
-#define SLAM_CTOR_GMAPPING_PARTICLE_FILTER_H_INCLUDED
+#ifndef SLAM_CTOR_GMAPPING_PARTICLE_FILTER_H
+#define SLAM_CTOR_GMAPPING_PARTICLE_FILTER_H
 
 #include <memory>
 #include <vector>
@@ -7,8 +7,8 @@
 #include <iostream>
 #include <iomanip>
 
-#include "../core/world.h"
-#include "../core/particle_filter.h"
+#include "../../core/world.h"
+#include "../../core/particle_filter.h"
 #include "gmapping_world.h"
 
 class GmappingParticleFactory : public ParticleFactory<GmappingWorld> {

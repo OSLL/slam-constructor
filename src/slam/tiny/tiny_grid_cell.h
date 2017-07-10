@@ -1,7 +1,7 @@
-#ifndef __TINY_GRID_CELL_H
-#define __TINY_GRID_CELL_H
+#ifndef SLAM_CTOR_SLAM_TINY_GRID_CELL_H
+#define SLAM_CTOR_SLAM_TINY_GRID_CELL_H
 
-#include "../core/maps/grid_cell.h"
+#include "../../core/maps/grid_cell.h"
 
 //------------------------------------------------------------------------------
 // Base cell

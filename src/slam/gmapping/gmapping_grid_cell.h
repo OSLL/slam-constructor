@@ -1,9 +1,9 @@
-#ifndef __GMAPPING_GRID_CELL_H_INCLUDED
-#define __GMAPPING_GRID_CELL_H_INCLUDED
+#ifndef SLAM_CTOR_SLAM_GMAPPING_GRID_CELL_H
+#define SLAM_CTOR_SLAM_GMAPPING_GRID_CELL_H
 
 #include <memory>
-#include "../core/geometry_utils.h"
-#include "../core/maps/grid_cell.h"
+#include "../../core/geometry_utils.h"
+#include "../../core/maps/grid_cell.h"
 
 class GmappingBaseCell : public GridCell {
 public:

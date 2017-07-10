@@ -1,14 +1,14 @@
-#ifndef SLAM_CTOR_GMAPPING_SCAN_PROBABILITY_ESTIMATOR_H_INCLUDED
-#define SLAM_CTOR_GMAPPING_SCAN_PROBABILITY_ESTIMATOR_H_INCLUDED
+#ifndef SLAM_CTOR_GMAPPING_SCAN_PROBABILITY_ESTIMATOR_H
+#define SLAM_CTOR_GMAPPING_SCAN_PROBABILITY_ESTIMATOR_H
 
 #include <cmath>
 #include <limits>
 #include <memory>
 #include <utility>
 
-#include "../core/geometry_utils.h"
-#include "../core/scan_matchers/grid_scan_matcher.h"
-#include "../core/maps/grid_map.h"
+#include "../../core/geometry_utils.h"
+#include "../../core/scan_matchers/grid_scan_matcher.h"
+#include "../../core/maps/grid_map.h"
 
 #include "gmapping_grid_cell.h"
 

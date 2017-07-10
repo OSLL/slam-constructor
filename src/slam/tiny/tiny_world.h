@@ -1,11 +1,11 @@
-#ifndef SLAM_CTOR_TINYSLAM_TINY_WORLD_H
-#define SLAM_CTOR_TINYSLAM_TINY_WORLD_H
+#ifndef SLAM_CTOR_SLAM_TINY_WORLD_H
+#define SLAM_CTOR_SLAM_TINY_WORLD_H
 
 #include <memory>
 
-#include "../core/laser_scan_grid_world.h"
-#include "../core/maps/plain_grid_map.h"
-#include "../core/maps/grid_cell.h"
+#include "../../core/laser_scan_grid_world.h"
+#include "../../core/maps/plain_grid_map.h"
+#include "../../core/maps/grid_cell.h"
 
 #include "tiny_scan_matcher.h"
 

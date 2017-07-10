@@ -6,12 +6,12 @@
 #include <sensor_msgs/LaserScan.h>
 #include <nav_msgs/OccupancyGrid.h>
 
-#include "../ros/topic_with_transform.h"
-#include "../ros/laser_scan_observer.h"
-#include "../ros/init_utils.h"
+#include "../../ros/topic_with_transform.h"
+#include "../../ros/laser_scan_observer.h"
+#include "../../ros/init_utils.h"
 
-#include "../core/sensor_data.h"
-#include "../core/maps/grid_cell_strategy.h"
+#include "../../core/sensor_data.h"
+#include "../../core/maps/grid_cell_strategy.h"
 
 #include "viny_scan_probability_estimator.h"
 #include "viny_world.h"

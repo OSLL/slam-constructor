@@ -1,16 +1,16 @@
-#ifndef SLAM_CTOR_GMAPPING_WORLD_H_INCLUDED
-#define SLAM_CTOR_GMAPPING_WORLD_H_INCLUDED
+#ifndef SLAM_CTOR_GMAPPING_WORLD_H
+#define SLAM_CTOR_GMAPPING_WORLD_H
 
 #include <memory>
 #include <random>
 #include <cmath>
 
-#include "../core/particle_filter.h"
-#include "../core/laser_scan_grid_world.h"
-#include "../core/maps/grid_cell.h"
-#include "../core/maps/grid_cell_strategy.h"
-#include "../core/maps/lazy_tiled_grid_map.h"
-#include "../core/scan_matchers/hill_climbing_scan_matcher.h"
+#include "../../core/particle_filter.h"
+#include "../../core/laser_scan_grid_world.h"
+#include "../../core/maps/grid_cell.h"
+#include "../../core/maps/grid_cell_strategy.h"
+#include "../../core/maps/lazy_tiled_grid_map.h"
+#include "../../core/scan_matchers/hill_climbing_scan_matcher.h"
 
 #include "gmapping_grid_cell.h"
 

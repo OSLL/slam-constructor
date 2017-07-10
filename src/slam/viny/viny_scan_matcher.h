@@ -1,27 +1,29 @@
-#ifndef SLAM_CTOR_TINYSLAM_TINY_SCAN_MATCHER_H_INCLUDED
-#define SLAM_CTOR_TINYSLAM_TINY_SCAN_MATCHER_H_INCLUDED
+#ifndef SLAM_CTOR_SLAM_VINY_SCAN_MATCHER_H_INCLUDED
+#define SLAM_CTOR_SLAM_VINY_SCAN_MATCHER_H_INCLUDED
 
 #include <random>
 
-#include "../core/scan_matchers/monte_carlo_scan_matcher.h"
+#include "../../core/scan_matchers/monte_carlo_scan_matcher.h"
 
-struct TinySMParams {
+struct VinySMParams {
   const double Sig_XY;
   const double Sig_TH;
   const unsigned Bad_Lmt;
   const unsigned Tot_Lmt;
-  TinySMParams(double sig_xy, double sig_th,
-               unsigned bad_lmt, unsigned tot_lmt)
-    : Sig_XY(sig_xy), Sig_TH(sig_th)
-    , Bad_Lmt(bad_lmt), Tot_Lmt(tot_lmt) {}
+  const unsigned Seed;
+  VinySMParams(double sig_xy, double sig_th, unsigned bad_lmt, unsigned tot_lmt,
+               unsigned seed)
+    : Sig_XY(sig_xy), Sig_TH(sig_th), Bad_Lmt(bad_lmt), Tot_Lmt(tot_lmt)
+    , Seed(seed) {}
 };
 
-class TinyScanMatcher : public MonteCarloScanMatcher {
+class VinyScanMatcher : public MonteCarloScanMatcher {
 public:
-  TinyScanMatcher(SPE prob_estimator, const TinySMParams& params)
+  VinyScanMatcher(SPE prob_estimator, const VinySMParams& params)
     : MonteCarloScanMatcher(prob_estimator, params.Bad_Lmt, params.Tot_Lmt)
     , _sigma_coord(params.Sig_XY), _sigma_angle(params.Sig_TH)
-    , _curr_sigma_coord(_sigma_coord), _curr_sigma_angle(_sigma_angle) {}
+    , _curr_sigma_coord(_sigma_coord), _curr_sigma_angle(_sigma_angle)
+    , _pr_generator(params.Seed) {}
 
   void reset_state() override {
     _curr_sigma_coord = _sigma_coord;
@@ -30,14 +32,12 @@ public:
 
 protected:
   void sample_pose(RobotPose &base_pose) override {
-    std::random_device rd;
-    std::mt19937 gen(rd());
     std::normal_distribution<> d_coord(0.0, _curr_sigma_coord);
     std::normal_distribution<> d_angle(0.0, _curr_sigma_angle);
 
-    base_pose.x += d_coord(gen);
-    base_pose.y += d_coord(gen);
-    base_pose.theta += d_angle(gen);
+    base_pose.x += d_coord(_pr_generator);
+    base_pose.y += d_coord(_pr_generator);
+    base_pose.theta += d_angle(_pr_generator);
   }
 
   unsigned on_estimate_update(unsigned sample_num,
@@ -54,6 +54,7 @@ protected:
 private:
   double _sigma_coord, _sigma_angle;
   double _curr_sigma_coord, _curr_sigma_angle;
+  std::mt19937 _pr_generator;
 };
 
 #endif

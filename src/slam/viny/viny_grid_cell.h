@@ -1,7 +1,7 @@
-#ifndef __VINY_GRID_CELL_H
-#define __VINY_GRID_CELL_H
+#ifndef SLAM_CTOR_SLAM_VINY_GRID_CELL_H
+#define SLAM_CTOR_SLAM_VINY_GRID_CELL_H
 
-#include "../core/maps/grid_cell.h"
+#include "../../core/maps/grid_cell.h"
 #include <ostream>
 
 class BaseTBM {

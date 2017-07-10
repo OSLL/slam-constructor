@@ -1,13 +1,13 @@
-#ifndef SLAM_CTOR_VINYSLAM_VINY_WORLD_H
-#define SLAM_CTOR_VINYSLAM_VINY_WORLD_H
+#ifndef SLAM_CTOR_SLAM_VINY_WORLD_H
+#define SLAM_CTOR_SLAM_VINY_WORLD_H
 
 #include <memory>
 
-#include "../core/world.h"
-#include "../core/sensor_data.h"
-#include "../core/laser_scan_grid_world.h"
-#include "../core/maps/grid_cell_strategy.h"
-#include "../core/maps/plain_grid_map.h"
+#include "../../core/world.h"
+#include "../../core/sensor_data.h"
+#include "../../core/laser_scan_grid_world.h"
+#include "../../core/maps/grid_cell_strategy.h"
+#include "../../core/maps/plain_grid_map.h"
 
 #include "viny_scan_matcher.h"
 
