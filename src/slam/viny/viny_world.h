@@ -13,10 +13,10 @@
 
 struct VinyWorldParams {
   double localized_scan_quality, raw_scan_quality;
-  const VinySMParams Viny_SM_Params;
+  VinySMParams viny_sm_params;
 
-  VinyWorldParams(const VinySMParams& viny_sm_params) :
-    Viny_SM_Params(viny_sm_params) {}
+  VinyWorldParams(const VinySMParams& viny_sm_params)
+    : viny_sm_params(viny_sm_params) {}
 };
 
 class VinyWorld : public LaserScanGridWorld<UnboundedPlainGridMap> {
@@ -31,7 +31,7 @@ public:
     : LaserScanGridWorld(gcs, scan_adder, map_params)
     , _params(params)
     , _scan_matcher{std::make_shared<VinyScanMatcher>(gcs->prob_est(),
-                                                      params.Viny_SM_Params)} {}
+                                                      params.viny_sm_params)} {}
 
   std::shared_ptr<GridScanMatcher> scan_matcher() override {
     return _scan_matcher;

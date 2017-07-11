@@ -6,24 +6,24 @@
 #include "../../core/scan_matchers/monte_carlo_scan_matcher.h"
 
 struct VinySMParams {
-  const double Sig_XY;
-  const double Sig_TH;
-  const unsigned Bad_Lmt;
-  const unsigned Tot_Lmt;
-  const unsigned Seed;
+  double sig_xy;
+  double sig_th;
+  unsigned bad_lmt;
+  unsigned tot_lmt;
+  unsigned seed;
   VinySMParams(double sig_xy, double sig_th, unsigned bad_lmt, unsigned tot_lmt,
                unsigned seed)
-    : Sig_XY(sig_xy), Sig_TH(sig_th), Bad_Lmt(bad_lmt), Tot_Lmt(tot_lmt)
-    , Seed(seed) {}
+    : sig_xy(sig_xy), sig_th(sig_th), bad_lmt(bad_lmt), tot_lmt(tot_lmt)
+    , seed(seed) {}
 };
 
 class VinyScanMatcher : public MonteCarloScanMatcher {
 public:
   VinyScanMatcher(SPE prob_estimator, const VinySMParams& params)
-    : MonteCarloScanMatcher(prob_estimator, params.Bad_Lmt, params.Tot_Lmt)
-    , _sigma_coord(params.Sig_XY), _sigma_angle(params.Sig_TH)
+    : MonteCarloScanMatcher(prob_estimator, params.bad_lmt, params.tot_lmt)
+    , _sigma_coord(params.sig_xy), _sigma_angle(params.sig_th)
     , _curr_sigma_coord(_sigma_coord), _curr_sigma_angle(_sigma_angle)
-    , _pr_generator(params.Seed) {}
+    , _pr_generator(params.seed) {}
 
   void reset_state() override {
     _curr_sigma_coord = _sigma_coord;
