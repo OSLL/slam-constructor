@@ -1,0 +1,43 @@
+<launch>
+  <machine name="local" address="localhost" default="true" />
+
+  <param name="use_sim_time" value="true"/>
+  <arg name="dataset" default="" />
+  <arg name="rate" default="1.0" />
+
+  <node name="vinySlam_plus" pkg="slam_fmwk" type="viny_slam_x"
+        cwd="node" required="true" output="screen">
+    <remap from="laser_scan" to="/base_scan" />
+
+    <param name="slam/particles/number" value="5" />
+    <!-- SLAM Components -->
+    <param name="slam/occupancy_estimator/type" value="const" />
+    <param name="slam/occupancy_estimator/base_occupied/prob" value="0.95" />
+    <param name="slam/occupancy_estimator/base_occupied/qual" value="0.04" />
+    <param name="slam/occupancy_estimator/base_empty/prob" value="0.01" />
+    <param name="slam/occupancy_estimator/base_empty/qual" value="0.003" />
+
+    <!-- Map -->
+    <param name="slam/map/height_in_meters" value="100" />
+    <param name="slam/map/width_in_meters" value="100" />
+    <param name="slam/map/meters_per_cell" value="0.1" />
+
+    <!-- Internal constants -->
+    <param name="ros/skip_exceeding_lsr_vals" value="false" />
+    <param name="vinySlam/hole_width" value="0.3" />  <!-- w < 0 for dynamic -->
+
+    <!-- Monte Carlo Scan Matcher -->
+    <!-- <param name="slam/scmtch/MC/seed" value="666666" /> -->
+    <param name="slam/scmtch/MC/sigma_XY" value="0.2" />
+    <param name="slam/scmtch/MC/sigma_theta" value="0.1" />
+    <param name="slam/scmtch/MC/limit_of_bad_attempts" value="20" />
+    <param name="slam/scmtch/MC/limit_of_total_attempts" value="100" />
+  </node>
+
+  <node name="player" pkg="rosbag" type="play"
+        args="--delay=3 --clock --rate $(arg rate) $(arg path)" />
+
+  <node name="rviz" pkg="rviz" type="rviz" respawn="true"
+        args="-d $(find slam_fmwk)/rviz/debug.rviz" />
+
+</launch>
