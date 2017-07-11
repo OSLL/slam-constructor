@@ -36,8 +36,9 @@ public:
     */
   }
 
-  BaseTBM(double occupied, double empty, double unknown, double conflict) :
-    _occupied(occupied), _empty(empty), _unknown(unknown), _conflict(conflict) {}
+  BaseTBM(double occupied, double empty, double unknown, double conflict)
+    : _occupied(occupied), _empty(empty)
+    , _unknown(unknown), _conflict(conflict) {}
 
   BaseTBM& operator+=(const BaseTBM& rhs) {
     auto result = BaseTBM();
@@ -77,6 +78,10 @@ public:
     BaseTBM combined = that;
     combined += *this;
     return combined.conflict() + d_occ + total_unknown;
+  }
+
+  double normalized_discrepancy(const BaseTBM &that) const {
+    return discrepancy(that) / 3;
   }
 
   explicit operator Occupancy() {
@@ -137,38 +142,41 @@ class VinyDSCell : public GridCell {
 public:
   VinyDSCell(): GridCell{Occupancy{-1, 1}} {}
 
-  virtual std::unique_ptr<GridCell> clone() const {
+  std::unique_ptr<GridCell> clone() const override {
     return std::make_unique<VinyDSCell>(*this);
   }
 
-  virtual void operator+=(const AreaOccupancyObservation &aoo) {
+  void operator+=(const AreaOccupancyObservation &aoo) override {
     if (!aoo.occupancy.is_valid()) { return; }
 
-    belief += aoo;
-    belief.normalize_conflict();
-    _occupancy.prob_occ = ((Occupancy) belief).prob_occ;
+    _belief += aoo;
+    _belief.normalize_conflict();
+    _occupancy.prob_occ = Occupancy(_belief).prob_occ;
   }
 
-  virtual double discrepancy(const AreaOccupancyObservation &aoo) const {
-    return belief.discrepancy(aoo);
+  double discrepancy(const AreaOccupancyObservation &aoo) const override {
+    return _belief.discrepancy(aoo);
   }
 
-  virtual std::vector<char> serialize() const override {
+  std::vector<char> serialize() const override {
     Serializer s(GridCell::serialize());
-    s << belief.occupied() << belief.empty() << belief.unknown() << belief.conflict();
+    s << _belief.occupied() << _belief.empty()
+      << _belief.unknown() << _belief.conflict();
     return s.result();
   }
 
-  virtual size_t deserialize(const std::vector<char>& data, size_t pos = 0) override {
+  std::size_t deserialize(const std::vector<char>& data,
+                          std::size_t pos = 0) override {
     Deserializer d(data, GridCell::deserialize(data, pos));
     double o, e, u, c;
     d >> o >> e >> u >> c;
-    belief = BaseTBM(o, e, u, c);
+    _belief = BaseTBM(o, e, u, c);
     return d.pos();
   }
 
+  const BaseTBM& belief() const { return _belief; }
 private:
-  BaseTBM belief;
+  BaseTBM _belief;
 };
 
 #endif
