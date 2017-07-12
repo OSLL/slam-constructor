@@ -15,6 +15,9 @@
 #include "vinyx_hypothesis.h"
 #include "../viny/viny_grid_cell.h"
 
+#include "../../core/scan_matchers/m3rsm_engine.h"
+#include "../../core/maps/rescalable_caching_grid_map.h"
+
 class VinyXDSCell : public VinyDSCell {
 public:
   std::unique_ptr<GridCell> clone() const override {
@@ -58,7 +61,8 @@ public: // methods
              std::shared_ptr<GridMapScanAdder> scan_adder,
              const GridMapParams &gmp, const VinyWorldParams &vwp,
              unsigned hypoth_nm = 1)
-    : _pf{std::make_shared<VinyHypothesisFactory>(gcs, scan_adder, gmp, vwp),
+    : _gcs{gcs}
+    , _pf{std::make_shared<VinyHypothesisFactory>(gcs, scan_adder, gmp, vwp),
           hypoth_nm} {
     for (auto &p : _pf.particles()) {
       p->sample();
@@ -90,6 +94,7 @@ public: // methods
 protected:
 
   void handle_observation(TransformedLaserScan &obs) override {
+    detect_peaks(obs);
     for (auto &world : _pf.particles()) { world->handle_sensor_data(obs); }
 
     // NB: weights are updated during scan update for performance reasons
@@ -118,7 +123,38 @@ private:
     return true;
   }
 
+  void detect_peaks(const TransformedLaserScan &raw_scan) {
+    //std::cout << "=== Detect Peaks ===" << std::endl;
+    M3RSMEngine engine;
+    engine.set_translation_lookup_range(0.4, 0.4);
+    engine.set_rotation_lookup_range(0.2, 0.05);
+    SafeRescalableMap rescalable_map{map()};
+    engine.add_scan_matching_request(_gcs->prob_est(), pose(),
+                                     raw_scan.scan, rescalable_map, true);
+    double max_prob = -1;
+    unsigned peaks_nm = 0;
+    while (1) {
+      auto best_match = engine.next_best_match(0.4);
+      if (!best_match.is_valid()) {
+        break;
+      }
+      if (best_match.is_finest()) {
+        double p = best_match.prob_upper_bound;
+        if (max_prob == -1) { max_prob = p; }
+        //std::cout << "next prob: " << p << std::endl;
+        if (p < max_prob * 0.97 || p < 0.5) {
+          break;
+        }
+        peaks_nm++;
+        continue;
+      }
+      engine.add_match(Match{M3RSMEngine::Rect{best_match.translation_drift.center()}, best_match});
+    }
+    if (1 < peaks_nm) { std::cout << "PEAKS NM: " << peaks_nm << std::endl; }
+  }
+
 private: // fields
+  std::shared_ptr<GridCellStrategy> _gcs;
   ParticleFilter<VinyXHypothesis> _pf;
   RobotPoseDelta _traversed_since_last_resample;
 };

@@ -29,7 +29,7 @@ protected:
   void handle_observation(TransformedLaserScan &scan) override {
     if (!_scan_is_first) {
       // add "noise" to guess extra cost function peak
-      update_robot_pose(_pose_guess_rv.sample(_rnd_engine));
+      //FIXME: update_robot_pose(_pose_guess_rv.sample(_rnd_engine));
     }
 
     // FIXME: code duplication (viny_world.h)

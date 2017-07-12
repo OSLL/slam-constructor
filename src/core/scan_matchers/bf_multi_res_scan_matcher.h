@@ -5,30 +5,13 @@
 
 #include "grid_scan_matcher.h"
 #include "m3rsm_engine.h"
+#include "../maps/rescalable_caching_grid_map.h"
 #include "../geometry_primitives.h"
 
 class BruteForceMultiResolutionScanMatcher : public GridScanMatcher {
 private: // consts
   static constexpr double _Max_Translation_Error = 1,
                           _Max_Rotation_Error = deg2rad(5);
-private: // types
-
-  // a RAII for const grid map rescaling
-  class SafeRescalableMap {
-  public:
-    SafeRescalableMap(const GridMap &map)
-      : _vanilla_scale{map.scale()}, _map{const_cast<GridMap&>(map)} {}
-    ~SafeRescalableMap() { _map.rescale(_vanilla_scale); }
-    SafeRescalableMap(const SafeRescalableMap&) = delete;
-    SafeRescalableMap& operator=(const SafeRescalableMap&) = delete;
-    SafeRescalableMap(SafeRescalableMap&&) = delete;
-    SafeRescalableMap& operator=(SafeRescalableMap&&) = delete;
-
-    operator GridMap&() { return _map; }
-  private:
-    double _vanilla_scale;
-    GridMap &_map;
-  };
 public:
   BruteForceMultiResolutionScanMatcher(SPE est,
                                        double ang_step = deg2rad(0.1),

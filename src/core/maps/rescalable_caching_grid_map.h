@@ -178,4 +178,21 @@ private:
   mutable std::shared_ptr<MapCache> _map_cache;
 };
 
+// a RAII for const grid map rescaling
+class SafeRescalableMap {
+public:
+ SafeRescalableMap(const GridMap &map)
+   : _vanilla_scale{map.scale()}, _map{const_cast<GridMap&>(map)} {}
+  ~SafeRescalableMap() { _map.rescale(_vanilla_scale); }
+  SafeRescalableMap(const SafeRescalableMap&) = delete;
+  SafeRescalableMap& operator=(const SafeRescalableMap&) = delete;
+  SafeRescalableMap(SafeRescalableMap&&) = delete;
+  SafeRescalableMap& operator=(SafeRescalableMap&&) = delete;
+
+  operator GridMap&() { return _map; }
+private:
+  double _vanilla_scale;
+  GridMap &_map;
+};
+
 #endif // header guard
