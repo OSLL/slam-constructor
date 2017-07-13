@@ -32,18 +32,16 @@ public:
     auto total_weight = double{0};
     auto total_probability = double{0};
 
-    const auto Observation = expected_scan_point_observation();
+    auto observation = expected_scan_point_observation();
     scan.trig_cache->set_theta(pose.theta);
     for (const auto &sp : scan.points()) {
       // FIXME: assumption - sensor pose is in robot's (0,0), dir - 0
-      auto world_point = params.scan_is_prerotated ?
+      observation.obstacle = params.scan_is_prerotated ?
         sp.move_origin(pose.x, pose.y) :
         sp.move_origin(pose.x, pose.y, scan.trig_cache);
-
-      auto sp_prob = world_point_probability(world_point, pose, map,
-                                             Observation, params);
+      auto obs_prob = observation_probability(observation, pose, map, params);
       auto sp_weight = scan_point_weight(sp);
-      total_probability += sp_prob * sp_weight * sp.factor();
+      total_probability += obs_prob * sp_weight * sp.factor();
       total_weight += sp_weight;
     }
     if (total_weight == 0) {
@@ -69,19 +67,25 @@ protected:
     return 1;
   }
 
-  double world_point_probability(const Point2D &wp,
+  /* returns p(observation | pose && map) */
+  double observation_probability(const AreaOccupancyObservation &obs,
                                  const RobotPose &pose, const GridMap &map,
-                                 const AreaOccupancyObservation &obs,
                                  const SPEParams &params) const {
-    auto analysis_area = params.sp_analysis_area.move_center(wp);
+    assert(obs.is_occupied);
+    // an area taken into account around the obstacle.
+    auto analysis_area = params.sp_analysis_area.move_center(obs.obstacle);
+    // a Java-like iterator that holds area ids covered by analysis_area
     auto area_ids = GridRasterizedRectangle{map, analysis_area};
-    double highest_probability = 0;
+    double max_probability = 0;
 
     while (area_ids.has_next()) {
-      double point_prob = 1.0 - map[area_ids.next()].discrepancy(obs);
-      highest_probability = std::max(point_prob, highest_probability);
+      // compute probability of being inside an area (grid cell).
+      // Discrepancy returns a kind of inconsistency between
+      // an observation and area's content.
+      double obs_prob = 1.0 - map[area_ids.next()].discrepancy(obs);
+      max_probability = std::max(obs_prob, max_probability);
     }
-    return highest_probability;
+    return max_probability;
   }
 };
 
