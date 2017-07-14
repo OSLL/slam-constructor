@@ -23,13 +23,6 @@ std::shared_ptr<GridCell> init_cell_prototype(VinyWorldParams &params) {
   return std::make_shared<VinyXDSCell>();
 }
 
-unsigned init_particles_nm() {
-  int particles_nm;
-  ros::param::param<int>("~slam/particles/number", particles_nm, 30);
-  assert(0 < particles_nm && "Particles number must be positive");
-  return particles_nm;
-}
-
 VinyWorldParams init_common_world_params() {
   double sig_XY, sig_T;
   int lim_bad, lim_totl, seed;
@@ -56,7 +49,7 @@ double init_hole_width() {
 }
 
 using ObservT = sensor_msgs::LaserScan;
-using VinySlamXMap = VinyXHypothesis::MapType;
+using VinySlamXMap = VinyXMapT;
 
 // FIXME: viny_slam.cpp code duplication
 int main(int argc, char** argv) {
@@ -70,7 +63,7 @@ int main(int argc, char** argv) {
   auto scan_adder = std::make_shared<WallDistanceBlurringScanAdder>(
     gcs->occupancy_est(), init_hole_width());
   auto slam = std::make_shared<VinyXWorld>(gcs, scan_adder,
-    init_grid_map_params(), world_params, init_particles_nm());
+    world_params, init_grid_map_params());
 
   // connect the slam to a ros-topic based data provider
   ros::NodeHandle nh;

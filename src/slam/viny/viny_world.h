@@ -19,17 +19,18 @@ struct VinyWorldParams {
     : viny_sm_params(viny_sm_params) {}
 };
 
-class VinyWorld : public LaserScanGridWorld<UnboundedPlainGridMap> {
+template <typename MapT = UnboundedPlainGridMap>
+class VinyWorld : public LaserScanGridWorld<MapT> {
 public:
   using Point = DiscretePoint2D;
 public:
 
   VinyWorld(std::shared_ptr<GridCellStrategy> gcs,
-            ScanAdder scan_adder,
+            std::shared_ptr<GridMapScanAdder> scan_adder,
             const VinyWorldParams &params,
             const GridMapParams &map_params)
-    : LaserScanGridWorld(gcs, scan_adder, map_params)
-    , _params(params)
+    : LaserScanGridWorld<MapT>::LaserScanGridWorld{gcs, scan_adder, map_params}
+    , _params{params}
     , _scan_matcher{std::make_shared<VinyScanMatcher>(gcs->prob_est(),
                                                       params.viny_sm_params)} {}
 
@@ -37,18 +38,16 @@ public:
     return _scan_matcher;
   }
 
-protected:
-
   void handle_observation(TransformedLaserScan &scan) override {
     _scan_matcher->reset_state();
 
     RobotPoseDelta pose_delta;
-    _scan_matcher->process_scan(scan, pose(), map(), pose_delta);
-    update_robot_pose(pose_delta);
+    _scan_matcher->process_scan(scan, this->pose(), this->map(), pose_delta);
+    this->update_robot_pose(pose_delta);
 
     scan.quality = pose_delta ? _params.localized_scan_quality :
                                 _params.raw_scan_quality;
-    LaserScanGridWorld::handle_observation(scan);
+    LaserScanGridWorld<MapT>::handle_observation(scan);
   }
 
 private:

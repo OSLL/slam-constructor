@@ -9,7 +9,6 @@
         cwd="node" required="true" output="screen">
     <remap from="laser_scan" to="/base_scan" />
 
-    <param name="slam/particles/number" value="1" />
     <!-- SLAM Components -->
     <param name="slam/occupancy_estimator/type" value="const" />
     <param name="slam/occupancy_estimator/base_occupied/prob" value="0.95" />

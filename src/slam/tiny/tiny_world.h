@@ -35,8 +35,6 @@ public:
     return _scan_matcher;
   }
 
-protected:
-
   void handle_observation(TransformedLaserScan &scan) override {
     _scan_matcher->reset_state();
     RobotPoseDelta pose_delta;

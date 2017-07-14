@@ -49,7 +49,7 @@ double init_hole_width() {
 }
 
 using ObservT = sensor_msgs::LaserScan;
-using VinySlamMap = VinyWorld::MapType;
+using VinySlamMap = VinyWorld<>::MapType;
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "vinySLAM");
@@ -62,7 +62,8 @@ int main(int argc, char** argv) {
     init_cell_prototype(params), prob_est, init_occ_estimator());
   auto scan_adder = std::make_shared<WallDistanceBlurringScanAdder>(
     gcs->occupancy_est(), init_hole_width());
-  auto slam = std::make_shared<VinyWorld>(gcs, scan_adder, params, map_params);
+  auto slam = std::make_shared<VinyWorld<>>(gcs, scan_adder,
+                                            params, map_params);
 
   // connect the slam to a ros-topic based data provider
   ros::NodeHandle nh;
