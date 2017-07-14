@@ -3,9 +3,9 @@
 
 #include <iostream>
 #include <memory>
-#include "math_utils.h"
-#include "random_utils.h"
-#include "geometry_utils.h"
+#include "../math_utils.h"
+#include "../random_utils.h"
+#include "../geometry_utils.h"
 
 class RobotPoseDelta {
 public: // methods

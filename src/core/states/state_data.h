@@ -2,7 +2,7 @@
 #define SLAM_CTOR_CORE_STATE_DATA_H
 
 #include <ostream>
-#include "geometry_utils.h"
+#include "../geometry_utils.h"
 
 struct Occupancy {
   double prob_occ;

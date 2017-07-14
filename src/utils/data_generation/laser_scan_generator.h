@@ -1,12 +1,12 @@
-#ifndef SLAM_CTOR_UTILS_DG_LASER_SCAN_GENERATOR_H_INCLUDED
-#define SLAM_CTOR_UTILS_DG_LASER_SCAN_GENERATOR_H_INCLUDED
+#ifndef SLAM_CTOR_UTILS_DG_LASER_SCAN_GENERATOR_H
+#define SLAM_CTOR_UTILS_DG_LASER_SCAN_GENERATOR_H
 
 #include <memory>
 #include <cmath>
 
 #include "../../core/math_utils.h"
 #include "../../core/maps/grid_map.h"
-#include "../../core/sensor_data.h"
+#include "../../core/states/sensor_data.h"
 #include "../../core/geometry_utils.h"
 
 struct LaserScannerParams {

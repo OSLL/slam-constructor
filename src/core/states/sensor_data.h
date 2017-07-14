@@ -1,5 +1,5 @@
-#ifndef SLAM_CTOR_CORE_SENSOR_DATA_H_INCLUDED
-#define SLAM_CTOR_CORE_SENSOR_DATA_H_INCLUDED
+#ifndef SLAM_CTOR_CORE_SENSOR_DATA_H
+#define SLAM_CTOR_CORE_SENSOR_DATA_H
 
 #include <cassert>
 #include <cmath>
@@ -9,7 +9,7 @@
 
 #include "state_data.h"
 #include "robot_pose.h"
-#include "geometry_utils.h"
+#include "../geometry_utils.h"
 
 struct ScanPoint2D {
 public:

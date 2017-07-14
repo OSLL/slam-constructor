@@ -1,12 +1,12 @@
-#ifndef __INIT_UTILS_H_INCLUDED
-#define __INIT_UTILS_H_INCLUDED
+#ifndef SLAM_CTOR_ROS_INIT_UTILS_H
+#define SLAM_CTOR_ROS_INIT_UTILS_H
 
 #include <string>
 #include <memory>
 
 #include <ros/ros.h>
 
-#include "../core/world.h"
+#include "../core/states/world.h"
 #include "../core/maps/area_occupancy_estimator.h"
 #include "../core/maps/const_occupancy_estimator.h"
 

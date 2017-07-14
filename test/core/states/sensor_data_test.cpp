@@ -2,13 +2,13 @@
 
 #include <functional>
 
-#include "../../src/core/sensor_data.h"
+#include "../../../src/core/states/sensor_data.h"
 
-#include "mock_grid_cell.h"
-#include "../../src/core/maps/plain_grid_map.h"
-#include "../../src/utils/data_generation/map_primitives.h"
-#include "../../src/utils/data_generation/grid_map_patcher.h"
-#include "../../src/utils/data_generation/laser_scan_generator.h"
+#include "../mock_grid_cell.h"
+#include "../../../src/core/maps/plain_grid_map.h"
+#include "../../../src/utils/data_generation/map_primitives.h"
+#include "../../../src/utils/data_generation/grid_map_patcher.h"
+#include "../../../src/utils/data_generation/laser_scan_generator.h"
 
 
 //----------------------------------------------------------------------------//

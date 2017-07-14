@@ -1,10 +1,10 @@
-#ifndef __OCCUPANCY_GRID_PUBLISHER_H_INCLUDED
-#define __OCCUPANCY_GRID_PUBLISHER_H_INCLUDED
+#ifndef SLAM_CTOR_CORE_OCCUPANCY_GRID_PUBLISHER_H
+#define SLAM_CTOR_CORE_OCCUPANCY_GRID_PUBLISHER_H
 
 #include <ros/ros.h>
 #include <nav_msgs/OccupancyGrid.h>
 
-#include "../core/state_data.h"
+#include "../core/states/state_data.h"
 #include "../core/maps/grid_map.h"
 
 template <typename GridMapType>

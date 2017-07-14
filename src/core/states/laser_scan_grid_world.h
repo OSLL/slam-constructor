@@ -6,9 +6,9 @@
 
 #include "sensor_data.h"
 #include "world.h"
-#include "maps/grid_cell_strategy.h"
-#include "maps/grid_map.h"
-#include "maps/grid_map_scan_adders.h"
+#include "../maps/grid_cell_strategy.h"
+#include "../maps/grid_map.h"
+#include "../maps/grid_map_scan_adders.h"
 
 template <typename Map>
 class LaserScanGridWorld : public World<TransformedLaserScan, Map> {

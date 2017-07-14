@@ -7,7 +7,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include "../../core/world.h"
+#include "../../core/states/world.h"
 #include "../../core/particle_filter.h"
 #include "gmapping_world.h"
 

@@ -6,7 +6,7 @@
 #include <cmath>
 
 #include "../../core/particle_filter.h"
-#include "../../core/laser_scan_grid_world.h"
+#include "../../core/states/laser_scan_grid_world.h"
 #include "../../core/maps/grid_cell.h"
 #include "../../core/maps/grid_cell_strategy.h"
 #include "../../core/maps/lazy_tiled_grid_map.h"

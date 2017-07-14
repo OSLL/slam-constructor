@@ -220,8 +220,10 @@ catkin_add_gtest(geom_utils-test
                  test/core/geometry_utils_test.cpp)
 catkin_add_gtest(geom_dprimitives-test
                  test/core/geometry_discrete_primitives_test.cpp)
+
+# Core states
 catkin_add_gtest(sensor_data-test
-                 test/core/sensor_data_test.cpp)
+                 test/core/states/sensor_data_test.cpp)
 
 # Scan Matchers
 catkin_add_gtest(hill_climbing_sm-smoke_test

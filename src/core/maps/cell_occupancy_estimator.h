@@ -1,8 +1,8 @@
-#ifndef _CELL_OCCUPANCY_ESTIMATOR_H
-#define _CELL_OCCUPANCY_ESTIMATOR_H
+#ifndef SLAM_CTOR_CORE_CELL_OCCUPANCY_ESTIMATOR_H
+#define SLAM_CTOR_CORE_CELL_OCCUPANCY_ESTIMATOR_H
 
 #include "../geometry_utils.h"
-#include "../state_data.h" // the Occupancy class
+#include "../states/state_data.h" // the Occupancy class
 
 class CellOccupancyEstimator {
 public:

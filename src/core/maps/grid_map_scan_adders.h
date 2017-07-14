@@ -6,8 +6,8 @@
 
 #include "grid_map.h"
 #include "cell_occupancy_estimator.h"
-#include "../sensor_data.h"
-#include "../world.h"
+#include "../states/sensor_data.h"
+#include "../states/world.h"
 
 class GridMapScanAdder {
 public:

@@ -1,5 +1,5 @@
-#ifndef __POSE_CORRECTION_TF_PUBLISHER_H_INCLUDED
-#define __POSE_CORRECTION_TF_PUBLISHER_H_INCLUDED
+#ifndef SLAM_CTOR_CORE_POSE_CORRECTION_TF_PUBLISHER_H
+#define SLAM_CTOR_CORE_POSE_CORRECTION_TF_PUBLISHER_H
 
 #include <thread>
 #include <mutex>
@@ -8,7 +8,7 @@
 #include <tf/transform_broadcaster.h>
 
 #include "topic_with_transform.h"
-#include "../core/world.h"
+#include "../core/states/world.h"
 
 template <typename ObservationType>
 class PoseCorrectionTfPublisher : public TopicObserver<ObservationType>,

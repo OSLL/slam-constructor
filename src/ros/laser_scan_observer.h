@@ -8,10 +8,10 @@
 #include <cassert>
 #include <iostream>
 
-#include "../core/state_data.h"
-#include "../core/robot_pose.h"
-#include "../core/world.h"
-#include "../core/sensor_data.h"
+#include "../core/states/state_data.h"
+#include "../core/states/robot_pose.h"
+#include "../core/states/world.h"
+#include "../core/states/sensor_data.h"
 #include "topic_with_transform.h"
 
 class LaserScanObserver : public TopicObserver<sensor_msgs::LaserScan> {

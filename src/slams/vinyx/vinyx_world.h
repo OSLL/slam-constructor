@@ -11,7 +11,7 @@
 
 #include <vector>
 #include <memory>
-#include "../../core/world.h"
+#include "../../core/states/world.h"
 
 #include "../viny/viny_world.h"
 #include "../viny/viny_grid_cell.h"

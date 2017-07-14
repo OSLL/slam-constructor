@@ -1,10 +1,10 @@
-#ifndef __SLAM_CTOR_ROBOT_POSE_TF_PUBLISHER_H_INCLUDED
-#define __SLAM_CTOR_ROBOT_POSE_TF_PUBLISHER_H_INCLUDED
+#ifndef SLAM_CTOR_CORE_SLAM_CTOR_ROBOT_POSE_TF_PUBLISHER_H
+#define SLAM_CTOR_CORE_SLAM_CTOR_ROBOT_POSE_TF_PUBLISHER_H
 
 #include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
 
-#include "../core/world.h"
+#include "../core/states/world.h"
 
 class RobotPoseTfPublisher : public WorldPoseObserver {
 public: //methods

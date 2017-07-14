@@ -3,9 +3,9 @@
 
 #include <memory>
 
-#include "../../core/world.h"
-#include "../../core/sensor_data.h"
-#include "../../core/laser_scan_grid_world.h"
+#include "../../core/states/world.h"
+#include "../../core/states/sensor_data.h"
+#include "../../core/states/laser_scan_grid_world.h"
 #include "../../core/maps/grid_cell_strategy.h"
 #include "../../core/maps/plain_grid_map.h"
 

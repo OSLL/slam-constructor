@@ -1,14 +1,14 @@
-#ifndef SLAM_CTOR_CORE_GRID_SCAN_MATCHER_H_INCLUDED
-#define SLAM_CTOR_CORE_GRID_SCAN_MATCHER_H_INCLUDED
+#ifndef SLAM_CTOR_CORE_GRID_SCAN_MATCHER_H
+#define SLAM_CTOR_CORE_GRID_SCAN_MATCHER_H
 
 #include <vector>
 #include <memory>
 #include <algorithm>
 #include <limits>
 
-#include "../state_data.h"
-#include "../sensor_data.h"
-#include "../robot_pose.h"
+#include "../states/state_data.h"
+#include "../states/sensor_data.h"
+#include "../states/robot_pose.h"
 #include "../maps/grid_map.h"
 
 class GridScanMatcherObserver {

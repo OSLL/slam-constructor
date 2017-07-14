@@ -9,7 +9,6 @@
 #include "../../ros/laser_scan_observer.h"
 #include "../../ros/init_utils.h"
 
-#include "../../core/sensor_data.h"
 #include "../../core/maps/grid_cell_strategy.h"
 #include "../../core/scan_matchers/weighted_mean_discrepancy_spe.h"
 

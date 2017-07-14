@@ -3,7 +3,7 @@
 #include "../../core/mock_grid_cell.h"
 
 #include "../../../src/core/math_utils.h"
-#include "../../../src/core/robot_pose.h"
+#include "../../../src/core/states/robot_pose.h"
 #include "../../../src/core/maps/plain_grid_map.h"
 #include "../../../src/utils/data_generation/map_primitives.h"
 #include "../../../src/utils/data_generation/grid_map_patcher.h"

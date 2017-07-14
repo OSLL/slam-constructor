@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include "../../core/laser_scan_grid_world.h"
+#include "../../core/states/laser_scan_grid_world.h"
 #include "../../core/maps/plain_grid_map.h"
 #include "../../core/maps/grid_cell.h"
 
