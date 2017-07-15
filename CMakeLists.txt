@@ -218,6 +218,8 @@ catkin_add_gtest(rescalable_caching_grid_map-test
 # Core common
 catkin_add_gtest(geom_utils-test
                  test/core/geometry_utils_test.cpp)
+catkin_add_gtest(lwrectangle-test
+                 test/core/light_weight_rectangle_test.cpp)
 catkin_add_gtest(geom_dprimitives-test
                  test/core/geometry_discrete_primitives_test.cpp)
 

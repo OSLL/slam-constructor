@@ -182,6 +182,7 @@ public:
 
   double vside_len() const { return top() - bot(); }
   double hside_len() const { return right() - left(); }
+  bool is_square() const { return vside_len() == hside_len(); }
   double side() const { return vside_len(); }
   double area() const { return vside_len() * hside_len(); }
   Point2D center() const {
@@ -216,7 +217,7 @@ public:
     };
   }
 
-  auto split_horiz() const {
+  auto split_horz() const {
     auto c = center();
     return std::vector<LVRect>{
       LVRect{bot(), top(), left(),     c.x},
@@ -230,8 +231,66 @@ public:
       LVRect{ bot(),   c.y, left(),     c.x}, // left-bot
       LVRect{   c.y, top(), left(),     c.x}, // left-top
       LVRect{ bot(),   c.y,    c.x, right()}, // right-bot
-      LVRect{   c.y, top(),    c.x, right()} // right-top
+      LVRect{   c.y, top(),    c.x, right()}  // right-top
     };
+  }
+
+  bool contains(const Point2D &p) const { return contains(p.x, p.y); }
+
+  bool contains(double x, double y) const {
+    return are_ordered(left(), x, right()) && are_ordered(bot(), y, top());
+  }
+
+  auto intersect(const LightWeightRectangle &that) const {
+    return intersect_internal(that, false);
+  }
+
+  auto overlap(const LightWeightRectangle &that) const {
+    return intersect(that).area() / area();
+  }
+
+private:
+
+  LightWeightRectangle intersect_internal(const LightWeightRectangle &that,
+                                          bool reversed = false) const {
+    // NB: a naive implementation; straightforward and correct (I hope so).
+    // IDEA: shrink -this- to intersection rectangle.
+
+    // FIXME: @see unit tests
+    unsigned contained_corners_nm = 0;
+    auto cleft = left(), cright = right(), ctop = top(), cbot = bot();
+
+    #define PROCESS_CORNER(horz_id, vert_id)                    \
+      if (contains(that.horz_id(), that.vert_id())) {           \
+        ++contained_corners_nm;                                 \
+        c##horz_id = that.horz_id();                            \
+        c##vert_id = that.vert_id();                            \
+      }
+
+    PROCESS_CORNER(left, bot);
+    PROCESS_CORNER(right, bot);
+    PROCESS_CORNER(left, top);
+    PROCESS_CORNER(right, top);
+
+    #undef PROCESS_CORNER
+
+    // handle corner cases based on a number of contained corners (pun intended)
+    switch (contained_corners_nm) {
+    case 0:
+      /*
+       * Either doesn't overlap or the overlap must be detected
+       * by this-in-that corners analysis (reversed).
+       */
+      // FIXME: awkward stuff
+      return reversed ? LightWeightRectangle{}
+                      : that.intersect_internal(*this, true);
+    case 1: case 2: case 4:
+      break;
+    case 3: default:
+      assert(0 && "Unexpected inclusions number");
+    }
+
+    return LightWeightRectangle{cbot, ctop, cleft, cright};
   }
 
 private: // fields
@@ -276,9 +335,6 @@ public: // methods
   Rectangle& operator=(Rectangle &&rhs) = default;
 
   /* Inclusion predicates */
-  bool contains(const Point2D &p) const {
-    return are_ordered(bot(), p.y, top()) && are_ordered(left(), p.x, right());
-  }
 
   // NB: segment is not necessary coincide with an edge of the rectangle
   bool has_on_edge_line(const Segment2D &s) const {

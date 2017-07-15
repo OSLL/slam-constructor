@@ -7,27 +7,6 @@
 
 #include "../../../src/core/maps/regular_squares_grid.h"
 
-class Directions {
-private:
-  constexpr static int Left_Id  = 1 << 0;
-  constexpr static int Right_Id = 1 << 1;
-  constexpr static int Up_Id    = 1 << 2;
-  constexpr static int Down_Id  = 1 << 3;
-public:
-  Directions& set_left()  { _data |= Left_Id; return *this; }
-  Directions& set_right() { _data |= Right_Id; return *this; }
-  Directions& set_up()    { _data |= Up_Id; return *this; }
-  Directions& set_down()  { _data |= Down_Id; return *this; }
-
-  bool left() const  { return _data & Left_Id; }
-  bool right() const { return _data & Right_Id; }
-  bool up() const    { return _data & Up_Id; }
-  bool down() const  { return _data & Down_Id; }
-
-private:
-  int _data = 0;
-};
-
 //============================================================================//
 //===                                 Tests                                ===//
 //============================================================================//

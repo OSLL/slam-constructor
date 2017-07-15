@@ -1,27 +1,7 @@
 #include <gtest/gtest.h>
 
+#include "../directions.h"
 #include "../../../src/core/maps/grid_rasterization.h"
-
-class Directions {
-private:
-  constexpr static int Left_Id  = 1 << 0;
-  constexpr static int Right_Id = 1 << 1;
-  constexpr static int Up_Id    = 1 << 2;
-  constexpr static int Down_Id  = 1 << 3;
-public:
-  Directions& set_left()  { _data |= Left_Id; return *this; }
-  Directions& set_right() { _data |= Right_Id; return *this; }
-  Directions& set_up()    { _data |= Up_Id; return *this; }
-  Directions& set_down()  { _data |= Down_Id; return *this; }
-
-  bool left() const  { return _data & Left_Id; }
-  bool right() const { return _data & Right_Id; }
-  bool up() const    { return _data & Up_Id; }
-  bool down() const  { return _data & Down_Id; }
-
-private:
-  int _data = 0;
-};
 
 //============================================================================//
 //===                                 Tests                                ===//
@@ -100,12 +80,12 @@ protected: // methods
           right += Half_Cell_Len;
           expected_d_x_end = 1;
         }
-        if (dirs.down()) {
+        if (dirs.bot()) {
           area_offset.y -= Quat_Cell_Len;
           bot += Half_Cell_Len;
           expected_d_y_start = -1;
         }
-        if (dirs.up()) {
+        if (dirs.top()) {
           area_offset.y += Quat_Cell_Len;
           top += Half_Cell_Len;
           expected_d_y_end = 1;
@@ -160,14 +140,14 @@ protected: // methods
         // generate expected
         auto left = Cell_Len, right = Cell_Len, top = Cell_Len, bot = Cell_Len;
         if (dirs.left())  { left  += Half_Cell_Len; }
-        if (dirs.down())   { bot   += Half_Cell_Len; }
+        if (dirs.bot())   { bot   += Half_Cell_Len; }
 
         if (dirs.right()) {
           ++d_x_limit;
           right += Half_Cell_Len;
         }
 
-        if (dirs.up()) {
+        if (dirs.top()) {
           ++d_y_limit;
           top += Half_Cell_Len;
         }
@@ -253,52 +233,52 @@ TEST_F(RectangleGridRasterizationTest, areaExceedsCellRightLeft) {
   test_area_exceeding(Directions{}.set_right().set_left());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaExceedsCellUp) {
-  test_area_exceeding(Directions{}.set_up());
+TEST_F(RectangleGridRasterizationTest, areaExceedsCellTop) {
+  test_area_exceeding(Directions{}.set_top());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaExceedsCellUpLeft) {
-  test_area_exceeding(Directions{}.set_up().set_left());
+TEST_F(RectangleGridRasterizationTest, areaExceedsCellTopLeft) {
+  test_area_exceeding(Directions{}.set_top().set_left());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaExceedsCellUpRight) {
-  test_area_exceeding(Directions{}.set_up().set_right());
+TEST_F(RectangleGridRasterizationTest, areaExceedsCellTopRight) {
+  test_area_exceeding(Directions{}.set_top().set_right());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaExceedsCellUpRightLeft) {
-  test_area_exceeding(Directions{}.set_up().set_right().set_left());
+TEST_F(RectangleGridRasterizationTest, areaExceedsCellTopRightLeft) {
+  test_area_exceeding(Directions{}.set_top().set_right().set_left());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaExceedsCellDown) {
-  test_area_exceeding(Directions{}.set_down());
+TEST_F(RectangleGridRasterizationTest, areaExceedsCellBot) {
+  test_area_exceeding(Directions{}.set_bot());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaExceedsCellDownLeft) {
-  test_area_exceeding(Directions{}.set_down().set_left());
+TEST_F(RectangleGridRasterizationTest, areaExceedsCellBotLeft) {
+  test_area_exceeding(Directions{}.set_bot().set_left());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaExceedsCellDownRight) {
-  test_area_exceeding(Directions{}.set_down().set_right());
+TEST_F(RectangleGridRasterizationTest, areaExceedsCellBotRight) {
+  test_area_exceeding(Directions{}.set_bot().set_right());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaExceedsCellDownRightLeft) {
-  test_area_exceeding(Directions{}.set_down().set_right().set_left());
+TEST_F(RectangleGridRasterizationTest, areaExceedsCellBotRightLeft) {
+  test_area_exceeding(Directions{}.set_bot().set_right().set_left());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaExceedsCellDownUp) {
-  test_area_exceeding(Directions{}.set_down().set_up());
+TEST_F(RectangleGridRasterizationTest, areaExceedsCellBotTop) {
+  test_area_exceeding(Directions{}.set_bot().set_top());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaExceedsCellDownUpLeft) {
-  test_area_exceeding(Directions{}.set_down().set_up().set_left());
+TEST_F(RectangleGridRasterizationTest, areaExceedsCellBotTopLeft) {
+  test_area_exceeding(Directions{}.set_bot().set_top().set_left());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaExceedsCellDownUpRight) {
-  test_area_exceeding(Directions{}.set_down().set_up().set_right());
+TEST_F(RectangleGridRasterizationTest, areaExceedsCellBotTopRight) {
+  test_area_exceeding(Directions{}.set_bot().set_top().set_right());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaExceedsCellDownUpRightLeft) {
-  test_area_exceeding(Directions{}.set_down().set_up().set_right().set_left());
+TEST_F(RectangleGridRasterizationTest, areaExceedsCellBotTopRightLeft) {
+  test_area_exceeding(Directions{}.set_bot().set_top().set_right().set_left());
 }
 
 //----------------------------------------------------------------------------//
@@ -321,52 +301,52 @@ TEST_F(RectangleGridRasterizationTest, areaAlignesRightLeft) {
   test_area_alignement(Directions{}.set_right().set_left());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaAlignesUp) {
-  test_area_alignement(Directions{}.set_up());
+TEST_F(RectangleGridRasterizationTest, areaAlignesTop) {
+  test_area_alignement(Directions{}.set_top());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaAlignesUpLeft) {
-  test_area_alignement(Directions{}.set_up().set_left());
+TEST_F(RectangleGridRasterizationTest, areaAlignesTopLeft) {
+  test_area_alignement(Directions{}.set_top().set_left());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaAlignesUpRight) {
-  test_area_alignement(Directions{}.set_up().set_right());
+TEST_F(RectangleGridRasterizationTest, areaAlignesTopRight) {
+  test_area_alignement(Directions{}.set_top().set_right());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaAlignesUpRightLeft) {
-  test_area_alignement(Directions{}.set_up().set_right().set_left());
+TEST_F(RectangleGridRasterizationTest, areaAlignesTopRightLeft) {
+  test_area_alignement(Directions{}.set_top().set_right().set_left());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaAlignesDown) {
-  test_area_alignement(Directions{}.set_down());
+TEST_F(RectangleGridRasterizationTest, areaAlignesBot) {
+  test_area_alignement(Directions{}.set_bot());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaAlignesDownLeft) {
-  test_area_alignement(Directions{}.set_down().set_left());
+TEST_F(RectangleGridRasterizationTest, areaAlignesBotLeft) {
+  test_area_alignement(Directions{}.set_bot().set_left());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaAlignesDownRight) {
-  test_area_alignement(Directions{}.set_down().set_right());
+TEST_F(RectangleGridRasterizationTest, areaAlignesBotRight) {
+  test_area_alignement(Directions{}.set_bot().set_right());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaAlignesDownRightLeft) {
-  test_area_alignement(Directions{}.set_down().set_right().set_left());
+TEST_F(RectangleGridRasterizationTest, areaAlignesBotRightLeft) {
+  test_area_alignement(Directions{}.set_bot().set_right().set_left());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaAlignesDownUp) {
-  test_area_alignement(Directions{}.set_down().set_up());
+TEST_F(RectangleGridRasterizationTest, areaAlignesBotTop) {
+  test_area_alignement(Directions{}.set_bot().set_top());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaAlignesDownUpLeft) {
-  test_area_alignement(Directions{}.set_down().set_up().set_left());
+TEST_F(RectangleGridRasterizationTest, areaAlignesBotTopLeft) {
+  test_area_alignement(Directions{}.set_bot().set_top().set_left());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaAlignesDownUpRight) {
-  test_area_alignement(Directions{}.set_down().set_up().set_right());
+TEST_F(RectangleGridRasterizationTest, areaAlignesBotTopRight) {
+  test_area_alignement(Directions{}.set_bot().set_top().set_right());
 }
 
-TEST_F(RectangleGridRasterizationTest, areaAlignesDownUpRightLeft) {
-  test_area_alignement(Directions{}.set_down().set_up().set_right().set_left());
+TEST_F(RectangleGridRasterizationTest, areaAlignesBotTopRightLeft) {
+  test_area_alignement(Directions{}.set_bot().set_top().set_right().set_left());
 }
 
 //----------------------------------------------------------------------------//

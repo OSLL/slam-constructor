@@ -221,7 +221,7 @@ private:
     if (is_horz && is_vert) {
       finer_drifts = coarse_drift.split4_evenly();
     } else if (is_horz) {
-      finer_drifts = coarse_drift.split_horiz();
+      finer_drifts = coarse_drift.split_horz();
     } else if (is_vert) {
       finer_drifts = coarse_drift.split_vert();
     }
