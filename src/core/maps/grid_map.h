@@ -1,8 +1,9 @@
-#ifndef SLAM_CTOR_CORE_GRID_MAP_H_INCLUDED
-#define SLAM_CTOR_CORE_GRID_MAP_H_INCLUDED
+#ifndef SLAM_CTOR_CORE_GRID_MAP_H
+#define SLAM_CTOR_CORE_GRID_MAP_H
 
 #include <memory>
 
+#include "occupancy_map.h"
 #include "regular_squares_grid.h"
 #include "grid_cell.h"
 
@@ -18,7 +19,8 @@ struct MapValues {
   static constexpr GridMapParams gmp{width, height, meters_per_cell};
 };
 
-class GridMap : public RegularSquaresGrid {
+class GridMap : public OccupancyMap<RegularSquaresGrid::Coord, double>
+              , public RegularSquaresGrid {
 public:
   GridMap(std::shared_ptr<GridCell> prototype,
           const GridMapParams& params = MapValues::gmp)
@@ -30,16 +32,24 @@ public:
     return _cell_prototype->clone();
   }
 
+  /* == OccupancyMap API == */
+
   // GridCell access
   // NB: use update/reset to modify cells instead of operator[]
   //     to prevent proxies usage in descendants that are interested in
   //     modifications.
-  virtual void update(const Coord &area_id,
-                      const AreaOccupancyObservation &aoo) {
+  void update(const Coord &area_id,
+              const AreaOccupancyObservation &aoo) override {
     auto const_this = static_cast<const decltype(this)>(this);
     auto &area = const_cast<GridCell&>((*const_this)[area_id]);
     area += aoo;
   }
+
+  double occupancy(const Coord &area_id) const override {
+    return (*this)[area_id].occupancy().prob_occ;
+  }
+
+  /* == Own API == */
 
   virtual void reset(const Coord &area_id, const GridCell &new_area) {
     auto const_this = static_cast<const decltype(this)>(this);

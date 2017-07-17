@@ -11,6 +11,7 @@
 // WA: GridRasterizedRectangle{grid, grid.world_cell_bounds(cell), false}
 //          == { cell }
 class GridRasterizedRectangle {
+  // TODO: make iterable
 public:
   /* IDEA:
    *

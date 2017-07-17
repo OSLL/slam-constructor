@@ -189,6 +189,14 @@ public:
     return {left() + hside_len() / 2, bot() + vside_len() / 2};
   }
 
+  bool is_line() const { return (vside_len() == 0) ^ (hside_len() == 0); }
+  bool is_point() const { return (vside_len() == 0) && (hside_len() == 0); }
+
+  bool operator==(const LightWeightRectangle &rhs) const {
+    return are_equal(top(), rhs.top()) && are_equal(bot(), rhs.bot()) &&
+           are_equal(left(), rhs.left()) && are_equal(right(), rhs.right());
+  }
+
   auto corners() const {
     return std::vector<Point2D>{{left(), bot()}, {left(), top()},
                                 {right(), bot()}, {right(), top()}};
@@ -246,7 +254,15 @@ public:
   }
 
   auto overlap(const LightWeightRectangle &that) const {
-    return intersect(that).area() / area();
+    if (area()) {
+      return intersect(that).area() / area();
+    }
+    if (that.area()) {
+      return that.contains(left(), bot()) ? 1.0 : 0.0;
+    }
+    // FIXME: the assert below, see unit tests.
+    assert(is_point() && that.is_point() && "TODO: support lwr-lines");
+    return *this == that ? 1.0 : 0.0;
   }
 
 private:
@@ -296,14 +312,6 @@ private:
 private: // fields
   double _bot, _top, _left, _right;
 };
-
-inline bool operator==(const LightWeightRectangle &lhs,
-                       const LightWeightRectangle &rhs) {
-  return are_equal(lhs.top(), rhs.top()) &&
-         are_equal(lhs.bot(), rhs.bot()) &&
-         are_equal(lhs.left(), rhs.left()) &&
-         are_equal(lhs.right(), rhs.right());
-}
 
 inline std::ostream &operator<<(std::ostream &stream,
                                 const LightWeightRectangle &r) {

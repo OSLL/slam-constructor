@@ -39,4 +39,11 @@ inline std::ostream &operator<<(std::ostream &stream, const Occupancy &occ) {
   return stream << "{" << occ.prob_occ << ", " << occ.estimation_quality << "}";
 }
 
+struct AreaOccupancyObservation {
+  bool is_occupied;
+  Occupancy occupancy;
+  Point2D obstacle;
+  double quality;
+};
+
 #endif

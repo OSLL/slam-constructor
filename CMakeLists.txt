@@ -227,7 +227,9 @@ catkin_add_gtest(geom_dprimitives-test
 catkin_add_gtest(sensor_data-test
                  test/core/states/sensor_data_test.cpp)
 
-# Scan Matchers
+# Scan Matching
+catkin_add_gtest(occupancy_observation_probability-test
+  test/core/scan_matchers/occupancy_observation_probability_test.cpp)
 catkin_add_gtest(hill_climbing_sm-smoke_test
                  test/core/scan_matchers/hill_climbing_sm_smoke_test.cpp)
 catkin_add_gtest(bfmrsm-smoke_test

@@ -179,11 +179,4 @@ struct TransformedLaserScan {
   double quality; // 0 - low, 1 - fine
 };
 
-struct AreaOccupancyObservation {
-  bool is_occupied;
-  Occupancy occupancy;
-  Point2D obstacle;
-  double quality;
-};
-
 #endif

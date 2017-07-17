@@ -7,7 +7,7 @@
 /* LightWeightRectangle.intersection/overlap                                  */
 
 class LWRIntersectionOverlapTest : public ::testing::Test {
-private:
+protected:
   using Rect = LightWeightRectangle;
 protected:
   static constexpr auto Base_Outer_Overlap = 1.0 / 9;
@@ -234,6 +234,54 @@ TEST_F(LWRIntersectionOverlapTest, properInclusionTBRLSideAligned) {
   test_proper_inclusion(Directions{}.set_bot().set_right().set_left().set_top(),
                         9*Base_Outer_Overlap);
 }
+
+//------------------------------------------------------------------------------
+// Degenerate rectangles: point/line-like rectangles
+
+// point-rects
+
+TEST_F(LWRIntersectionOverlapTest, pointRectInsidePointRect) {
+  auto pnt_rect1 = Rect{0, 0, 0.5, 0.5}, pnt_rect2 = pnt_rect1;
+  check_intersection(pnt_rect1, pnt_rect2, pnt_rect1, 1.0);
+}
+
+TEST_F(LWRIntersectionOverlapTest, pointRectOutsidePointRect) {
+  auto pnt_rect1 = Rect{0, 0, 0, 0}, pnt_rect2 = Rect{0, 0, 1, 1};
+  check_intersection(pnt_rect1, pnt_rect2, {}, 0);
+  check_intersection(pnt_rect2, pnt_rect1, {}, 0);
+}
+
+TEST_F(LWRIntersectionOverlapTest, pointRectangleInsidePlainRectangle) {
+  auto pnt_rect = Rect{0.5, 0.5, 0.5, 0.5}, rect = Rect{0, 1, 0, 1};
+  check_intersection(pnt_rect, rect, pnt_rect, 1);
+  check_intersection(rect, pnt_rect, pnt_rect, 0);
+}
+
+TEST_F(LWRIntersectionOverlapTest, pointRectangleOutsidePlainRectangle) {
+  auto pnt_rect = Rect{2, 2, 2, 2}, rect = Rect{0, 1, 0, 1};
+  check_intersection(pnt_rect, rect, {}, 0);
+  check_intersection(rect, pnt_rect, {}, 0);
+}
+
+// line-rects
+
+/* FIXME: broken test
+TEST_F(LWRIntersectionOverlapTest, pointRectInsideLineRect) {
+  auto pnt_rect = Rect{0, 0, 0.5, 0.5}, line_rect = Rect{0, 0, 0, 1};
+  check_intersection(pnt_rect, line_rect, pnt_rect, 1.0);
+  check_intersection(line_rect, pnt_rect, pnt_rect, 1.0);
+}
+*/
+
+/* FIXME: broken test
+TEST_F(LWRIntersectionOverlapTest, pointRectOutsideLineRect) {
+  auto pnt_rect = Rect{0, 0, 0, 0}, line_rect = Rect{0, 0, 1, 2};
+  check_intersection(pnt_rect, line_rect, {}, 1.0);
+  check_intersection(line_rect, pnt_rect, {}, 1.0);
+}
+*/
+
+// TODO: add line-line-in, ll-out, l-non_emty-in, l-non_empty-out
 
 //------------------------------------------------------------------------------
 // Misc

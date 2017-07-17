@@ -9,6 +9,7 @@
 #include "../states/state_data.h"
 #include "../states/sensor_data.h"
 #include "../states/robot_pose.h"
+#include "../maps/occupancy_map.h"
 #include "../maps/grid_map.h"
 
 class GridScanMatcherObserver {
@@ -25,6 +26,15 @@ public:
   virtual void on_matching_end(const RobotPose &,   /*delta*/
                                const LaserScan2D &, /* applied scan */
                                double) {};          /*best_score*/
+};
+
+/* Estimates p(observation | map & area) */
+class OccupancyObservationProbabilityEstimator {
+public:
+  // TODO: [API Clean Up] GridMap -> OccupancyMap
+  virtual double probability(const AreaOccupancyObservation &aoo,
+                             const LightWeightRectangle &area,
+                             const GridMap &map) = 0;
 };
 
 /* Client (e.g. a scan matcher) code example:
