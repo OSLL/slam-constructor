@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
   // init viny slam
   VinyWorldParams params = init_common_world_params();
   GridMapParams map_params = init_grid_map_params();
-  auto prob_est = std::make_shared<VinyScanProbabilityEstimator>();
+  auto prob_est = std::make_shared<VinyScanProbabilityEstimator>(init_oope());
   auto gcs = std::make_shared<GridCellStrategy>(
     init_cell_prototype(params), prob_est, init_occ_estimator());
   auto scan_adder = std::make_shared<WallDistanceBlurringScanAdder>(

@@ -7,6 +7,8 @@
 
 class WeightedMeanDiscrepancySPEstimator : public ScanProbabilityEstimator {
 public:
+  WeightedMeanDiscrepancySPEstimator(OOPE oope)
+    : ScanProbabilityEstimator{oope} {}
 
   LaserScan2D filter_scan(const LaserScan2D &raw_scan, const RobotPose &pose,
                           const GridMap &map) override {
@@ -36,12 +38,22 @@ public:
     scan.trig_cache->set_theta(pose.theta);
     for (const auto &sp : scan.points()) {
       // FIXME: assumption - sensor pose is in robot's (0,0), dir - 0
+
+      // prepare obstacle-based AreaOccupancyObservation
       observation.obstacle = params.scan_is_prerotated ?
         sp.move_origin(pose.x, pose.y) :
         sp.move_origin(pose.x, pose.y, scan.trig_cache);
-      auto obs_prob = observation_probability(observation, pose, map, params);
+      // area around the obstacle taken into account
+      // Q: move obst_area to AOO?
+      auto obs_area = params.sp_analysis_area.move_center(observation.obstacle);
+
+      // estimate AOO probability
+      auto aoo_prob = occupancy_observation_probability(observation,
+                                                        obs_area, map);
+
+      // combine AOO probability
       auto sp_weight = scan_point_weight(sp);
-      total_probability += obs_prob * sp_weight * sp.factor();
+      total_probability += aoo_prob * sp_weight * sp.factor();
       total_weight += sp_weight;
     }
     if (total_weight == 0) {
@@ -54,6 +66,7 @@ public:
 
 protected:
   virtual AreaOccupancyObservation expected_scan_point_observation() const {
+    // TODO: use a strategy to convert obstacle->occupancy
     return {true, {1.0, 1.0}, {0, 0}, 1.0};
   }
 
@@ -65,27 +78,6 @@ protected:
 
   virtual double scan_point_weight(const ScanPoint2D &) const {
     return 1;
-  }
-
-  /* returns p(observation | pose && map) */
-  double observation_probability(const AreaOccupancyObservation &obs,
-                                 const RobotPose &pose, const GridMap &map,
-                                 const SPEParams &params) const {
-    assert(obs.is_occupied);
-    // an area taken into account around the obstacle.
-    auto analysis_area = params.sp_analysis_area.move_center(obs.obstacle);
-    // a Java-like iterator that holds area ids covered by analysis_area
-    auto area_ids = GridRasterizedRectangle{map, analysis_area};
-    double max_probability = 0;
-
-    while (area_ids.has_next()) {
-      // compute probability of being inside an area (grid cell).
-      // Discrepancy returns a kind of inconsistency between
-      // an observation and area's content.
-      double obs_prob = 1.0 - map[area_ids.next()].discrepancy(obs);
-      max_probability = std::max(obs_prob, max_probability);
-    }
-    return max_probability;
   }
 };
 

@@ -58,7 +58,8 @@ int main(int argc, char** argv) {
   auto world_params = init_common_world_params();
   auto gcs = std::make_shared<GridCellStrategy>(
     init_cell_prototype(world_params),
-    std::make_shared<VinyScanProbabilityEstimator>(), init_occ_estimator());
+    std::make_shared<VinyScanProbabilityEstimator>(init_oope()),
+    init_occ_estimator());
   auto scan_adder = std::make_shared<WallDistanceBlurringScanAdder>(
     gcs->occupancy_est(), init_hole_width());
   auto slam = std::make_shared<VinyXWorld>(gcs, scan_adder,

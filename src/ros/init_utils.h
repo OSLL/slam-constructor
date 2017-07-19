@@ -9,6 +9,7 @@
 #include "../core/states/world.h"
 #include "../core/maps/area_occupancy_estimator.h"
 #include "../core/maps/const_occupancy_estimator.h"
+#include "../core/scan_matchers/occupancy_observation_probability.h"
 
 #include "topic_with_transform.h"
 #include "pose_correction_tf_publisher.h"
@@ -69,6 +70,26 @@ std::shared_ptr<CellOccupancyEstimator> init_occ_estimator() {
     return std::make_shared<AreaOccupancyEstimator>(base_occ, base_empty);
   } else {
     std::cerr << "Unknown estimator type: " << est_type << std::endl;
+    std::exit(-1);
+  }
+}
+
+std::shared_ptr<OccupancyObservationProbabilityEstimator> init_oope() {
+  std::string est_type;
+  ros::param::param<std::string>("~slam/scmtch/oope/type",
+                                 est_type, "obstacle");
+  if (est_type == "obstacle") {
+    return std::make_shared<ObstacleBasedOccupancyObservationPE>();
+  } else if (est_type == "max") {
+    return std::make_shared<MaxOccupancyObservationPE>();
+  } else if (est_type == "mean") {
+    return std::make_shared<MeanOccupancyObservationPE>();
+  } else if (est_type == "overlap") {
+    return std::make_shared<OverlapWeightedOccupancyObservationPE>();
+  } else {
+    std::cerr << "Unknown occupancy observation probability estimator type "
+              << "(slam/scmtch/oope/type)"
+              << est_type << std::endl;
     std::exit(-1);
   }
 }

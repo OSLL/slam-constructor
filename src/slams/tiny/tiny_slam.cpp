@@ -60,9 +60,10 @@ int main(int argc, char** argv) {
   // init tiny slam
   TinyWorldParams params = init_common_world_params();
   GridMapParams map_params = init_grid_map_params();
+  auto oope = init_oope();
   auto gcs = std::make_shared<GridCellStrategy>(
     init_cell_prototype(params),
-    std::make_shared<WeightedMeanDiscrepancySPEstimator>(),
+    std::make_shared<WeightedMeanDiscrepancySPEstimator>(oope),
     init_occ_estimator());
   auto scan_adder = std::make_shared<WallDistanceBlurringScanAdder>(
     gcs->occupancy_est(), init_hole_width());

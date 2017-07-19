@@ -25,6 +25,9 @@
     <param name="slam/map/width_in_meters" value="100" />
     <param name="slam/map/meters_per_cell" value="0.1" />
 
+    <!-- Scan Matching -->
+    <param name="~slam/scmtch/oope/type" value="obstacle" />
+
     <!-- Internal scan matcher constants-->
     <param name="slam/scmtch/MC/sigma_XY" value="0.2" />
     <param name="slam/scmtch/MC/sigma_theta" value="0.1" />

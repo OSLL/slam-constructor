@@ -25,6 +25,8 @@
     <param name="ros/skip_exceeding_lsr_vals" value="false" />
     <param name="vinySlam/hole_width" value="0.3" />  <!-- w < 0 for dynamic -->
 
+    <!-- Scan Matching -->
+    <param name="~slam/scmtch/oope/type" value="obstacle" />
     <!-- Monte Carlo Scan Matcher -->
     <!-- <param name="slam/scmtch/MC/seed" value="666666" /> -->
     <param name="slam/scmtch/MC/sigma_XY" value="0.2" />

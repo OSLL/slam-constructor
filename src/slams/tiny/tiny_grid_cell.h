@@ -27,7 +27,7 @@ public:
 
 class AvgTinyCell : public GridCell {
 public:
-  AvgTinyCell(): GridCell{Occupancy{-1, 1}}, _n(0) {}
+  AvgTinyCell(): GridCell{Occupancy{0.5, 1}}, _n(0) {}
 
   virtual std::unique_ptr<GridCell> clone() const {
     return std::make_unique<AvgTinyCell>(*this);

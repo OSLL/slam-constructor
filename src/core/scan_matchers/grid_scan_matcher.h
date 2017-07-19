@@ -34,7 +34,8 @@ public:
   // TODO: [API Clean Up] GridMap -> OccupancyMap
   virtual double probability(const AreaOccupancyObservation &aoo,
                              const LightWeightRectangle &area,
-                             const GridMap &map) = 0;
+                             const GridMap &map) const = 0;
+  virtual ~OccupancyObservationProbabilityEstimator() = default;
 };
 
 /* Client (e.g. a scan matcher) code example:
@@ -53,13 +54,25 @@ public: // types
     LightWeightRectangle sp_analysis_area = {0, 0, 0, 0};
     bool scan_is_prerotated = false;
   };
+  using OOPE = std::shared_ptr<OccupancyObservationProbabilityEstimator>;
 public:
+  ScanProbabilityEstimator(OOPE oope) : _oope{oope} {}
+
   constexpr static double unknown_probability() {
     return std::numeric_limits<double>::quiet_NaN();
   }
 
   static bool is_prob_unknown(double probability) {
     return probability == unknown_probability();
+  }
+
+  OOPE occupancy_observation_probability_estimator() const { return _oope; }
+  void set_oope(OOPE occ_obs_prob_est) { _oope = occ_obs_prob_est; }
+
+  double occupancy_observation_probability(const AreaOccupancyObservation &aoo,
+                                           const LightWeightRectangle &area,
+                                           const GridMap &map) const {
+    return _oope->probability(aoo, area, map);
   }
 
   virtual LaserScan2D filter_scan(const LaserScan2D &scan, const RobotPose &,
@@ -79,6 +92,8 @@ public:
                                            const SPEParams &params) const = 0;
 
   virtual ~ScanProbabilityEstimator() = default;
+private:
+  OOPE _oope;
 };
 
 class GridScanMatcher {

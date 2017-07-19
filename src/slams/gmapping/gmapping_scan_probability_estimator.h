@@ -19,8 +19,10 @@ private:
   constexpr static double FREE_CELL_DIST = std::sqrt(2.0);
   constexpr static double DBL_INF = std::numeric_limits<double>::infinity();
 public:
-  GmappingScanProbabilityEstimator()
-    : _scan_margin(0), _pts_skip_rate(3), _window_sz(1) {}
+  // FIXME: implement gmapping-specific OOPE (decoupling)
+  GmappingScanProbabilityEstimator(OOPE oope = OOPE{nullptr})
+    : ScanProbabilityEstimator{oope}
+    , _scan_margin(0), _pts_skip_rate(3), _window_sz(1) {}
 
   double estimate_scan_probability(const LaserScan2D &scan,
                                    const RobotPose &pose,
