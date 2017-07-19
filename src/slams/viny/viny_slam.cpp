@@ -10,37 +10,43 @@
 #include "../../ros/laser_scan_observer.h"
 #include "../../ros/init_utils.h"
 
-#include "../../core/maps/grid_cell_strategy.h"
+#include "../../core/maps/plain_grid_map.h"
+#include "../../core/scan_matchers/monte_carlo_scan_matcher.h"
+#include "../../core/states/single_state_hypothesis_laser_scan_grid_world.h"
 
 #include "viny_scan_probability_estimator.h"
-#include "viny_world.h"
 #include "viny_grid_cell.h"
 
-std::shared_ptr<GridCell> init_cell_prototype(VinyWorldParams &params) {
-  params.localized_scan_quality = 0.9;
-  params.raw_scan_quality = 0.6;
-  return std::make_shared<VinyDSCell>();
+void setup_cell_prototype(SingleStateHypothesisLSGWProperties &props) {
+  // FIXME: move to params
+  props.localized_scan_quality = 0.9;
+  props.raw_scan_quality = 0.6;
+  props.cell_prototype = std::make_shared<VinyDSCell>();
 }
 
-VinyWorldParams init_common_world_params() {
+// FIXME: code duplication (tinySLAM, pe is the only difference)
+std::shared_ptr<GridScanMatcher> init_scan_matcher() {
+  // TODO: refactoring - name of params, vars, move to init MC scan matcher
   double sig_XY, sig_T;
   int lim_bad, lim_totl, seed;
   ros::param::param<double>("~slam/scmtch/MC/sigma_XY", sig_XY, 0.2);
   ros::param::param<double>("~slam/scmtch/MC/sigma_theta", sig_T, 0.1);
-  ros::param::param<int>("~slam/scmtch/MC/limit_of_bad_attempts",
-                         lim_bad, 20);
+  ros::param::param<int>("~slam/scmtch/MC/limit_of_bad_attempts", lim_bad, 20);
   ros::param::param<int>("~slam/scmtch/MC/limit_of_total_attempts",
                          lim_totl, 100);
   ros::param::param<int>("~slam/scmtch/MC/seed", seed,
                          std::random_device{}());
+  assert(0 <= lim_bad && 0 <= lim_totl);
 
   ROS_INFO("MC Scan Matcher seed: %u\n", seed);
-  auto sm_params = VinySMParams{sig_XY, sig_T,
-                                (unsigned)lim_bad, (unsigned)lim_totl,
-                                (unsigned) seed};
-  return VinyWorldParams{sm_params};
+  auto oope = init_oope();
+  auto pe = std::make_shared<VinyScanProbabilityEstimator>(oope);
+  auto gpe = std::make_shared<GaussianPoseEnumerator>(sig_XY, sig_T, seed,
+                                                      lim_bad, lim_totl);
+  return std::make_shared<MonteCarloScanMatcher>(pe, gpe);
 }
 
+// FIXME: code duplication (tinySLAM)
 double init_hole_width() {
   double hole_width;
   ros::param::param<double>("~vinySlam/hole_width", hole_width, 0.5);
@@ -48,21 +54,21 @@ double init_hole_width() {
 }
 
 using ObservT = sensor_msgs::LaserScan;
-using VinySlamMap = VinyWorld<>::MapType;
+using VinySlam= SingleStateHypothesisLaserScanGridWorld<UnboundedPlainGridMap>;
+using VinySlamMap = VinySlam::MapType;
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "vinySLAM");
 
   // init viny slam
-  VinyWorldParams params = init_common_world_params();
-  GridMapParams map_params = init_grid_map_params();
-  auto prob_est = std::make_shared<VinyScanProbabilityEstimator>(init_oope());
-  auto gcs = std::make_shared<GridCellStrategy>(
-    init_cell_prototype(params), prob_est, init_occ_estimator());
-  auto scan_adder = std::make_shared<WallDistanceBlurringScanAdder>(
-    gcs->occupancy_est(), init_hole_width());
-  auto slam = std::make_shared<VinyWorld<>>(gcs, scan_adder,
-                                            params, map_params);
+  auto slam_props = SingleStateHypothesisLSGWProperties{};
+  setup_cell_prototype(slam_props);
+  slam_props.gsm = init_scan_matcher();
+  slam_props.gmsa = std::make_shared<WallDistanceBlurringScanAdder>(
+    init_occ_estimator(), init_hole_width()
+  );
+  slam_props.map_props = init_grid_map_params();
+  auto slam = std::make_shared<VinySlam>(slam_props);
 
   // connect the slam to a ros-topic based data provider
   ros::NodeHandle nh;

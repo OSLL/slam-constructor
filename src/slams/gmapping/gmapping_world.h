@@ -6,7 +6,7 @@
 #include <cmath>
 
 #include "../../core/particle_filter.h"
-#include "../../core/states/laser_scan_grid_world.h"
+#include "../../core/states/single_state_hypothesis_laser_scan_grid_world.h"
 #include "../../core/maps/grid_cell.h"
 #include "../../core/maps/grid_cell_strategy.h"
 #include "../../core/maps/lazy_tiled_grid_map.h"
@@ -33,21 +33,27 @@ public:
                        URV1D{min_sm_lim_th, max_sm_lim_th}} {}
 };
 
-class GmappingWorld : public Particle,
-                      public LaserScanGridWorld<UnboundedLazyTiledGridMap> {
+class GmappingWorld
+  : public Particle
+  , public SingleStateHypothesisLaserScanGridWorld<UnboundedLazyTiledGridMap> {
 public:
   using MapType = UnboundedLazyTiledGridMap;
 public:
 
+  // FIXME: drop gcs, use SingleStateHypothesisLSGWProperties
+  //        or its gmapping_world specific extension
   GmappingWorld(std::shared_ptr<GridCellStrategy> gcs,
-                const GridMapParams& params,
+                const GridMapParams& map_params,
                 const GMappingParams& gparams)
     // FIXME: [Performance] The adder does extra computations
     //        related to blurring that are not actually used
-    : LaserScanGridWorld{gcs, std::make_shared<WallDistanceBlurringScanAdder>(
-                                gcs->occupancy_est(), 0),
-                         params}
-    , _matcher{gcs->prob_est()}
+    : SingleStateHypothesisLaserScanGridWorld{
+        {1.0, 1.0, 0, gcs->cell_prototype(),
+         std::make_shared<HillClimbingScanMatcher>(gcs->prob_est()),
+         std::make_shared<WallDistanceBlurringScanAdder>(
+           gcs->occupancy_est(), 0),
+         map_params}
+      }
     , _rnd_engine(std::random_device{}())
     , _pose_guess_rv{gparams.pose_guess_rv}
     , _next_sm_delta_rv{gparams.next_sm_delta_rv} {
@@ -65,19 +71,22 @@ public:
       return;
     }
 
+    // TODO: consider super::handle_observation
+
     if (!_scan_is_first) {
       // add "noise" to guess extra cost function peak
       update_robot_pose(_pose_guess_rv.sample(_rnd_engine));
     }
 
     RobotPoseDelta pose_delta;
-    double scan_prob = _matcher.process_scan(scan, pose(), map(), pose_delta);
+    double scan_prob = scan_matcher()->process_scan(scan, pose(),
+                                                    map(), pose_delta);
     update_robot_pose(pose_delta);
 
     // TODO: scan_prob threshold to params
     if (0.0 < scan_prob || _scan_is_first) {
       // map update accordig to original gmapping code (ref?)
-      LaserScanGridWorld::handle_observation(scan);
+      scan_adder()->append_scan(map(), pose(), scan.scan, scan.quality, 0);
       _scan_is_first = false;
     }
 
@@ -106,7 +115,6 @@ private:
 private:
   bool _is_master = false;
   bool _scan_is_first = true;
-  HillClimbingScanMatcher _matcher;
   std::mt19937 _rnd_engine;
   RobotPoseDeltaRV<std::mt19937> _pose_guess_rv, _next_sm_delta_rv;
   RobotPoseDelta _delta_since_last_sm, _next_sm_delta;
