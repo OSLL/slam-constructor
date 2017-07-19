@@ -6,6 +6,7 @@
 #include "../data_generation_utils.h"
 #include "scan_matcher_test_utils.h"
 
+#include "../../../src/core/scan_matchers/occupancy_observation_probability.h"
 #include "../../../src/core/scan_matchers/bf_multi_res_scan_matcher.h"
 #include "../../../src/core/maps/plain_grid_map.h"
 #include "../../../src/core/maps/lazy_tiled_grid_map.h"
@@ -16,9 +17,11 @@ class BFMRScanMatcherTestBase
   :  public ScanMatcherTestBase<MapType> {
 protected: // names
   using SPE = typename ScanMatcherTestBase<MapType>::DefaultSPE;
+  using OOPE = MaxOccupancyObservationPE;
 protected: // methods
   BFMRScanMatcherTestBase()
-    : ScanMatcherTestBase<MapType>{std::make_shared<SPE>(),
+    : ScanMatcherTestBase<MapType>{std::make_shared<SPE>(
+                                     std::make_shared<OOPE>()),
                                    Map_Width, Map_Height, Map_Scale,
                                    to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
     , bfmrsm{this->spe, SM_Ang_Step, SM_Transl_Step} {
