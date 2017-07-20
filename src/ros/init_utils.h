@@ -10,6 +10,7 @@
 #include "../core/maps/area_occupancy_estimator.h"
 #include "../core/maps/const_occupancy_estimator.h"
 #include "../core/scan_matchers/occupancy_observation_probability.h"
+#include "../core/scan_matchers/monte_carlo_scan_matcher.h"
 
 #include "topic_with_transform.h"
 #include "pose_correction_tf_publisher.h"
@@ -72,6 +73,29 @@ std::shared_ptr<CellOccupancyEstimator> init_occ_estimator() {
     std::cerr << "Unknown estimator type: " << est_type << std::endl;
     std::exit(-1);
   }
+}
+
+std::shared_ptr<GridScanMatcher> init_monte_carlo_scan_matcher(
+    std::shared_ptr<ScanProbabilityEstimator> spe) {
+
+  double translation_dispersion, rotation_dispersion;
+  int failed_attempts_per_dispersion, total_attempts, seed;
+  ros::param::param<double>("~slam/scmtch/MC/dispersion_translation",
+                            translation_dispersion, 0.2);
+  ros::param::param<double>("~slam/scmtch/MC/dispersion_rotation",
+                            rotation_dispersion, 0.1);
+  ros::param::param<int>("~slam/scmtch/MC/attempts_failed_per_dispersion",
+                         failed_attempts_per_dispersion, 20);
+  ros::param::param<int>("~slam/scmtch/MC/attempts_total", total_attempts, 100);
+  ros::param::param<int>("~slam/scmtch/MC/seed", seed,
+                         std::random_device{}());
+  assert(0 <= failed_attempts_per_dispersion && 0 <= total_attempts);
+
+  ROS_INFO("MC Scan Matcher seed: %u\n", seed);
+  return std::make_shared<MonteCarloScanMatcher>(
+      spe, seed, translation_dispersion, rotation_dispersion,
+      failed_attempts_per_dispersion, total_attempts
+  );
 }
 
 std::shared_ptr<OccupancyObservationProbabilityEstimator> init_oope() {

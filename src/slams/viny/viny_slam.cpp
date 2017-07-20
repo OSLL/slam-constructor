@@ -24,28 +24,6 @@ void setup_cell_prototype(SingleStateHypothesisLSGWProperties &props) {
   props.cell_prototype = std::make_shared<VinyDSCell>();
 }
 
-// FIXME: code duplication (tinySLAM, pe is the only difference)
-std::shared_ptr<GridScanMatcher> init_scan_matcher() {
-  // TODO: refactoring - name of params, vars, move to init MC scan matcher
-  double sig_XY, sig_T;
-  int lim_bad, lim_totl, seed;
-  ros::param::param<double>("~slam/scmtch/MC/sigma_XY", sig_XY, 0.2);
-  ros::param::param<double>("~slam/scmtch/MC/sigma_theta", sig_T, 0.1);
-  ros::param::param<int>("~slam/scmtch/MC/limit_of_bad_attempts", lim_bad, 20);
-  ros::param::param<int>("~slam/scmtch/MC/limit_of_total_attempts",
-                         lim_totl, 100);
-  ros::param::param<int>("~slam/scmtch/MC/seed", seed,
-                         std::random_device{}());
-  assert(0 <= lim_bad && 0 <= lim_totl);
-
-  ROS_INFO("MC Scan Matcher seed: %u\n", seed);
-  auto oope = init_oope();
-  auto pe = std::make_shared<VinyScanProbabilityEstimator>(oope);
-  auto gpe = std::make_shared<GaussianPoseEnumerator>(sig_XY, sig_T, seed,
-                                                      lim_bad, lim_totl);
-  return std::make_shared<MonteCarloScanMatcher>(pe, gpe);
-}
-
 // FIXME: code duplication (tinySLAM)
 double init_hole_width() {
   double hole_width;
@@ -63,7 +41,9 @@ int main(int argc, char** argv) {
   // init viny slam
   auto slam_props = SingleStateHypothesisLSGWProperties{};
   setup_cell_prototype(slam_props);
-  slam_props.gsm = init_scan_matcher();
+  slam_props.gsm = init_monte_carlo_scan_matcher(
+    std::make_shared<VinyScanProbabilityEstimator>(init_oope())
+  );
   slam_props.gmsa = std::make_shared<WallDistanceBlurringScanAdder>(
     init_occ_estimator(), init_hole_width()
   );

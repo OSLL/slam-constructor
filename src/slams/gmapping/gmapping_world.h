@@ -16,10 +16,11 @@
 
 struct GMappingParams {
 private:
-  using GRV1D = GaussianRV1D;
-  using URV1D = UniformRV1D;
+  using RandomEngine = std::mt19937;
+  using GRV1D = GaussianRV1D<RandomEngine>;
+  using URV1D = UniformRV1D<RandomEngine>;
 public:
-  RobotPoseDeltaRV<std::mt19937> pose_guess_rv, next_sm_delta_rv;
+  RobotPoseDeltaRV<RandomEngine> pose_guess_rv, next_sm_delta_rv;
 
   GMappingParams(double mean_sample_xy, double sigma_sample_xy,
                  double mean_sample_th, double sigma_sample_th,
@@ -37,6 +38,8 @@ class GmappingWorld
   : public Particle
   , public SingleStateHypothesisLaserScanGridWorld<UnboundedLazyTiledGridMap> {
 public:
+  using RandomEngine = std::mt19937;
+  using GRV1D = GaussianRV1D<RandomEngine>;
   using MapType = UnboundedLazyTiledGridMap;
 public:
 
@@ -97,10 +100,10 @@ public:
   void mark_master() {
     _is_master = true;
     // master is corrected on each step without noise
-    _pose_guess_rv = RobotPoseDeltaRV<std::mt19937>{
-      GaussianRV1D{0, 0}, GaussianRV1D{0, 0}, GaussianRV1D{0, 0}};
-    _next_sm_delta_rv = RobotPoseDeltaRV<std::mt19937>{
-      GaussianRV1D{0, 0}, GaussianRV1D{0, 0}, GaussianRV1D{0, 0}};
+    _pose_guess_rv = RobotPoseDeltaRV<RandomEngine>{
+      GRV1D{0, 0}, GRV1D{0, 0}, GRV1D{0, 0}};
+    _next_sm_delta_rv = RobotPoseDeltaRV<RandomEngine>{
+      GRV1D{0, 0}, GRV1D{0, 0}, GRV1D{0, 0}};
   }
   bool is_master() { return _is_master; }
   void sample() override { _is_master = false; }
@@ -115,8 +118,8 @@ private:
 private:
   bool _is_master = false;
   bool _scan_is_first = true;
-  std::mt19937 _rnd_engine;
-  RobotPoseDeltaRV<std::mt19937> _pose_guess_rv, _next_sm_delta_rv;
+  RandomEngine _rnd_engine;
+  RobotPoseDeltaRV<RandomEngine> _pose_guess_rv, _next_sm_delta_rv;
   RobotPoseDelta _delta_since_last_sm, _next_sm_delta;
 };
 

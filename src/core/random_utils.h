@@ -7,40 +7,42 @@ template<typename T>
 class RandomVariable1D {
 public:
   virtual double sample(T& rnd_engine) = 0;
-  virtual std::unique_ptr<RandomVariable1D> clone() const = 0;
+  virtual std::unique_ptr<RandomVariable1D<T>> clone() const = 0;
   virtual ~RandomVariable1D() {}
 };
 
-class GaussianRV1D : public RandomVariable1D<std::mt19937> {
+template <typename Engine>
+class GaussianRV1D : public RandomVariable1D<Engine> {
 public:
-  GaussianRV1D(double mean, double sigma)
-    : _mean{mean}, _sigma{sigma}, _distr{_mean, _sigma} {}
+  GaussianRV1D(double mean, double dispersion)
+    : _mean{mean}, _dispersion{dispersion}, _distr{_mean, _dispersion} {}
 
-  std::unique_ptr<RandomVariable1D> clone() const override {
-    return std::make_unique<GaussianRV1D>(_mean, _sigma);
+  double sample(Engine &rnd_engine) override {
+    return _distr(rnd_engine);
   }
 
-  double sample(std::mt19937 &rnd_engine) override {
-    return _distr(rnd_engine);
+  std::unique_ptr<RandomVariable1D<Engine>> clone() const override {
+    return std::make_unique<GaussianRV1D<Engine>>(_mean, _dispersion);
   }
 
 private:
   double _mean;
-  double _sigma;
+  double _dispersion;
   std::normal_distribution<> _distr;
 };
 
-class UniformRV1D : public RandomVariable1D<std::mt19937> {
+template <typename Engine>
+class UniformRV1D : public RandomVariable1D<Engine> {
 public:
   UniformRV1D(double from, double to)
     : _from{from}, _to{to}, _distr{_from, _to} {}
 
-  double sample(std::mt19937 &rnd_engine) override {
+  double sample(Engine &rnd_engine) override {
     return _distr(rnd_engine);
   }
 
-  std::unique_ptr<RandomVariable1D> clone() const override {
-    return std::make_unique<UniformRV1D>(_from, _to);
+  std::unique_ptr<RandomVariable1D<Engine>> clone() const override {
+    return std::make_unique<UniformRV1D<Engine>>(_from, _to);
   }
 
 private:

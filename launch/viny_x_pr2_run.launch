@@ -25,12 +25,12 @@
     <param name="slam/occupancy_estimator/base_empty/prob" value="0.01" />
     <param name="slam/occupancy_estimator/base_empty/qual" value="0.003" />
 
-    <!-- Monte Carlo Scan Matcher-->
+    <!-- Monte Carlo scan matcher setup -->
     <!-- <param name="slam/scmtch/MC/seed" value="666666" /> -->
-    <param name="slam/scmtch/MC/sigma_XY" value="0.2" />
-    <param name="slam/scmtch/MC/sigma_theta" value="0.1" />
-    <param name="slam/scmtch/MC/limit_of_bad_attempts" value="20" />
-    <param name="slam/scmtch/MC/limit_of_total_attempts" value="100" />
+    <param name="slam/scmtch/MC/dispersion_translation" value="0.2" />
+    <param name="slam/scmtch/MC/dispersion_rotation" value="0.1" />
+    <param name="slam/scmtch/MC/attempts_failed_per_dispersion" value="20" />
+    <param name="slam/scmtch/MC/attempts_total" value="100" />
 
     <!-- ROS constants -->
     <param name="ros/rviz/map_publishing_rate" value="5.0" />
