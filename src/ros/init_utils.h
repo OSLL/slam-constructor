@@ -11,6 +11,7 @@
 #include "../core/maps/const_occupancy_estimator.h"
 #include "../core/scan_matchers/occupancy_observation_probability.h"
 #include "../core/scan_matchers/monte_carlo_scan_matcher.h"
+#include "../core/scan_matchers/hill_climbing_scan_matcher.h"
 
 #include "topic_with_transform.h"
 #include "pose_correction_tf_publisher.h"
@@ -97,6 +98,25 @@ std::shared_ptr<GridScanMatcher> init_monte_carlo_scan_matcher(
       failed_attempts_per_dispersion, total_attempts
   );
 }
+
+std::shared_ptr<GridScanMatcher> init_hill_climbing_scan_matcher(
+    std::shared_ptr<ScanProbabilityEstimator> spe) {
+
+  double translation_distorsion, rotation_distorsion;
+  int max_lookup_attempts_failed;
+  ros::param::param<double>("~slam/scmtch/HC/distorsion_translation",
+                            translation_distorsion, 0.1);
+  ros::param::param<double>("~slam/scmtch/HC/distorsion_rotation",
+                            rotation_distorsion, 0.1);
+  ros::param::param<int>("~slam/scmtch/HC/lookup_attempts_failed",
+                         max_lookup_attempts_failed, 6);
+  assert(0 <= max_lookup_attempts_failed);
+
+  return std::make_shared<HillClimbingScanMatcher>(
+    spe, max_lookup_attempts_failed, translation_distorsion, rotation_distorsion
+  );
+}
+
 
 std::shared_ptr<OccupancyObservationProbabilityEstimator> init_oope() {
   std::string est_type;

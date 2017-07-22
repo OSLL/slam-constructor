@@ -52,7 +52,9 @@ public:
     //        related to blurring that are not actually used
     : SingleStateHypothesisLaserScanGridWorld{
         {1.0, 1.0, 0, gcs->cell_prototype(),
-         std::make_shared<HillClimbingScanMatcher>(gcs->prob_est()),
+         // FIXME: move to params
+         std::make_shared<HillClimbingScanMatcher>(gcs->prob_est(), 6,
+                                                   0.1, 0.1),
          std::make_shared<WallDistanceBlurringScanAdder>(
            gcs->occupancy_est(), 0),
          map_params}

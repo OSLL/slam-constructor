@@ -61,9 +61,9 @@ public:
         obs->on_scan_test(sampled_pose, scan, sampled_scan_prob);
       });
 
-      auto pose_is_acceptable = sampled_scan_prob <= best_pose_prob;
+      auto pose_is_acceptable = best_pose_prob < sampled_scan_prob;
       _pose_enumerator->feedback(pose_is_acceptable);
-      if (pose_is_acceptable) {
+      if (!pose_is_acceptable) {
         continue;
       }
 
