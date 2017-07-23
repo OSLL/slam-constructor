@@ -120,6 +120,7 @@ class HillClimbingScanMatcher : public PoseEnumerationScanMatcher {
 private:
   using HCPE = FailedRoundsLimitedPoseEnumerator<Distorsion1DPoseEnumerator>;
 public:
+  // FIXME: update enumerator on set_lookup_ranges update
   HillClimbingScanMatcher(std::shared_ptr<ScanProbabilityEstimator> estimator,
                           unsigned max_lookup_attempts_failed,
                           double translation_delta, double rotation_delta)

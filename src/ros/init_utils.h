@@ -10,8 +10,10 @@
 #include "../core/maps/area_occupancy_estimator.h"
 #include "../core/maps/const_occupancy_estimator.h"
 #include "../core/scan_matchers/occupancy_observation_probability.h"
+// TODO: move to a separate init_* file
 #include "../core/scan_matchers/monte_carlo_scan_matcher.h"
 #include "../core/scan_matchers/hill_climbing_scan_matcher.h"
+#include "../core/scan_matchers/brute_force_scan_matcher.h"
 
 #include "topic_with_transform.h"
 #include "pose_correction_tf_publisher.h"
@@ -101,7 +103,6 @@ std::shared_ptr<GridScanMatcher> init_monte_carlo_scan_matcher(
 
 std::shared_ptr<GridScanMatcher> init_hill_climbing_scan_matcher(
     std::shared_ptr<ScanProbabilityEstimator> spe) {
-
   double translation_distorsion, rotation_distorsion;
   int max_lookup_attempts_failed;
   ros::param::param<double>("~slam/scmtch/HC/distorsion_translation",
@@ -116,6 +117,28 @@ std::shared_ptr<GridScanMatcher> init_hill_climbing_scan_matcher(
     spe, max_lookup_attempts_failed, translation_distorsion, rotation_distorsion
   );
 }
+
+std::shared_ptr<GridScanMatcher> init_brute_force_scan_matcher(
+    std::shared_ptr<ScanProbabilityEstimator> spe) {
+  using ros::param::param;
+  static const std::string BF_Param_Prefix = "~slam/scmtch/BF/";
+
+  #define INIT_BFSM_RANGE(dim, limit, step)                                \
+    double from_##dim, to_##dim, step_##dim;                               \
+    param<double>(BF_Param_Prefix + #dim + "_from", from_##dim, -(limit)); \
+    param<double>(BF_Param_Prefix + #dim + "_to"  , to_##dim  , limit);    \
+    param<double>(BF_Param_Prefix + #dim + "_step", step_##dim, step);
+
+  INIT_BFSM_RANGE(x, 0.5, 0.1);
+  INIT_BFSM_RANGE(y, 0.5, 0.1);
+  INIT_BFSM_RANGE(t, deg2rad(5), deg2rad(1));
+
+  #undef INIT_BFSM_RANGE
+
+  return std::make_shared<BruteForceScanMatcher>(
+    spe, from_x, to_x, step_x, from_y, to_y, step_y, from_t, to_t, step_t);
+}
+
 
 
 std::shared_ptr<OccupancyObservationProbabilityEstimator> init_oope() {

@@ -1,21 +1,23 @@
 #include <gtest/gtest.h>
 
-#include <limits>
-
 #include "../mock_grid_cell.h"
 #include "../data_generation_utils.h"
 #include "scan_matcher_test_utils.h"
 
-#include "../../../src/core/scan_matchers/hill_climbing_scan_matcher.h"
+#include "../../../src/core/scan_matchers/brute_force_scan_matcher.h"
 #include "../../../src/core/scan_matchers/occupancy_observation_probability.h"
 #include "../../../src/core/maps/plain_grid_map.h"
+
+// TODO: BruteForcePoseEnumeratorTest
 
 //------------------------------------------------------------------------------
 // Smoke Tests Suite
 // NB: the suit checks _fundamental_ abilities to find a correction.
 
-class HillClimbingScanMatcherSmokeTest
+class BruteForceScanMatcherSmokeTest
   : public ScanMatcherTestBase<UnboundedPlainGridMap> {
+
+  // TODO: remove duplication (hc-test, m3mrsm-test)
 protected: // consts
   // map params
   static constexpr int Map_Width = 100;
@@ -32,20 +34,27 @@ protected: // consts
   static constexpr int LS_Pts_Nm = 10;
 
   // scan matcher params
-  static constexpr int Max_SM_Shirnks_Nm = 10;
-  static constexpr double Init_Lin_Step = 0.1;
-  static constexpr double Init_Ang_Step = deg2rad(30);
+  static constexpr double From_Translation = -0.5;
+  static constexpr double To_Translation   = 0.5;
+  static constexpr double Step_Translation = 0.05;
+  static constexpr double From_Rotation = deg2rad(-10);
+  static constexpr double To_Rotation   = deg2rad(10);
+  static constexpr double Step_Rotation = deg2rad(1);
 protected: // type aliases
   using SPE = WeightedMeanDiscrepancySPEstimator;
   using OOPE = ObstacleBasedOccupancyObservationPE;
+
 protected: // methods
-  HillClimbingScanMatcherSmokeTest()
+  BruteForceScanMatcherSmokeTest()
     : ScanMatcherTestBase{std::make_shared<SPE>(std::make_shared<OOPE>()),
                           Map_Width, Map_Height, Map_Scale,
                           to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
-    , _hcsm{spe, Max_SM_Shirnks_Nm, Init_Lin_Step, Init_Ang_Step} {}
+    , _bfsm{spe,
+            From_Translation, To_Translation, Step_Translation,
+            From_Translation, To_Translation, Step_Translation,
+            From_Rotation, To_Rotation, Step_Rotation} {}
 
-  GridScanMatcher& scan_matcher() override { return _hcsm; };
+  GridScanMatcher& scan_matcher() override { return _bfsm; };
 
   void init_pose_facing_top_cecum_bound() {
     using CecumMp = CecumTextRasterMapPrimitive;
@@ -61,58 +70,50 @@ protected: // methods
   }
 
 protected: // fields
-  HillClimbingScanMatcher _hcsm;
+  BruteForceScanMatcher _bfsm;
 };
 
-TEST_F(HillClimbingScanMatcherSmokeTest, cecumNoPoseNoise) {
+TEST_F(BruteForceScanMatcherSmokeTest, cecumNoPoseNoise) {
   init_pose_facing_top_cecum_bound();
   test_scan_matcher(RobotPoseDelta{0, 0, 0});
 }
 
-TEST_F(HillClimbingScanMatcherSmokeTest, cecumLinStepXLeftDrift) {
+TEST_F(BruteForceScanMatcherSmokeTest, cecumLinStepXLeftDrift) {
   init_pose_facing_top_cecum_bound();
-  test_scan_matcher(RobotPoseDelta{-Init_Lin_Step, 0, 0});
+  test_scan_matcher(RobotPoseDelta{From_Translation, 0, 0});
 }
 
-TEST_F(HillClimbingScanMatcherSmokeTest, cecumLinStepXRightDrift) {
+TEST_F(BruteForceScanMatcherSmokeTest, cecumLinStepXRightDrift) {
   init_pose_facing_top_cecum_bound();
-  test_scan_matcher(RobotPoseDelta{Init_Lin_Step, 0, 0});
+  test_scan_matcher(RobotPoseDelta{2*Step_Translation, 0, 0});
 }
 
-TEST_F(HillClimbingScanMatcherSmokeTest, cecumLinStepYUpDrift) {
+TEST_F(BruteForceScanMatcherSmokeTest, cecumLinStepYUpDrift) {
   init_pose_facing_top_cecum_bound();
-  test_scan_matcher(RobotPoseDelta{0, -Init_Lin_Step, 0});
+  test_scan_matcher(RobotPoseDelta{0, -2*Step_Translation, 0});
 }
 
-TEST_F(HillClimbingScanMatcherSmokeTest, cecumLinStepYDownDrift) {
+TEST_F(BruteForceScanMatcherSmokeTest, cecumLinStepYDownDrift) {
   init_pose_facing_top_cecum_bound();
-  test_scan_matcher(RobotPoseDelta{0, Init_Lin_Step, 0});
+  test_scan_matcher(RobotPoseDelta{0, To_Translation, 0});
 }
 
-TEST_F(HillClimbingScanMatcherSmokeTest, cecumAngStepThetaCcwDrift) {
+TEST_F(BruteForceScanMatcherSmokeTest, cecumAngStepThetaCcwDrift) {
   init_pose_facing_top_cecum_bound();
-  test_scan_matcher(RobotPoseDelta{0, 0, Init_Ang_Step});
+  test_scan_matcher(RobotPoseDelta{0, 0, -3*Step_Rotation});
 }
 
-TEST_F(HillClimbingScanMatcherSmokeTest, cecumAngStepThetaCwDrift) {
+TEST_F(BruteForceScanMatcherSmokeTest, cecumAngStepThetaCwDrift) {
   init_pose_facing_top_cecum_bound();
-  test_scan_matcher(RobotPoseDelta{0, 0, -Init_Ang_Step});
+  test_scan_matcher(RobotPoseDelta{0, 0, To_Rotation});
 }
 
-/* FIXME: looks like the method itself should be fixed.
-TEST_F(HillClimbingScanMatcherSmokeTest, cecumComboStepsDrift) {
+TEST_F(BruteForceScanMatcherSmokeTest, cecumComboStepsDrift) {
   init_pose_facing_top_cecum_bound();
-  test_scan_matcher({Init_Lin_Step, -Init_Lin_Step, Init_Ang_Step});
+  test_scan_matcher({2*Step_Translation, -3*Step_Translation, Step_Rotation});
 }
-*/
 
-//------------------------------------------------------------------------------
-
-// TODO: More sophisticated testing (e.g. an arbitrary noise cases,
-//       high res map/scanner, map state, etc.) is supposed to be implemented
-//       with a separate test suite.
-
-//------------------------------------------------------------------------------
+//----------------------------------------------------------------------------//
 
 int main (int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

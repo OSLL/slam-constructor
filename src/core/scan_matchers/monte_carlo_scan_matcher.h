@@ -83,6 +83,7 @@ private:
 
 class MonteCarloScanMatcher : public PoseEnumerationScanMatcher {
 public:
+  // FIXME: update enumerator on set_lookup_ranges update
   MonteCarloScanMatcher(std::shared_ptr<ScanProbabilityEstimator> estimator,
                         unsigned seed,
                         double translation_dispersion,
