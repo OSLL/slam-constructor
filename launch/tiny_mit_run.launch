@@ -45,5 +45,4 @@
         args="-d $(find slam_fmwk)/rviz/debug.rviz" />
 
   <node name="path_publisher" pkg="slam_fmwk" type="path_publisher" />
-
 </launch>
