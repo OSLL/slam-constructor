@@ -28,12 +28,13 @@
     <!-- Scan Matching -->
     <param name="~slam/scmtch/oope/type" value="obstacle" />
 
-    <!-- Monte Carlo scan matcher setup -->
+    <!-- Scan Matcher setup -->
+    <param name="slam/scmtch/type" value="MC" />
+    <param name="slam/scmtch/MC/dispersion/translation" value="0.2" />
+    <param name="slam/scmtch/MC/dispersion/rotation" value="0.1" />
+    <param name="slam/scmtch/MC/dispersion/failed_attempts_limit" value="20" />
+    <param name="slam/scmtch/MC/attempts_limit" value="100" />
     <!-- <param name="slam/scmtch/MC/seed" value="666666" /> -->
-    <param name="slam/scmtch/MC/dispersion_translation" value="0.2" />
-    <param name="slam/scmtch/MC/dispersion_rotation" value="0.1" />
-    <param name="slam/scmtch/MC/attempts_failed_per_dispersion" value="20" />
-    <param name="slam/scmtch/MC/attempts_total" value="100" />
 
     <!-- Internal constants for ros-->
     <param name="ros/rviz/map_publishing_rate" value="5.0" />

@@ -52,9 +52,8 @@ int main(int argc, char** argv) {
   // init tiny slam
   auto slam_props = SingleStateHypothesisLSGWProperties{};
   setup_cell_prototype(slam_props);
-  slam_props.gsm = init_monte_carlo_scan_matcher(
-    std::make_shared<WeightedMeanDiscrepancySPEstimator>(init_oope())
-  );
+  auto spe = std::make_shared<WeightedMeanDiscrepancySPEstimator>(init_oope());
+  slam_props.gsm = init_scan_matcher(spe);
   slam_props.gmsa = std::make_shared<WallDistanceBlurringScanAdder>(
     init_occ_estimator(), init_hole_width()
   );
