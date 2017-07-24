@@ -44,5 +44,11 @@
   <node name="rviz" pkg="rviz" type="rviz" respawn="true"
         args="-d $(find slam_fmwk)/rviz/debug.rviz" />
 
-  <node name="path_publisher" pkg="slam_fmwk" type="path_publisher" />
+  <node name="path_publisher" pkg="slam_fmwk" type="path_publisher">
+    <param name="wait_for_transform_duration" value="3.0" />
+    <param name="base_link_frame_id" value="base_link" />
+    <param name="subscribers_queue_size" value="1000" />
+    <param name="publishing_rate" value="5.0" />
+    <param name="path_topic_name" value="/path" />
+  </node>
 </launch>

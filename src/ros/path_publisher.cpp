@@ -8,35 +8,35 @@
 
 static double tf_wait_for_transform_duration() {
   double wait_for_transform_duration;
-  ros::param::param<double>("~ros/tf/wait_for_transform_duration", wait_for_transform_duration, 3.0);
+  ros::param::param<double>("wait_for_transform_duration", wait_for_transform_duration, 3.0);
 
   return wait_for_transform_duration;
 }
 
 static std::string tf_base_link_frame_id() {
   std::string base_link_frame_id;
-  ros::param::param<std::string>("~ros/tf/tf_base_link_frame_id", base_link_frame_id, "base_link");
+  ros::param::param<std::string>("base_link_frame_id", base_link_frame_id, "base_link");
 
   return base_link_frame_id;
 }
 
 static int subscriber_queue_size() {
   int subscriber_queue_size;
-  ros::param::param<int>("~ros/subscribers_queue_size", subscriber_queue_size, 1000);
+  ros::param::param<int>("subscribers_queue_size", subscriber_queue_size, 1000);
 
   return subscriber_queue_size;
 }
 
 static double publishing_rate() {
   double publishing_rate;
-  ros::param::param<double>("~ros/rviz/map_publishing_rate", publishing_rate, 5.0);
+  ros::param::param<double>("publishing_rate", publishing_rate, 5.0);
 
   return publishing_rate;
 }
 
 static std::string path_topic_name() {
   std::string path_topic_name;
-  ros::param::param<std::string>("~ros/path_topic_name", path_topic_name, "path");
+  ros::param::param<std::string>("path_topic_name", path_topic_name, "path");
 
   return path_topic_name;
 }
