@@ -136,6 +136,7 @@ add_executable(gmapping src/slams/gmapping/gmapping.cpp)
 add_executable(tiny_slam src/slams/tiny/tiny_slam.cpp)
 add_executable(viny_slam src/slams/viny/viny_slam.cpp)
 add_executable(viny_slam_x src/slams/vinyx/vinyx_slam.cpp)
+add_executable(path_publisher src/ros/path_publisher.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -148,6 +149,7 @@ target_link_libraries(gmapping ${catkin_LIBRARIES})
 target_link_libraries(tiny_slam ${catkin_LIBRARIES})
 target_link_libraries(viny_slam ${catkin_LIBRARIES})
 target_link_libraries(viny_slam_x ${catkin_LIBRARIES})
+target_link_libraries(path_publisher ${catkin_LIBRARIES})
 
 #target_link_libraries(openratslam_odom_converter ${catkin_LIBRARIES})
 #target_link_libraries(scan_dbg
