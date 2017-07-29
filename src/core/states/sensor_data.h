@@ -142,12 +142,12 @@ inline std::ostream& operator<<(std::ostream &osm, const ScanPoint2D &sp) {
 }
 
 struct LaserScan2D {
-private:
-  using ScanPoints = std::vector<ScanPoint2D>;
 public:
-  const ScanPoints& points() const { return _points; }
-  ScanPoints& points() {
-    return const_cast<ScanPoints&>(
+  using Points = std::vector<ScanPoint2D>;
+public:
+  const Points& points() const { return _points; }
+  Points& points() {
+    return const_cast<Points&>(
       static_cast<const LaserScan2D*>(this)->points());
   }
 
@@ -169,7 +169,7 @@ public:
   //       Move the cache to LaserScan2D.
   std::shared_ptr<TrigonometricCache> trig_cache;
 private:
-  std::vector<ScanPoint2D> _points;
+  Points _points;
 };
 
 struct TransformedLaserScan {

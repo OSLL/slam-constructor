@@ -9,7 +9,9 @@ public:
   VinyScanProbabilityEstimator(OOPE oope)
     : WeightedMeanDiscrepancySPEstimator{oope} {}
 
-  double scan_point_weight(const ScanPoint2D &sp) const override {
+  double scan_point_weight(const LaserScan2D::Points &pts,
+                           LaserScan2D::Points::size_type i) const override {
+    const auto &sp = pts[i];
     double angle = sp.angle();
     double weight = std::abs(std::sin(angle)) + std::abs(std::cos(angle));
     if (0.9 < std::abs(std::cos(angle))) {

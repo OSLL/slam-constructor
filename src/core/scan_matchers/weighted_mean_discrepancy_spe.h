@@ -36,7 +36,9 @@ public:
 
     auto observation = expected_scan_point_observation();
     scan.trig_cache->set_theta(pose.theta);
-    for (const auto &sp : scan.points()) {
+    const auto &points = scan.points();
+    for (LaserScan2D::Points::size_type i = 0; i < points.size(); ++i) {
+      auto &sp = points[i];
       // FIXME: assumption - sensor pose is in robot's (0,0), dir - 0
 
       // prepare obstacle-based AreaOccupancyObservation
@@ -51,8 +53,7 @@ public:
       auto aoo_prob = occupancy_observation_probability(observation,
                                                         obs_area, map);
 
-      // combine AOO probability
-      auto sp_weight = scan_point_weight(sp);
+      auto sp_weight = scan_point_weight(points, i);
       total_probability += aoo_prob * sp_weight * sp.factor();
       total_weight += sp_weight;
     }
@@ -76,9 +77,60 @@ protected:
     return !sp.is_occupied() || !map.has_cell(area_id);
   }
 
-  virtual double scan_point_weight(const ScanPoint2D &) const {
+  virtual double scan_point_weight(const LaserScan2D::Points &,
+                                   LaserScan2D::Points::size_type) const {
     return 1;
   }
 };
+
+/* Experimental */
+
+#include <array>
+
+class HistogramWeightedMDSPEstimator
+  : public WeightedMeanDiscrepancySPEstimator {
+public:
+  HistogramWeightedMDSPEstimator(OOPE oope)
+    : WeightedMeanDiscrepancySPEstimator{oope} {}
+
+  LaserScan2D filter_scan(const LaserScan2D &raw_scan, const RobotPose &pose,
+                          const GridMap &map) override {
+    auto scan = WeightedMeanDiscrepancySPEstimator::filter_scan(raw_scan, pose,
+                                                                map);
+
+    std::fill(std::begin(_hist), std::end(_hist), 0);
+    for (std::size_t i = 1; i < scan.points().size(); ++i) {
+      _hist[hist_index(scan.points(), i)]++;
+    }
+
+    return scan;
+  }
+
+protected:
+
+  std::size_t hist_index(const LaserScan2D::Points &pts,
+                         LaserScan2D::Points::size_type i) const {
+      auto &sp1 = pts[i-1], &sp2 = pts[i];
+      double d_x = sp1.x() - sp2.x();
+      double d_y = sp1.y() - sp2.y();
+      double d_d = std::sqrt(d_x*d_x + d_y*d_y);
+      double rate = d_x / d_d;
+      if (1.0 < std::abs(rate)) {
+        std::cout << "[Warning] HWMDSPE: rate is " << rate << std::endl;
+        rate = 1.0;
+      }
+      auto raw_i = std::size_t(std::floor((1 + rate) * _hist.size() / 2));
+      return raw_i % _hist.size();
+  }
+
+  double scan_point_weight(const LaserScan2D::Points &pts,
+                           LaserScan2D::Points::size_type i) const override{
+    return 1.0 / _hist[hist_index(pts, i)];
+  }
+
+private:
+  std::array<unsigned, 20> _hist;
+};
+
 
 #endif
