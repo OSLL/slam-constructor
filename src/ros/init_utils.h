@@ -15,7 +15,7 @@
 
 #include "topic_with_transform.h"
 #include "pose_correction_tf_publisher.h"
-#include "robot_pose_tf_publisher.h"
+#include "robot_pose_observers.h"
 #include "occupancy_grid_publisher.h"
 
 std::string get_string_param(const std::string &name,
