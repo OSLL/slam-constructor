@@ -5,7 +5,6 @@
 #include <memory>
 
 #include "../mock_grid_cell.h"
-#include "../data_generation_utils.h"
 #include "../../../src/core/maps/const_occupancy_estimator.h"
 #include "../../../src/core/maps/plain_grid_map.h"
 #include "../../../src/core/math_utils.h"
