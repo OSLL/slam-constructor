@@ -9,32 +9,32 @@
         cwd="node" required="true" output="screen">
     <remap from="laser_scan" to="/base_scan" />
 
-    <!-- SLAM Components -->
+    <!-- = Mapping = -->
+    <param name="slam/mapping/blur" value="0.3" />
+    <!-- * Occupancy Estimator setup -->
     <param name="slam/occupancy_estimator/type" value="const" />
     <param name="slam/occupancy_estimator/base_occupied/prob" value="0.95" />
     <param name="slam/occupancy_estimator/base_occupied/qual" value="0.04" />
     <param name="slam/occupancy_estimator/base_empty/prob" value="0.01" />
     <param name="slam/occupancy_estimator/base_empty/qual" value="0.003" />
-
-    <!-- Map -->
+    <!-- * Occupancy Map setup -->
     <param name="slam/map/height_in_meters" value="100" />
     <param name="slam/map/width_in_meters" value="100" />
     <param name="slam/map/meters_per_cell" value="0.1" />
 
-    <!-- Internal constants -->
-    <param name="ros/skip_exceeding_lsr_vals" value="false" />
-    <param name="vinySlam/hole_width" value="0.3" />  <!-- w < 0 for dynamic -->
-
-    <!-- Scan Matcher setup -->
-    <!-- =method -->
+    <!-- = Localization = -->
     <param name="slam/scmtch/type" value="MC" />
     <param name="slam/scmtch/MC/dispersion/translation" value="0.2" />
     <param name="slam/scmtch/MC/dispersion/rotation" value="0.1" />
     <param name="slam/scmtch/MC/dispersion/failed_attempts_limit" value="20" />
     <param name="slam/scmtch/MC/attempts_limit" value="100" />
     <!-- <param name="slam/scmtch/MC/seed" value="666666" /> -->
-    <!-- =oope -->
-    <param name="~slam/scmtch/oope/type" value="obstacle" />
+    <!-- * oope -->
+    <param name="slam/scmtch/oope/type" value="obstacle" />
+
+    <!-- = TODO sort = -->
+    <!-- Internal constants -->
+    <param name="ros/skip_exceeding_lsr_vals" value="false" />
 
   </node>
 

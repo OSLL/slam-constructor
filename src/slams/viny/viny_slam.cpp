@@ -10,44 +10,17 @@
 #include "../../ros/laser_scan_observer.h"
 #include "../../ros/init_utils.h"
 
-#include "../../core/maps/plain_grid_map.h"
-#include "../../core/scan_matchers/monte_carlo_scan_matcher.h"
-#include "../../core/states/single_state_hypothesis_laser_scan_grid_world.h"
-
-#include "viny_scan_probability_estimator.h"
-#include "viny_grid_cell.h"
-
-void setup_cell_prototype(SingleStateHypothesisLSGWProperties &props) {
-  // FIXME: move to params
-  props.localized_scan_quality = 0.9;
-  props.raw_scan_quality = 0.6;
-  props.cell_prototype = std::make_shared<VinyDSCell>();
-}
-
-// FIXME: code duplication (tinySLAM)
-double init_hole_width() {
-  double hole_width;
-  ros::param::param<double>("~vinySlam/hole_width", hole_width, 0.5);
-  return hole_width;
-}
+#include "../../ros/launch_properties_provider.h"
+#include "init_viny_slam.h"
 
 using ObservT = sensor_msgs::LaserScan;
-using VinySlam= SingleStateHypothesisLaserScanGridWorld<UnboundedPlainGridMap>;
 using VinySlamMap = VinySlam::MapType;
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "vinySLAM");
 
-  // init viny slam
-  auto slam_props = SingleStateHypothesisLSGWProperties{};
-  setup_cell_prototype(slam_props);
-  auto spe = std::make_shared<VinyScanProbabilityEstimator>(init_oope());
-  slam_props.gsm = init_scan_matcher(spe);
-  slam_props.gmsa = std::make_shared<WallDistanceBlurringScanAdder>(
-    init_occ_estimator(), init_hole_width()
-  );
-  slam_props.map_props = init_grid_map_params();
-  auto slam = std::make_shared<VinySlam>(slam_props);
+  auto props = std::make_shared<LaunchPropertiesProvider>();
+  auto slam = init_viny_slam(props);
 
   // connect the slam to a ros-topic based data provider
   ros::NodeHandle nh;

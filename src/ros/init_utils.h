@@ -6,12 +6,7 @@
 
 #include <ros/ros.h>
 
-#include "init_scan_matcher.h"
-
 #include "../core/states/world.h"
-#include "../core/maps/area_occupancy_estimator.h"
-#include "../core/maps/const_occupancy_estimator.h"
-#include "../core/scan_matchers/occupancy_observation_probability.h"
 
 #include "topic_with_transform.h"
 #include "pose_correction_tf_publisher.h"
@@ -43,58 +38,15 @@ bool is_async_correction() {
   return async_correction;
 }
 
+// TODO: to scan filtering
+
 bool init_skip_exceeding_lsr() {
   bool param_value;
   ros::param::param<bool>("~ros/skip_exceeding_lsr_vals", param_value, false);
   return param_value;
 }
 
-std::shared_ptr<CellOccupancyEstimator> init_occ_estimator() {
-  double occ_prob, occ_qual, empty_prob, empty_qual;
-  ros::param::param<double>("~slam/occupancy_estimator/"        \
-                            "base_occupied/prob", occ_prob, 0.95);
-  ros::param::param<double>("~slam/occupancy_estimator/"        \
-                            "base_occupied/qual", occ_qual, 1.0);
-  ros::param::param<double>("~slam/occupancy_estimator/"        \
-                            "base_empty/prob", empty_prob, 0.01);
-  ros::param::param<double>("~slam/occupancy_estimator/"        \
-                            "base_empty/qual", empty_qual, 1.0);
-
-  std::string est_type;
-  ros::param::param<std::string>("~slam/occupancy_estimator/type",
-                                 est_type, "const");
-
-  auto base_occ = Occupancy{occ_prob, occ_qual};
-  auto base_empty = Occupancy{empty_prob, empty_qual};
-  if (est_type == "const") {
-    return std::make_shared<ConstOccupancyEstimator>(base_occ, base_empty);
-  } else if (est_type == "area") {
-    return std::make_shared<AreaOccupancyEstimator>(base_occ, base_empty);
-  } else {
-    std::cerr << "Unknown estimator type: " << est_type << std::endl;
-    std::exit(-1);
-  }
-}
-
-std::shared_ptr<OccupancyObservationProbabilityEstimator> init_oope() {
-  std::string est_type;
-  ros::param::param<std::string>("~slam/scmtch/oope/type",
-                                 est_type, "obstacle");
-  if (est_type == "obstacle") {
-    return std::make_shared<ObstacleBasedOccupancyObservationPE>();
-  } else if (est_type == "max") {
-    return std::make_shared<MaxOccupancyObservationPE>();
-  } else if (est_type == "mean") {
-    return std::make_shared<MeanOccupancyObservationPE>();
-  } else if (est_type == "overlap") {
-    return std::make_shared<OverlapWeightedOccupancyObservationPE>();
-  } else {
-    std::cerr << "Unknown occupancy observation probability estimator type "
-              << "(slam/scmtch/oope/type)"
-              << est_type << std::endl;
-    std::exit(-1);
-  }
-}
+// TODO: move to IO
 
 template <typename ObservT, typename MapT>
 std::shared_ptr<PoseCorrectionTfPublisher<ObservT>>
@@ -127,14 +79,6 @@ create_occupancy_grid_publisher(WorldObservable<MapT> *slam,
     tf_map_frame_id(), ros_map_publishing_rate);
   slam->subscribe_map(map_publisher);
   return map_publisher;
-}
-
-GridMapParams init_grid_map_params() {
-  double h, w, scale;
-  ros::param::param<double>("~slam/map/height_in_meters", h, 10);
-  ros::param::param<double>("~slam/map/width_in_meters", w, 10);
-  ros::param::param<double>("~slam/map/meters_per_cell", scale, 0.1);
-  return {(int)std::ceil(w / scale), (int)std::ceil(h / scale), scale};
 }
 
 void init_constants_for_ros(double &ros_tf_buffer_size,

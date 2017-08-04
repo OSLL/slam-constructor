@@ -9,41 +9,34 @@
 #include "../../ros/laser_scan_observer.h"
 #include "../../ros/init_utils.h"
 
+#include "../../ros/launch_properties_provider.h"
+#include "../../utils/init_occupancy_mapping.h"
 #include "gmapping_scan_probability_estimator.h"
 #include "gmapping_particle_filter.h"
 
-unsigned init_particles_nm() {
-  int particles_nm;
-  ros::param::param<int>("~slam/particles/number", particles_nm, 30);
-  assert(0 < particles_nm && "Particles number must be positive");
-  return particles_nm;
+auto init_particles_nm(std::shared_ptr<PropertiesProvider> props) {
+  return props->get_uint("slam/particles/number", 30);
 }
 
-GMappingParams init_gmapping_params() {
-  double mean_sample_xy, sigma_sample_xy,
-         mean_sample_th, sigma_sample_th,
-         min_sm_lim_xy, max_sm_lim_xy,
-         min_sm_lim_th, max_sm_lim_th;
-  ros::param::param<double>("slam/particles/sample/xy/mean",
-                                           mean_sample_xy, 0.0);
-  ros::param::param<double>("slam/particles/sample/xy/sigma",
-                                           sigma_sample_xy, 0.1);
-  ros::param::param<double>("slam/particles/sample/theta/mean",
-                                           mean_sample_th, 0.0);
-  ros::param::param<double>("slam/particles/sample/theta/sigma",
-                                           sigma_sample_th, 0.03);
-  ros::param::param<double>("slam/particles/sm_delta_lim/xy/min",
-                                           min_sm_lim_xy, 0.6);
-  ros::param::param<double>("slam/particles/sm_delta_lim/xy/max",
-                                           max_sm_lim_xy, 0.8);
-  ros::param::param<double>("slam/particles/sm_delta_lim/theta/min",
-                                           min_sm_lim_th, 0.3);
-  ros::param::param<double>("slam/particles/sm_delta_lim/theta/max",
-                                           max_sm_lim_th, 0.4);
-  return {mean_sample_xy, sigma_sample_xy,
-          mean_sample_th, sigma_sample_th,
-          min_sm_lim_xy, max_sm_lim_xy,
-          min_sm_lim_th, max_sm_lim_th};
+auto init_gmapping_params(std::shared_ptr<PropertiesProvider> props) {
+  auto mean_sample_xy = props->get_dbl("slam/particles/sample/xy/mean", 0.0);
+  auto sigma_sample_xy = props->get_dbl("slam/particles/sample/xy/sigma", 0.1);
+  auto mean_sample_th = props->get_dbl("slam/particles/sample/theta/mean", 0.0);
+  auto sigma_sample_th = props->get_dbl("slam/particles/sample/theta/sigma",
+                                        0.03);
+
+  auto min_sm_lim_xy = props->get_dbl("slam/particles/sm_delta_lim/xy/min",
+                                      0.6);
+  auto max_sm_lim_xy = props->get_dbl("slam/particles/sm_delta_lim/xy/max",
+                                      0.8);
+  auto min_sm_lim_th = props->get_dbl("slam/particles/sm_delta_lim/theta/min",
+                                      0.3);
+  auto max_sm_lim_th = props->get_dbl("slam/particles/sm_delta_lim/theta/max",
+                                      0.4);
+  return GMappingParams{mean_sample_xy, sigma_sample_xy,
+                        mean_sample_th, sigma_sample_th,
+                        min_sm_lim_xy, max_sm_lim_xy,
+                        min_sm_lim_th, max_sm_lim_th};
 }
 
 using ObservT = sensor_msgs::LaserScan;
@@ -52,13 +45,15 @@ using GmappingMap = GmappingWorld::MapType;
 int main(int argc, char** argv) {
   ros::init(argc, argv, "GMapping");
 
+  auto props = std::make_shared<LaunchPropertiesProvider>();
   auto gcs = std::make_shared<GridCellStrategy>(
     std::make_shared<GmappingBaseCell>(),
     std::make_shared<GmappingScanProbabilityEstimator>(),
-    init_occ_estimator()
+    init_occ_estimator(props)
   );
   auto slam = std::make_shared<GmappingParticleFilter>(
-    gcs, init_grid_map_params(), init_gmapping_params(), init_particles_nm());
+    gcs, init_grid_map_params(props),
+    init_gmapping_params(props), init_particles_nm(props));
 
   ros::NodeHandle nh;
   double ros_map_publishing_rate, ros_tf_buffer_size;
