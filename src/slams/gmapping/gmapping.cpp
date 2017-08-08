@@ -14,24 +14,24 @@
 #include "gmapping_scan_probability_estimator.h"
 #include "gmapping_particle_filter.h"
 
-auto init_particles_nm(std::shared_ptr<PropertiesProvider> props) {
-  return props->get_uint("slam/particles/number", 30);
+auto init_particles_nm(const PropertiesProvider &props) {
+  return props.get_uint("slam/particles/number", 30);
 }
 
-auto init_gmapping_params(std::shared_ptr<PropertiesProvider> props) {
-  auto mean_sample_xy = props->get_dbl("slam/particles/sample/xy/mean", 0.0);
-  auto sigma_sample_xy = props->get_dbl("slam/particles/sample/xy/sigma", 0.1);
-  auto mean_sample_th = props->get_dbl("slam/particles/sample/theta/mean", 0.0);
-  auto sigma_sample_th = props->get_dbl("slam/particles/sample/theta/sigma",
+auto init_gmapping_params(const PropertiesProvider &props) {
+  auto mean_sample_xy = props.get_dbl("slam/particles/sample/xy/mean", 0.0);
+  auto sigma_sample_xy = props.get_dbl("slam/particles/sample/xy/sigma", 0.1);
+  auto mean_sample_th = props.get_dbl("slam/particles/sample/theta/mean", 0.0);
+  auto sigma_sample_th = props.get_dbl("slam/particles/sample/theta/sigma",
                                         0.03);
 
-  auto min_sm_lim_xy = props->get_dbl("slam/particles/sm_delta_lim/xy/min",
+  auto min_sm_lim_xy = props.get_dbl("slam/particles/sm_delta_lim/xy/min",
                                       0.6);
-  auto max_sm_lim_xy = props->get_dbl("slam/particles/sm_delta_lim/xy/max",
+  auto max_sm_lim_xy = props.get_dbl("slam/particles/sm_delta_lim/xy/max",
                                       0.8);
-  auto min_sm_lim_th = props->get_dbl("slam/particles/sm_delta_lim/theta/min",
+  auto min_sm_lim_th = props.get_dbl("slam/particles/sm_delta_lim/theta/min",
                                       0.3);
-  auto max_sm_lim_th = props->get_dbl("slam/particles/sm_delta_lim/theta/max",
+  auto max_sm_lim_th = props.get_dbl("slam/particles/sm_delta_lim/theta/max",
                                       0.4);
   return GMappingParams{mean_sample_xy, sigma_sample_xy,
                         mean_sample_th, sigma_sample_th,
@@ -45,7 +45,7 @@ using GmappingMap = GmappingWorld::MapType;
 int main(int argc, char** argv) {
   ros::init(argc, argv, "GMapping");
 
-  auto props = std::make_shared<LaunchPropertiesProvider>();
+  auto props = LaunchPropertiesProvider{};
   auto gcs = std::make_shared<GridCellStrategy>(
     std::make_shared<GmappingBaseCell>(),
     std::make_shared<GmappingScanProbabilityEstimator>(),

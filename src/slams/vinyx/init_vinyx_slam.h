@@ -12,7 +12,7 @@
 #include "../viny/viny_scan_probability_estimator.h"
 #include "vinyx_world.h"
 
-auto init_vinyx_slam(std::shared_ptr<PropertiesProvider> props) {
+auto init_vinyx_slam(const PropertiesProvider &props) {
   auto slam_props = SingleStateHypothesisLSGWProperties{};
   // FIXME: move to params, init_viny_slam.h code duplication
   slam_props.localized_scan_quality = 0.9;

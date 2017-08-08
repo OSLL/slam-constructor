@@ -140,7 +140,7 @@ private:
 
 class VinyDSCell : public GridCell {
 public:
-  VinyDSCell(): GridCell{Occupancy{-1, 1}} {}
+  VinyDSCell(): GridCell{Occupancy{0.5, 1}} {}
 
   std::unique_ptr<GridCell> clone() const override {
     return std::make_unique<VinyDSCell>(*this);

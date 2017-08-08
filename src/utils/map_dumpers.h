@@ -1,6 +1,7 @@
 #ifndef SLAM_CTOR_UTIL_MAP_DUMPERS
 #define SLAM_CTOR_UTIL_MAP_DUMPERS
 
+#include <cmath>
 #include <fstream>
 #include <string>
 
@@ -10,24 +11,24 @@
 
 template <typename GridMapType>
 class GridMapToPgmDumber : public WorldMapObserver<GridMapType> {
+  // Used PGM format discription: http://netpbm.sourceforge.net/doc/pgm.html
 private:
-  static constexpr short Max_Intensity = 255;
-  using IntensityType = char;
-
+  using IntensityType = unsigned char;
+  static constexpr IntensityType Max_Intensity = 255;
 private:
   class PgmHeader {
   public:
-    PgmHeader(int w, int h, int max_v)
+    PgmHeader(int w, int h, unsigned max_v)
       : _width{w}, _height{h}, _max_val{max_v} {}
 
     void write(std::ostream &os) const {
       os.write(_magic, sizeof(_magic));
       write_whitespace(os);
-      write_int(os, _width);
+      write_integral(os, _width);
       write_whitespace(os);
-      write_int(os, _height);
+      write_integral(os, _height);
       write_whitespace(os);
-      write_int(os, _max_val);
+      write_integral(os, _max_val);
     }
   private:
 
@@ -36,14 +37,16 @@ private:
       os.write(&new_line, sizeof(new_line));
     }
 
-    void write_int(std::ostream &os, int n) const {
-      auto str = std::to_string(n);
+    template <typename T>
+    void write_integral(std::ostream &os, T value) const {
+      auto str = std::to_string(value);
       os.write(str.c_str(), str.size());
     }
 
   private:
     char _magic[2] = {'P', '5'};
-    int _width, _height, _max_val;
+    int _width, _height;
+    unsigned _max_val;
   };
 
 public:
@@ -59,7 +62,7 @@ public:
     ++_id;
   }
 
-  void dump_map(std::ofstream &os, const GridMapType &map) {
+  static void dump_map(std::ofstream &os, const GridMapType &map) {
     auto w = map.width(), h = map.height();
     auto origin = map.origin();
     // write pgm header
@@ -77,7 +80,8 @@ public:
         auto value = 1.0 - std::max(0.0, std::min(1.0, map.occupancy(area_id)));
         //assert(are_ordered(0, value, 1));
         auto intensity = static_cast<IntensityType>(Max_Intensity * value);
-        os.write(&intensity, sizeof(intensity));
+        static_assert(sizeof(intensity) == 1);
+        os.write(reinterpret_cast<char*>(&intensity), sizeof(intensity));
         ++val_nm;
       }
     }

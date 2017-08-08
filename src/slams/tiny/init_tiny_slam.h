@@ -15,9 +15,9 @@
 
 using TinySlam= SingleStateHypothesisLaserScanGridWorld<UnboundedPlainGridMap>;
 
-void setup_tiny_cell_prototype(std::shared_ptr<PropertiesProvider> props,
+void setup_tiny_cell_prototype(const PropertiesProvider &props,
                                SingleStateHypothesisLSGWProperties &sg_props) {
-  auto cell_type = props->get_str("slam/cell/type", "avg");
+  auto cell_type = props.get_str("slam/cell/type", "avg");
 
   if (cell_type == "base") {
     // FIXME: move to params
@@ -36,7 +36,7 @@ void setup_tiny_cell_prototype(std::shared_ptr<PropertiesProvider> props,
 }
 
 // FIXME: ~code duplication init_viny_slam.cpp
-auto init_tiny_slam(std::shared_ptr<PropertiesProvider> props) {
+auto init_tiny_slam(const PropertiesProvider &props) {
   auto slam_props = SingleStateHypothesisLSGWProperties{};
   setup_tiny_cell_prototype(props, slam_props);
 

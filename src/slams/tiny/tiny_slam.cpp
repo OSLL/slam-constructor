@@ -18,7 +18,7 @@ using TinySlamMap = TinySlam::MapType;
 int main(int argc, char** argv) {
   ros::init(argc, argv, "tinySLAM");
 
-  auto props = std::make_shared<LaunchPropertiesProvider>();
+  auto props = LaunchPropertiesProvider{};
   auto slam = init_tiny_slam(props);
 
   // connect the slam to a ros-topic based data provider

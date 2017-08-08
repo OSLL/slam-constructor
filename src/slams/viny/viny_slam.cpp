@@ -19,7 +19,7 @@ using VinySlamMap = VinySlam::MapType;
 int main(int argc, char** argv) {
   ros::init(argc, argv, "vinySLAM");
 
-  auto props = std::make_shared<LaunchPropertiesProvider>();
+  auto props = LaunchPropertiesProvider{};
   auto slam = init_viny_slam(props);
 
   // connect the slam to a ros-topic based data provider

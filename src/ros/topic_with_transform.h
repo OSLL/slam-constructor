@@ -1,5 +1,5 @@
-#ifndef __TOPIC_WITH_TRANSFORM_H
-#define __TOPIC_WITH_TRANSFORM_H
+#ifndef SLAM_CTOR_ROS_TOPIC_WITH_TRANSFORM_H
+#define SLAM_CTOR_ROS_TOPIC_WITH_TRANSFORM_H
 
 #include <string>
 #include <vector>

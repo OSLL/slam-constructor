@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   tf
   message_filters
+  rosbag_storage
 )
 
 find_package(GTest)
@@ -132,6 +133,7 @@ include_directories(
 ## Declare a C++ executable
 
 add_executable(wg_pr2_bag_adapter src/ros/wg_pr2_bag_adapter.cpp)
+add_executable(lslam2D_bag_runner src/ros/lslam2D_bag_runner.cpp)
 add_executable(gmapping src/slams/gmapping/gmapping.cpp)
 add_executable(tiny_slam src/slams/tiny/tiny_slam.cpp)
 add_executable(viny_slam src/slams/viny/viny_slam.cpp)
@@ -144,6 +146,7 @@ add_executable(viny_slam_x src/slams/vinyx/vinyx_slam.cpp)
 ## Specify libraries to link a library or executable target against
 
 target_link_libraries(wg_pr2_bag_adapter ${catkin_LIBRARIES})
+target_link_libraries(lslam2D_bag_runner ${catkin_LIBRARIES})
 target_link_libraries(gmapping ${catkin_LIBRARIES})
 target_link_libraries(tiny_slam ${catkin_LIBRARIES})
 target_link_libraries(viny_slam ${catkin_LIBRARIES})

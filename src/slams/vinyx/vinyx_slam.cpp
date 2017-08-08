@@ -23,7 +23,7 @@ using VinySlamXMap = VinyXMapT;
 int main(int argc, char** argv) {
   ros::init(argc, argv, "vinySLAM_plus");
 
-  auto props = std::make_shared<LaunchPropertiesProvider>();
+  auto props = LaunchPropertiesProvider{};
   auto slam = init_vinyx_slam(props);
 
   // connect the slam to a ros-topic based data provider

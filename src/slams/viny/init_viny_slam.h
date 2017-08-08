@@ -14,7 +14,7 @@
 
 using VinySlam= SingleStateHypothesisLaserScanGridWorld<UnboundedPlainGridMap>;
 
-auto init_viny_slam(std::shared_ptr<PropertiesProvider> props) {
+auto init_viny_slam(const PropertiesProvider &props) {
   auto slam_props = SingleStateHypothesisLSGWProperties{};
   // FIXME: move to params
   slam_props.localized_scan_quality = 0.9;

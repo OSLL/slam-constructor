@@ -20,9 +20,9 @@ static const std::string Slam_SM_NS = "slam/scmtch/";
 /* Init Occupancy Obeservation Probability Estimator                          */
 
 std::shared_ptr<OccupancyObservationProbabilityEstimator> init_oope(
-    std::shared_ptr<PropertiesProvider> props) {
+    const PropertiesProvider &props) {
   static const std::string OOPE_NS = Slam_SM_NS + "oope/";
-  auto type = props->get_str(OOPE_NS + "type", "obstacle");
+  auto type = props.get_str(OOPE_NS + "type", "obstacle");
 
   if (type == "obstacle") {
     return std::make_shared<ObstacleBasedOccupancyObservationPE>();
@@ -42,18 +42,18 @@ std::shared_ptr<OccupancyObservationProbabilityEstimator> init_oope(
 /*============================================================================*/
 /* Init Scan Matcher Algorithm                                                */
 
-auto init_monte_carlo_sm(std::shared_ptr<PropertiesProvider> props,
+auto init_monte_carlo_sm(const PropertiesProvider &props,
                          std::shared_ptr<ScanProbabilityEstimator> spe) {
   static const std::string SM_NS = Slam_SM_NS + "MC/";
   static const std::string DISP_NS = SM_NS + "dispersion/";
 
-  auto transl_dispersion = props->get_dbl(DISP_NS + "translation", 0.2);
-  auto rot_dispersion = props->get_dbl(DISP_NS + "rotation", 0.1);
+  auto transl_dispersion = props.get_dbl(DISP_NS + "translation", 0.2);
+  auto rot_dispersion = props.get_dbl(DISP_NS + "rotation", 0.1);
   auto failed_attempts_per_dispersion_limit =
-    props->get_uint(DISP_NS + "failed_attempts_limit", 20);
+    props.get_uint(DISP_NS + "failed_attempts_limit", 20);
 
-  auto attempts_limit = props->get_uint(SM_NS + "attempts_limit", 100);
-  auto seed = props->get_int(SM_NS + "seed", std::random_device{}());
+  auto attempts_limit = props.get_uint(SM_NS + "attempts_limit", 100);
+  auto seed = props.get_int(SM_NS + "seed", std::random_device{}());
 
   ROS_INFO("MC Scan Matcher seed: %u\n", seed);
   return std::make_shared<MonteCarloScanMatcher>(
@@ -61,27 +61,27 @@ auto init_monte_carlo_sm(std::shared_ptr<PropertiesProvider> props,
       failed_attempts_per_dispersion_limit, attempts_limit);
 }
 
-auto init_hill_climbing_sm(std::shared_ptr<PropertiesProvider> props,
+auto init_hill_climbing_sm(const PropertiesProvider &props,
                            std::shared_ptr<ScanProbabilityEstimator> spe) {
   static const std::string SM_NS = Slam_SM_NS + "HC/";
   static const std::string DIST_NS = SM_NS + "distortion/";
 
-  auto transl_distorsion = props->get_dbl(DIST_NS + "translation", 0.1);
-  auto rot_distorsion = props->get_dbl(DIST_NS + "rotation", 0.1);
-  auto fal = props->get_uint(DIST_NS + "failed_attempts_limit", 6);
+  auto transl_distorsion = props.get_dbl(DIST_NS + "translation", 0.1);
+  auto rot_distorsion = props.get_dbl(DIST_NS + "rotation", 0.1);
+  auto fal = props.get_uint(DIST_NS + "failed_attempts_limit", 6);
 
   return std::make_shared<HillClimbingScanMatcher>(
       spe, fal, transl_distorsion, rot_distorsion);
 }
 
-auto init_brute_force_sm(std::shared_ptr<PropertiesProvider> props,
+auto init_brute_force_sm(const PropertiesProvider &props,
                          std::shared_ptr<ScanProbabilityEstimator> spe) {
   static const std::string SM_NS = Slam_SM_NS + "BF/";
 
   #define INIT_BFSM_RANGE(dim, limit, step)                             \
-    auto from_##dim = props->get_dbl(SM_NS + #dim + "/from", -(limit)); \
-    auto to_##dim = props->get_dbl(SM_NS + #dim + "/to", limit);        \
-    auto step_##dim = props->get_dbl(SM_NS + #dim + "/step", step);
+    auto from_##dim = props.get_dbl(SM_NS + #dim + "/from", -(limit)); \
+    auto to_##dim = props.get_dbl(SM_NS + #dim + "/to", limit);        \
+    auto step_##dim = props.get_dbl(SM_NS + #dim + "/step", step);
 
   INIT_BFSM_RANGE(x, 0.5, 0.1);
   INIT_BFSM_RANGE(y, 0.5, 0.1);
@@ -93,10 +93,10 @@ auto init_brute_force_sm(std::shared_ptr<PropertiesProvider> props,
     spe, from_x, to_x, step_x, from_y, to_y, step_y, from_t, to_t, step_t);
 }
 
-auto init_scan_matcher(std::shared_ptr<PropertiesProvider> props,
+auto init_scan_matcher(const PropertiesProvider &props,
                        std::shared_ptr<ScanProbabilityEstimator> spe) {
   auto sm = std::shared_ptr<GridScanMatcher>{};
-  auto sm_type = props->get_str(Slam_SM_NS + "type", "MC");
+  auto sm_type = props.get_str(Slam_SM_NS + "type", "MC");
 
   if      (sm_type == "MC") { sm = init_monte_carlo_sm(props, spe); }
   else if (sm_type == "HC") { sm = init_hill_climbing_sm(props, spe); }
