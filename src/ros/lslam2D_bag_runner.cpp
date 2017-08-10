@@ -43,11 +43,13 @@ struct ProgramArgs {
       if (flag == "") {
         switch (mandatory_id) {
         case Slam_Type_Id: slam_type = *arg; break;
-        case Props_Id: props.init(*arg); break;
+        case Props_Id: props.append_file_content(*arg); break;
         case Bag_Id: bag_fname = *arg; break;
         default: is_valid = false;
         }
         ++mandatory_id;
+      } else if (flag == "-p") {
+        props.append_file_content(*arg);
       } else if (flag == "-t") {
         traj_dumper = std::make_shared<RobotPoseTumTrajectoryDumper>(*arg);
       } else if (flag == "-m") {
@@ -64,7 +66,8 @@ struct ProgramArgs {
 
   void print_usage(std::ostream &stream) {
     stream << "Args: <slam type> <properties file> <bag file>\n"
-           << "      [-v] [-t <traj file>] [-m <map file>]\n";
+           << "      [-v] [-t <traj file>] [-m <map file>] \n"
+           << "      [-p <extra properties file>]\n";
   }
 
   bool is_valid;

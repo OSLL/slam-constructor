@@ -7,7 +7,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include "../../core/states/world.h"
+#include "../../core/states/laser_scan_grid_world.h"
 #include "../../core/particle_filter.h"
 #include "gmapping_world.h"
 
@@ -30,9 +30,9 @@ private:
 
 // TODO: add restriction on particle type
 class GmappingParticleFilter :
-  public World<TransformedLaserScan, GmappingWorld::MapType> {
+  public LaserScanGridWorld<GmappingWorld::MapType> {
 public:
-  using WorldT = World<TransformedLaserScan, GmappingWorld::MapType>;
+  using WorldT = LaserScanGridWorld<GmappingWorld::MapType>;
 public: // methods
 
   GmappingParticleFilter(std::shared_ptr<GridCellStrategy> gcs,
