@@ -13,6 +13,7 @@
 #include "../utils/map_dumpers.h"
 #include "../utils/properties_providers.h"
 #include "../slams/viny/init_viny_slam.h"
+#include "../slams/tiny/init_tiny_slam.h"
 
 struct ProgramArgs {
   static constexpr auto Slam_Type_Id = 0, Props_Id = 1, Bag_Id = 2,
@@ -76,16 +77,10 @@ struct ProgramArgs {
   bool is_verbose;
 };
 
-int main(int argc, char** argv) {
-  auto args = ProgramArgs{}.init(argv);
-  if (!args.is_valid) {
-    args.print_usage(std::cout);
-    std::exit(-1);
-  }
-
-  // FIXME: use slam type for dispatching
-  auto slam = init_viny_slam(args.props);
-
+// TODO: consider moving map type to runtime params
+template <typename MapType>
+void run_slam(std::shared_ptr<LaserScanGridWorld<MapType>> slam,
+              const ProgramArgs &args) {
   if (args.traj_dumper) { slam->subscribe_pose(args.traj_dumper); }
   auto lscan_observer = LaserScanObserver{slam, true};
 
@@ -104,6 +99,22 @@ int main(int argc, char** argv) {
 
   if (!args.map_fname.empty()) {
     auto map_file = std::ofstream{args.map_fname, std::ios::binary};
-    GridMapToPgmDumber<VinySlam::MapType>::dump_map(map_file, slam->map());
+    GridMapToPgmDumber<MapType>::dump_map(map_file, slam->map());
+  }
+}
+
+int main(int argc, char** argv) {
+  auto args = ProgramArgs{}.init(argv);
+  if (!args.is_valid) {
+    args.print_usage(std::cout);
+    std::exit(-1);
+  }
+
+  if (args.slam_type == "viny") {
+    run_slam<typename VinySlam::MapType>(init_viny_slam(args.props), args);
+  } else if (args.slam_type == "tiny") {
+    run_slam<typename VinySlam::MapType>(init_tiny_slam(args.props), args);
+  } else {
+    std::cout << "Unkonw slam type: " << args.slam_type << std::endl;
   }
 }
