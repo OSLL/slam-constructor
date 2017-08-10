@@ -7,12 +7,15 @@
 
   <node name="gMappingSlam" pkg="slam_fmwk" type="gmapping"
         cwd="node" required="true" output="screen">
-    <remap from="laser_scan" to="/base_scan" />
     <param name="slam/particles/number" value="30" />
 
+    <!-- = Input = -->
+    <param name="in/lscan2D/ros/topic/name" value="/base_scan" />
+    <param name="in/odometry/ros/tf/odom_frame_id" value="odom_combined" />
+
+    <!-- = TODO = -->
     <param name="ros/tf/async_correction" value="true" />
     <param name="ros/tf/map_frame_id" value="map" />
-    <param name="ros/tf/odom_frame_id" value="odom_combined" />
   </node>
 
   <node name="bag_adapter" pkg="slam_fmwk"

@@ -29,8 +29,8 @@ int main(int argc, char** argv) {
   init_constants_for_ros(ros_tf_buffer_size, ros_map_publishing_rate,
                          ros_filter_queue, ros_subscr_queue);
   auto scan_provider = std::make_unique<TopicWithTransform<ObservT>>(
-    nh, "laser_scan", tf_odom_frame_id(), ros_tf_buffer_size,
-    ros_filter_queue, ros_subscr_queue
+    nh, laser_scan_2D_ros_topic_name(props), tf_odom_frame_id(props),
+    ros_tf_buffer_size, ros_filter_queue, ros_subscr_queue
   );
   auto scan_obs = std::make_shared<LaserScanObserver>(
     slam, init_skip_exceeding_lsr());
@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
     slam.get(), nh, ros_map_publishing_rate);
 
   auto pose_pub_pin = create_pose_correction_tf_publisher<ObservT, VinySlamMap>(
-    slam.get(), scan_provider.get());
+    slam.get(), scan_provider.get(), props);
   auto rp_pub_pin = create_robot_pose_tf_publisher<VinySlamMap>(slam.get());
 
   ros::spin();

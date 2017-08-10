@@ -7,7 +7,6 @@
 
   <node name="vinySlam_plus" pkg="slam_fmwk" type="viny_slam_x"
         cwd="node" required="true" output="screen">
-    <remap from="laser_scan" to="/base_scan" />
 
     <!-- = Mapping = -->
     <param name="slam/mapping/blur" value="0.3" />
@@ -31,6 +30,10 @@
     <!-- <param name="slam/scmtch/MC/seed" value="666666" /> -->
     <!-- * oope -->
     <param name="slam/scmtch/oope/type" value="obstacle" />
+
+    <!-- = Input = -->
+    <param name="in/lscan2D/ros/topic/name" value="/base_scan" />
+    <param name="in/odometry/ros/tf/odom_frame_id" value="odom_combined" />
 
     <!-- = TODO sort = -->
     <!-- Internal constants -->

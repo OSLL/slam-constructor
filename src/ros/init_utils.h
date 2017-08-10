@@ -8,6 +8,7 @@
 
 #include "../core/states/world.h"
 
+#include "../utils/properties_providers.h"
 #include "topic_with_transform.h"
 #include "pose_correction_tf_publisher.h"
 #include "robot_pose_observers.h"
@@ -20,8 +21,12 @@ std::string get_string_param(const std::string &name,
   return value;
 }
 
-std::string tf_odom_frame_id() {
-  return get_string_param("~ros/tf/odom_frame_id", "odom_combined");
+std::string laser_scan_2D_ros_topic_name(const PropertiesProvider &props) {
+  return props.get_str("in/lscan2D/ros/topic/name", "/base_scan");
+}
+
+std::string tf_odom_frame_id(const PropertiesProvider &props) {
+  return props.get_str("in/odometry/ros/tf/odom_frame_id", "odom_combined");
 }
 
 std::string tf_map_frame_id() {
@@ -51,9 +56,10 @@ bool init_skip_exceeding_lsr() {
 template <typename ObservT, typename MapT>
 std::shared_ptr<PoseCorrectionTfPublisher<ObservT>>
 create_pose_correction_tf_publisher(WorldObservable<MapT> *slam,
-                                    TopicWithTransform<ObservT> *scan_prov) {
+                                    TopicWithTransform<ObservT> *scan_prov,
+                                    const PropertiesProvider &props) {
   auto pose_publisher = std::make_shared<PoseCorrectionTfPublisher<ObservT>>(
-    tf_map_frame_id(), tf_odom_frame_id(), is_async_correction()
+    tf_map_frame_id(), tf_odom_frame_id(props), is_async_correction()
   );
   scan_prov->subscribe(pose_publisher);
   slam->subscribe_pose(pose_publisher);

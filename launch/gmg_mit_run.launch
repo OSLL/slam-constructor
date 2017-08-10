@@ -7,7 +7,6 @@
 
   <node name="gMappingSlam" pkg="slam_fmwk" type="gmapping"
         cwd="node" required="true" output="screen">
-    <remap from="laser_scan" to="/base_scan" />
     <param name="slam/particles/number" value="30" />
     <param name="ros/tf/async_correction" value="false" />
 
@@ -31,6 +30,10 @@
     <param name = "slam/particles/sm_delta_lim/xy/max" value = "0.8" />
     <param name = "slam/particles/sm_delta_lim/theta/min" value = "0.3" />
     <param name = "slam/particles/sm_delta_lim/theta/max" value = "0.4" />
+
+    <!-- = Input = -->
+    <param name="in/lscan2D/ros/topic/name" value="/base_scan" />
+    <param name="in/odometry/ros/tf/odom_frame_id" value="odom_combined" />
 
   </node>
 
