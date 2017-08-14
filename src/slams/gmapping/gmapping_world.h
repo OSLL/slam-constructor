@@ -8,7 +8,6 @@
 #include "../../core/particle_filter.h"
 #include "../../core/states/single_state_hypothesis_laser_scan_grid_world.h"
 #include "../../core/maps/grid_cell.h"
-#include "../../core/maps/grid_cell_strategy.h"
 #include "../../core/maps/lazy_tiled_grid_map.h"
 #include "../../core/scan_matchers/hill_climbing_scan_matcher.h"
 
@@ -43,22 +42,11 @@ public:
   using MapType = UnboundedLazyTiledGridMap;
 public:
 
-  // FIXME: drop gcs, use SingleStateHypothesisLSGWProperties
-  //        or its gmapping_world specific extension
-  GmappingWorld(std::shared_ptr<GridCellStrategy> gcs,
-                const GridMapParams& map_params,
-                const GMappingParams& gparams)
+  GmappingWorld(const SingleStateHypothesisLSGWProperties &shw_params,
+                const GMappingParams &gparams)
     // FIXME: [Performance] The adder does extra computations
     //        related to blurring that are not actually used
-    : SingleStateHypothesisLaserScanGridWorld{
-        {1.0, 1.0, 0, gcs->cell_prototype(),
-         // FIXME: move to params
-         std::make_shared<HillClimbingScanMatcher>(gcs->prob_est(), 6,
-                                                   0.1, 0.1),
-         std::make_shared<WallDistanceBlurringScanAdder>(
-           gcs->occupancy_est(), 0),
-         map_params}
-      }
+    : SingleStateHypothesisLaserScanGridWorld{shw_params}
     , _rnd_engine(std::random_device{}())
     , _pose_guess_rv{gparams.pose_guess_rv}
     , _next_sm_delta_rv{gparams.next_sm_delta_rv} {

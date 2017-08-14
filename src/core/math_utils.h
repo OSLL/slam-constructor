@@ -24,6 +24,10 @@ constexpr inline bool is_multiple_of(double value, double factor) {
   return are_equal(ratio, std::trunc(ratio));
 }
 
+inline double bound_value(double left, double v, double right) {
+  return std::max(left, std::min(right, v));
+}
+
 inline bool less_or_equal(double a, double b) {
   return are_equal(a, b) || less(a, b);
 }

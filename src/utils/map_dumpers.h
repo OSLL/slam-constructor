@@ -77,8 +77,8 @@ public:
     int val_nm = 0;
     for (area_id.y = h - origin.y - 1; -origin.y <= area_id.y; --area_id.y) {
       for (area_id.x = -origin.x; area_id.x < w - origin.x; ++area_id.x) {
-        auto value = 1.0 - std::max(0.0, std::min(1.0, map.occupancy(area_id)));
-        //assert(are_ordered(0, value, 1));
+        auto occ = map.occupancy(area_id);
+        auto value = 1.0 - (occ == -1 ? 0.5 : bound_value(0.0, occ, 1.0));
         auto intensity = static_cast<IntensityType>(Max_Intensity * value);
         static_assert(sizeof(intensity) == 1);
         os.write(reinterpret_cast<char*>(&intensity), sizeof(intensity));

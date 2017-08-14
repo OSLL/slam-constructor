@@ -15,6 +15,7 @@
 #include "../utils/properties_providers.h"
 #include "../slams/viny/init_viny_slam.h"
 #include "../slams/tiny/init_tiny_slam.h"
+#include "../slams/gmapping/init_gmapping.h"
 
 struct ProgramArgs {
   static constexpr auto Slam_Type_Id = 0, Props_Id = 1, Bag_Id = 2,
@@ -119,7 +120,9 @@ int main(int argc, char** argv) {
   if (args.slam_type == "viny") {
     run_slam<typename VinySlam::MapType>(init_viny_slam(args.props), args);
   } else if (args.slam_type == "tiny") {
-    run_slam<typename VinySlam::MapType>(init_tiny_slam(args.props), args);
+    run_slam<typename TinySlam::MapType>(init_tiny_slam(args.props), args);
+  } else if (args.slam_type == "gmapping") {
+    run_slam<typename Gmapping::MapType>(init_gmapping(args.props), args);
   } else {
     std::cout << "Unkonw slam type: " << args.slam_type << std::endl;
   }
