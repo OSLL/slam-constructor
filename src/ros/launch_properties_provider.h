@@ -28,6 +28,10 @@ public:
     return v;
   }
 
+  bool get_bool(const std::string &id, bool dflt) const override {
+    return launch_param<bool>(id, dflt);
+  }
+
 private:
 
   template <typename T>

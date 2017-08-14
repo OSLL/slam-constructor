@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <fstream>
 #include <algorithm>
+#include <sstream>
 
 // TODO: replace with plain header on standard update
 #include <libgen.h>
@@ -21,6 +22,7 @@ public:
   virtual double   get_dbl(const std::string &id, double dflt) const = 0;
   virtual str      get_str(const std::string &id, const str &dflt) const = 0;
   virtual unsigned get_uint(const std::string &id, unsigned dflt) const = 0;
+  virtual bool     get_bool(const std::string &id, bool dflt) const = 0;
 };
 
 class MapPropertiesProvider : public PropertiesProvider {
@@ -48,6 +50,12 @@ public:
 
   unsigned get_uint(const std::string &id, unsigned dflt) const override {
     return has_property(id) ? std::stoul(_props.at(id)) : dflt;
+  }
+
+  bool  get_bool(const std::string &id, bool dflt) const override {
+    if (!has_property(id)) { return dflt; }
+    auto value = _props.at(id);
+    return !(value == "false" || value == "0");
   }
 
   MapPropertiesProvider &operator+=(const MapPropertiesProvider &that) {
@@ -88,6 +96,10 @@ public:
 
   unsigned get_uint(const std::string &id, unsigned dflt) const override {
     return _props.get_uint(id, dflt);
+  }
+
+  bool get_bool(const std::string &id, bool dflt) const override {
+    return _props.get_bool(id, dflt);
   }
 
 private:

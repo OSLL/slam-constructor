@@ -90,6 +90,8 @@ void run_slam(std::shared_ptr<LaserScanGridWorld<MapType>> slam,
   auto lscan_observer = LaserScanObserver{slam, true};
 
   ros::Time::init();
+  assert(args.props.get_bool("in/lscan2D/ros/topic/enabled", false));
+  assert(args.props.get_bool("in/odometry/ros/tf/enabled", false));
   BagTopicWithTransform<sensor_msgs::LaserScan> bag{
     args.bag_fname, laser_scan_2D_ros_topic_name(args.props),
     tf_odom_frame_id(args.props)
