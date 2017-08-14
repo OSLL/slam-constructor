@@ -118,7 +118,9 @@ private:
             new char[path.length() + 1]()
           };
           std::strncpy(path_copy.get(), path.c_str(), path.length());
-          auto fname_dir = std::string{dirname(path_copy.get())};
+          constexpr char Unix_Path_Separator = '/';
+          auto fname_dir = std::string{dirname(path_copy.get())} +
+                           Unix_Path_Separator;
           /*
           auto fname_dir = static_cast<std::string>(
             std::experimental::filesystem::path{fname}.remove_filename());

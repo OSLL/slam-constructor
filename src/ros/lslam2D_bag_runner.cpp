@@ -18,8 +18,7 @@
 #include "../slams/gmapping/init_gmapping.h"
 
 struct ProgramArgs {
-  static constexpr auto Slam_Type_Id = 0, Props_Id = 1, Bag_Id = 2,
-                        Mandatory_Id_Nm = 3;
+  static constexpr auto Slam_Type_Id = 0, Bag_Id = 1, Mandatory_Id_Nm = 2;
   ProgramArgs() : is_valid{true}, is_verbose{false} {}
 
   // TODO: refactor
@@ -44,9 +43,10 @@ struct ProgramArgs {
       if (flag == "") {
         switch (mandatory_id) {
         case Slam_Type_Id: slam_type = *arg; break;
-        case Props_Id: props.append_file_content(*arg); break;
         case Bag_Id: bag_fname = *arg; break;
-        default: is_valid = false;
+        default:
+          std::cerr << "[Error] Wrong number of mandatory properties\n";
+          is_valid = false;
         }
         ++mandatory_id;
       } else if (flag == "-p") {
@@ -56,7 +56,7 @@ struct ProgramArgs {
       } else if (flag == "-m") {
         map_fname = *arg;
       } else {
-        std::cout << "Skip parameter for unknown flag \""
+        std::cout << "[Warn] Skip parameter for unknown flag \""
                   << flag << "\"" << std::endl;
       }
       flag = "";
@@ -66,9 +66,9 @@ struct ProgramArgs {
   }
 
   void print_usage(std::ostream &stream) {
-    stream << "Args: <slam type> <properties file> <bag file>\n"
+    stream << "Args: <slam type> <bag file>\n"
            << "      [-v] [-t <traj file>] [-m <map file>] \n"
-           << "      [-p <extra properties file>]\n";
+           << "      [-p <properties file>]\n";
   }
 
   bool is_valid;
