@@ -80,7 +80,7 @@ public:
         auto occ = map.occupancy(area_id);
         auto value = 1.0 - (occ == -1 ? 0.5 : bound_value(0.0, occ, 1.0));
         auto intensity = static_cast<IntensityType>(Max_Intensity * value);
-        static_assert(sizeof(intensity) == 1);
+        static_assert(sizeof(intensity) == 1, "PGM insensity is not char");
         os.write(reinterpret_cast<char*>(&intensity), sizeof(intensity));
         ++val_nm;
       }

@@ -128,4 +128,5 @@ int main(int argc, char** argv) {
   } else {
     std::cout << "Unkonw slam type: " << args.slam_type << std::endl;
   }
+  return 0;
 }
