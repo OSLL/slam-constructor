@@ -85,7 +85,7 @@ protected:
 
 /* Experimental */
 
-#include <array>
+#include "../features/angle_histogram.h"
 
 class HistogramWeightedMDSPEstimator
   : public WeightedMeanDiscrepancySPEstimator {
@@ -97,39 +97,19 @@ public:
                           const GridMap &map) override {
     auto scan = WeightedMeanDiscrepancySPEstimator::filter_scan(raw_scan, pose,
                                                                 map);
-
-    std::fill(std::begin(_hist), std::end(_hist), 0);
-    for (std::size_t i = 1; i < scan.points().size(); ++i) {
-      _hist[hist_index(scan.points(), i)]++;
-    }
-
+    _hist.reset(scan);
     return scan;
   }
 
 protected:
 
-  std::size_t hist_index(const LaserScan2D::Points &pts,
-                         LaserScan2D::Points::size_type i) const {
-      auto &sp1 = pts[i-1], &sp2 = pts[i];
-      double d_x = sp1.x() - sp2.x();
-      double d_y = sp1.y() - sp2.y();
-      double d_d = std::sqrt(d_x*d_x + d_y*d_y);
-      double rate = d_x / d_d;
-      if (1.0 < std::abs(rate)) {
-        std::cout << "[Warning] HWMDSPE: rate is " << rate << std::endl;
-        rate = 1.0;
-      }
-      auto raw_i = std::size_t(std::floor((1 + rate) * _hist.size() / 2));
-      return raw_i % _hist.size();
-  }
-
   double scan_point_weight(const LaserScan2D::Points &pts,
                            LaserScan2D::Points::size_type i) const override{
-    return 1.0 / _hist[hist_index(pts, i)];
+    return 1.0 / _hist.value(pts, i);
   }
 
 private:
-  std::array<unsigned, 20> _hist;
+  AngleHistogram _hist;
 };
 
 
