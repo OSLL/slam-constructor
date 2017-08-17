@@ -86,7 +86,6 @@ struct ProgramArgs {
 template <typename MapType>
 void run_slam(std::shared_ptr<LaserScanGridWorld<MapType>> slam,
               const ProgramArgs &args) {
-  if (args.traj_dumper) { slam->subscribe_pose(args.traj_dumper); }
   auto lscan_observer = LaserScanObserver{slam, true};
 
   ros::Time::init();
@@ -100,7 +99,11 @@ void run_slam(std::shared_ptr<LaserScanGridWorld<MapType>> slam,
   auto scan_id = unsigned{0};
   while (bag.extract_next_msg()) {
     lscan_observer.handle_transformed_msg(bag.msg(), bag.transform());
+    if (args.traj_dumper) {
+      args.traj_dumper->log_robot_pose(bag.timestamp(), slam->pose());
+    }
     ++scan_id;
+
     if (args.is_verbose) {
       std::cout << "Handled scan #" << scan_id << std::endl;
     }

@@ -37,9 +37,12 @@ public:
     , _flush_every_entry{flush_every_entry} {}
 
   void on_pose_update(const RobotPose &pose) override {
+    log_robot_pose(ros::Time::now(), pose);
+  }
+
+  void log_robot_pose(const ros::Time &time,  const RobotPose &pose) {
     auto q = tf::createQuaternionFromRPY(0, 0, pose.theta);
-    auto ts = ros::Time::now();
-    _fstream << ts.sec << '.' << ts.nsec
+    _fstream << time.sec << '.' << time.nsec
              << ' ' << pose.x << ' ' << pose.y << ' ' << '0'
              << ' ' << q.x() << ' ' << q.y() << ' ' << q.z() << ' ' << q.w()
              << '\n';

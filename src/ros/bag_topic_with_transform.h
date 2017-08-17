@@ -59,8 +59,11 @@ public:
     return has_synced_msg();
   }
 
-  auto msg() { return _msg;}
-  auto transform() { return _transform;}
+  const auto &msg() const { return _msg;}
+  const auto &transform() const { return _transform;}
+  auto timestamp() const {
+    return ros::message_traits::TimeStamp<MsgType>::value(*_msg);
+  }
 
 private:
   bool has_synced_msg() {

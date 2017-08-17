@@ -3,6 +3,7 @@
 
 #include <string>
 #include <memory>
+#include <iostream>
 
 #include "properties_providers.h"
 
@@ -55,7 +56,7 @@ auto init_monte_carlo_sm(const PropertiesProvider &props,
   auto attempts_limit = props.get_uint(SM_NS + "attempts_limit", 100);
   auto seed = props.get_int(SM_NS + "seed", std::random_device{}());
 
-  ROS_INFO("MC Scan Matcher seed: %u\n", seed);
+  std::cout << "[INFO] MC Scan Matcher seed: " << seed << std::endl;
   return std::make_shared<MonteCarloScanMatcher>(
       spe, seed, transl_dispersion, rot_dispersion,
       failed_attempts_per_dispersion_limit, attempts_limit);
