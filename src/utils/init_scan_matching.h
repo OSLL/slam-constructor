@@ -12,10 +12,9 @@
 #include "../core/scan_matchers/monte_carlo_scan_matcher.h"
 #include "../core/scan_matchers/hill_climbing_scan_matcher.h"
 #include "../core/scan_matchers/brute_force_scan_matcher.h"
+#include "../core/scan_matchers/weighted_mean_point_probability_spe.h"
 
 static const std::string Slam_SM_NS = "slam/scmtch/";
-
-// TODO: scan probability estimator
 
 /*============================================================================*/
 /* Init Occupancy Obeservation Probability Estimator                          */
@@ -35,10 +34,44 @@ std::shared_ptr<OccupancyObservationProbabilityEstimator> init_oope(
     return std::make_shared<OverlapWeightedOccupancyObservationPE>();
   } else {
     std::cerr << "Unknown occupancy observation probability estimator type "
-              << "(" << OOPE_NS + type << ")" << type << std::endl;
+              << "(" << OOPE_NS + "type) " << type << std::endl;
     std::exit(-1);
   }
 }
+
+/*============================================================================*/
+/*                 Scan Probability Estimator initialization                  */
+
+auto init_swp(const PropertiesProvider &props) {
+  static const std::string SWP_Type = Slam_SM_NS + "spe/wmpp/weighing/type";
+  auto type = props.get_str(SWP_Type, "<undefined>");
+  auto swp = std::shared_ptr<ScanPointWeighing>{};
+
+  if (type == "even") {
+    swp = std::make_shared<EvenSPW>();
+  } else if (type == "viny") {
+    swp = std::make_shared<VinySlamSPW>();
+  } else if (type == "ahr") {
+    swp = std::make_shared<AngleHistogramReciprocalSPW>();
+  } else {
+    std::cerr << "Unknown Scan Point Weighing type "
+              << "(" << SWP_Type << ") " << type << std::endl;
+    std::exit(-1);
+  }
+  return swp;
+}
+
+auto init_spe(const PropertiesProvider &props) {
+  auto type = props.get_str(Slam_SM_NS + "spe/type", "<undefined>");
+  if (type == "wmpp") {
+    using WmppSpe = WeightedMeanPointProbabilitySPE;
+    return std::make_shared<WmppSpe>(init_oope(props), init_swp(props));
+  } else {
+    std::cerr << "Unknown Scan Probability Estimator type ("
+              << Slam_SM_NS << "spe/type): " << type << std::endl;
+    std::exit(-1);
+  }
+};
 
 /*============================================================================*/
 /* Init Scan Matcher Algorithm                                                */
@@ -94,11 +127,10 @@ auto init_brute_force_sm(const PropertiesProvider &props,
     spe, from_x, to_x, step_x, from_y, to_y, step_y, from_t, to_t, step_t);
 }
 
-auto init_scan_matcher(const PropertiesProvider &props,
-                       std::shared_ptr<ScanProbabilityEstimator> spe) {
+auto init_scan_matcher(const PropertiesProvider &props) {
+  auto spe = init_spe(props);
   auto sm = std::shared_ptr<GridScanMatcher>{};
-  auto sm_type = props.get_str(Slam_SM_NS + "type", "MC");
-
+  auto sm_type = props.get_str(Slam_SM_NS + "type", "<undefined>");
   if      (sm_type == "MC") { sm = init_monte_carlo_sm(props, spe); }
   else if (sm_type == "HC") { sm = init_hill_climbing_sm(props, spe); }
   else if (sm_type == "BF") { sm = init_brute_force_sm(props, spe); }

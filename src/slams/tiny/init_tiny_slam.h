@@ -9,7 +9,6 @@
 
 #include "../../core/maps/plain_grid_map.h"
 #include "../../core/states/single_state_hypothesis_laser_scan_grid_world.h"
-#include "../../core/scan_matchers/weighted_mean_discrepancy_spe.h"
 
 #include "tiny_grid_cell.h"
 
@@ -40,9 +39,7 @@ auto init_tiny_slam(const PropertiesProvider &props) {
   auto slam_props = SingleStateHypothesisLSGWProperties{};
   setup_tiny_cell_prototype(props, slam_props);
 
-  auto spe = std::make_shared<WeightedMeanDiscrepancySPEstimator>
-    (init_oope(props));
-  slam_props.gsm = init_scan_matcher(props, spe);
+  slam_props.gsm = init_scan_matcher(props);
 
   // TODO: move to init utils, rename to map distorsion
   slam_props.gmsa = std::make_shared<WallDistanceBlurringScanAdder>(

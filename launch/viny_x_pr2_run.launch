@@ -30,6 +30,8 @@
     <!-- <param name="slam/scmtch/MC/seed" value="666666" /> -->
     <!-- * oope -->
     <param name="slam/scmtch/oope/type" value="obstacle" />
+    <param name="slam/scmtch/spe/type" value="wmpp" />
+    <param name="slam/scmtch/spe/wmpp/weighing/type" value="viny" />
 
     <!-- = TODO sort = -->
     <!-- Internal constants -->

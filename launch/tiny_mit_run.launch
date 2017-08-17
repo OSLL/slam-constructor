@@ -29,6 +29,9 @@
     <param name="slam/scmtch/MC/attempts_limit" value="100" />
     <!-- <param name="slam/scmtch/MC/seed" value="666666" /> -->
 
+    <param name="slam/scmtch/spe/type" value="wmpp" />
+    <param name="slam/scmtch/spe/wmpp/weighing/type" value="even" />
+
     <!-- = Input = -->
     <param name="in/lscan2D/ros/topic/name" value="/base_scan" />
     <param name="in/odometry/ros/tf/odom_frame_id" value="odom_combined" />

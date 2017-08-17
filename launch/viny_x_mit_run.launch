@@ -31,6 +31,9 @@
     <!-- * oope -->
     <param name="slam/scmtch/oope/type" value="obstacle" />
 
+    <param name="slam/scmtch/spe/type" value="wmpp" />
+    <param name="slam/scmtch/spe/wmpp/weighing/type" value="viny" />
+
     <!-- = Input = -->
     <param name="in/lscan2D/ros/topic/name" value="/base_scan" />
     <param name="in/odometry/ros/tf/odom_frame_id" value="odom_combined" />

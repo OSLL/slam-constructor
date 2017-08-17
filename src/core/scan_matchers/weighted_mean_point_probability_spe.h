@@ -4,11 +4,67 @@
 #include <cmath>
 #include "grid_scan_matcher.h"
 #include "../maps/grid_rasterization.h"
+#include "../features/angle_histogram.h"
 
-class WeightedMeanDiscrepancySPEstimator : public ScanProbabilityEstimator {
+//============================================================================//
+//                      Scan Point Weighing                                   //
+
+class ScanPointWeighing {
 public:
-  WeightedMeanDiscrepancySPEstimator(OOPE oope)
-    : ScanProbabilityEstimator{oope} {}
+  using PointId = LaserScan2D::Points::size_type;
+  virtual void reset(const LaserScan2D &scan) {}
+  virtual double weight(const LaserScan2D::Points &, PointId) const = 0;
+  virtual ~ScanPointWeighing() {}
+};
+
+class EvenSPW : public ScanPointWeighing {
+public:
+  void reset(const LaserScan2D &scan) override {
+    _common_weight = 1.0 / scan.points().size();
+  }
+
+  double weight(const LaserScan2D::Points &, PointId) const override {
+    return _common_weight;
+  }
+private:
+  double _common_weight;
+};
+
+class AngleHistogramReciprocalSPW : public ScanPointWeighing {
+public:
+  void reset(const LaserScan2D &scan) override { _hist.reset(scan); }
+
+  double weight(const LaserScan2D::Points &pts, PointId id) const override {
+    return 1.0 / _hist.value(pts, id);
+  }
+private:
+  AngleHistogram _hist;
+};
+
+class VinySlamSPW : public ScanPointWeighing {
+public:
+  double weight(const LaserScan2D::Points &pts, PointId id) const override {
+    const auto &sp = pts[id];
+    auto angle = sp.angle();
+    auto weight = std::abs(std::sin(angle)) + std::abs(std::cos(angle));
+    if (0.9 < std::abs(std::cos(angle))) {
+      weight = 3;
+    } else if (0.8 < std::abs(std::cos(angle))) {
+      weight = 2;
+    }
+    return weight * std::sqrt(sp.range());
+  }
+};
+
+//============================================================================//
+//                       Weighted Mean Discrepancy SPE                        //
+
+class WeightedMeanPointProbabilitySPE : public ScanProbabilityEstimator {
+protected:
+  using SPW = std::shared_ptr<ScanPointWeighing>;
+public:
+  WeightedMeanPointProbabilitySPE(OOPE oope, SPW spw)
+    : ScanProbabilityEstimator{oope}, _spw{spw} {}
 
   LaserScan2D filter_scan(const LaserScan2D &raw_scan, const RobotPose &pose,
                           const GridMap &map) override {
@@ -24,6 +80,8 @@ public:
 
       scan_pts.push_back(sp);
     }
+
+    _spw->reset(scan);
     return scan;
   }
 
@@ -53,7 +111,7 @@ public:
       auto aoo_prob = occupancy_observation_probability(observation,
                                                         obs_area, map);
 
-      auto sp_weight = scan_point_weight(points, i);
+      auto sp_weight = _spw->weight(points, i);
       total_probability += aoo_prob * sp_weight * sp.factor();
       total_weight += sp_weight;
     }
@@ -77,40 +135,8 @@ protected:
     return !sp.is_occupied() || !map.has_cell(area_id);
   }
 
-  virtual double scan_point_weight(const LaserScan2D::Points &,
-                                   LaserScan2D::Points::size_type) const {
-    return 1;
-  }
-};
-
-/* Experimental */
-
-#include "../features/angle_histogram.h"
-
-class HistogramWeightedMDSPEstimator
-  : public WeightedMeanDiscrepancySPEstimator {
-public:
-  HistogramWeightedMDSPEstimator(OOPE oope)
-    : WeightedMeanDiscrepancySPEstimator{oope} {}
-
-  LaserScan2D filter_scan(const LaserScan2D &raw_scan, const RobotPose &pose,
-                          const GridMap &map) override {
-    auto scan = WeightedMeanDiscrepancySPEstimator::filter_scan(raw_scan, pose,
-                                                                map);
-    _hist.reset(scan);
-    return scan;
-  }
-
-protected:
-
-  double scan_point_weight(const LaserScan2D::Points &pts,
-                           LaserScan2D::Points::size_type i) const override{
-    return 1.0 / _hist.value(pts, i);
-  }
-
 private:
-  AngleHistogram _hist;
+  SPW _spw;
 };
-
 
 #endif

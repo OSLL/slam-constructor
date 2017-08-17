@@ -40,12 +40,13 @@ protected: // consts
   static constexpr double To_Rotation   = deg2rad(10);
   static constexpr double Step_Rotation = deg2rad(1);
 protected: // type aliases
-  using SPE = WeightedMeanDiscrepancySPEstimator;
+  using SPE = typename ScanMatcherTestBase<UnboundedPlainGridMap>::DefaultSPE;
   using OOPE = ObstacleBasedOccupancyObservationPE;
-
+  using SPW = EvenSPW;
 protected: // methods
   BruteForceScanMatcherSmokeTest()
-    : ScanMatcherTestBase{std::make_shared<SPE>(std::make_shared<OOPE>()),
+    : ScanMatcherTestBase{std::make_shared<SPE>(std::make_shared<OOPE>(),
+                                                std::make_shared<SPW>()),
                           Map_Width, Map_Height, Map_Scale,
                           to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
     , _bfsm{spe,
