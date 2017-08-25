@@ -148,10 +148,8 @@ private:
         continue;
       }
 
-      // FIXME: WA for compilaction w/o -Ox
-      auto ivd = Id_Value_Delimiter;
-      auto delim = std::find(buf.begin(), buf.end(), ivd);
-      if (delim == buf.end()) {
+      auto delim_i = buf.find(Id_Value_Delimiter);
+      if (delim_i == std::string::npos) {
         std::cout << "[WARN][FilePropertiesProvider] Unable to parse "
                   << path << " entry. Line: " << line
                   << ", unable to find delimiter (" << Id_Value_Delimiter
@@ -159,8 +157,8 @@ private:
         continue;
       }
 
-      auto id = std::string{buf.begin(), delim};
-      auto value = std::string{delim + 1, buf.end()};
+      auto id = buf.substr(0, delim_i);
+      auto value = buf.substr(delim_i + 1, buf.size() - delim_i - 1);
       //TODO: trim id and value
 
       if (props.has_property(id)) {

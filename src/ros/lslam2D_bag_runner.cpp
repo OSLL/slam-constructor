@@ -93,8 +93,10 @@ void run_slam(std::shared_ptr<LaserScanGridWorld<MapType>> slam,
   assert(args.props.get_bool("in/odometry/ros/tf/enabled", false));
   BagTopicWithTransform<sensor_msgs::LaserScan> bag{
     args.bag_fname, laser_scan_2D_ros_topic_name(args.props),
+    args.props.get_str("in/odometry/ros/tf/name", "/tf"),
     tf_odom_frame_id(args.props)
   };
+  bag.set_tf_ignores(tf_ignored_transforms(args.props));
 
   auto scan_id = unsigned{0};
   while (bag.extract_next_msg()) {

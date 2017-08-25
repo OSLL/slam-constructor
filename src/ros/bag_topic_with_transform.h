@@ -5,6 +5,7 @@
 #include <string>
 #include <tuple>
 #include <queue>
+#include <unordered_map>
 
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
@@ -18,11 +19,12 @@ template <typename MsgType>
 class BagTopicWithTransform {
 protected:
   using vstr = std::vector<std::string>;
+  using Transforms = std::unordered_map<std::string, std::vector<std::string>>;
 public:
   BagTopicWithTransform(const std::string &bag_fname,
                         const std::string &topic_name,
-                        const std::string &target_frame,
-                        const std::string &tf_topic_name = "/tf")
+                        const std::string &tf_topic_name,
+                        const std::string &target_frame)
     : _topic_name{topic_name}, _tf_topic_name{tf_topic_name}
     , _target_frame{target_frame}
     , _bag{bag_fname}
@@ -39,6 +41,10 @@ public:
   BagTopicWithTransform& operator=(const BagTopicWithTransform&) = delete;
   BagTopicWithTransform& operator=(BagTopicWithTransform&&) = delete;
 
+  void set_tf_ignores(const Transforms &tf_ignores) {
+    _tf_ignores = tf_ignores;
+  }
+
   bool extract_next_msg() {
     while (_view_iter != _view.end()) {
       auto ros_msg = *(_view_iter++);
@@ -48,6 +54,9 @@ public:
       } else if (msg_topic == _tf_topic_name) {
         auto tf_msg = ros_msg.instantiate<tf::tfMessage>();
         for(auto t : tf_msg->transforms) {
+          if (should_skip_tf_transform(t)) {
+            continue;
+          }
           tf::StampedTransform st;
           tf::transformStampedMsgToTF(t, st);
           _tf_cache.setTransform(st);
@@ -66,6 +75,16 @@ public:
   }
 
 private:
+
+  bool should_skip_tf_transform(const geometry_msgs::TransformStamped &t) {
+    auto from = t.header.frame_id, to = t.child_frame_id;
+    if (_tf_ignores.find(from) == _tf_ignores.end()) {
+      return false;
+    }
+    auto skip_tos = _tf_ignores.at(from);
+    return std::find(skip_tos.begin(), skip_tos.end(), to) != skip_tos.end();
+  }
+
   bool has_synced_msg() {
     if (_msg_cache.empty()) { return false;}
 
@@ -105,6 +124,7 @@ private:
   rosbag::View _view;
   rosbag::View::const_iterator _view_iter;
 
+  Transforms _tf_ignores;
   tf::Transformer _tf_cache;
   std::queue<boost::shared_ptr<MsgType>> _msg_cache;
 

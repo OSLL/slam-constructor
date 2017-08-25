@@ -14,6 +14,7 @@
 #include "robot_pose_observers.h"
 #include "occupancy_grid_publisher.h"
 
+// TODO: remove
 std::string get_string_param(const std::string &name,
                              const std::string &dflt_value) {
   std::string value;
@@ -52,6 +53,34 @@ bool init_skip_exceeding_lsr() {
 }
 
 // TODO: move to IO
+
+auto tf_ignored_transforms(const PropertiesProvider &props) {
+  std::string Rec_Sep = ":", Entry_Sep = "-";
+  std::unordered_map<std::string, std::vector<std::string>> ignores;
+
+  auto data = props.get_str("in/odometry/ros/tf/ignore", "");
+  auto next_entry_i = std::string::size_type{0};
+  while (next_entry_i < data.length()) {
+    auto next_sep_i = data.find(Rec_Sep, next_entry_i);
+    if (next_sep_i == std::string::npos) {
+      next_sep_i = data.length();
+    }
+
+    auto entry = data.substr(next_entry_i, next_sep_i - next_entry_i);
+    next_entry_i = next_sep_i + 1;
+
+    auto entry_sep_i = entry.find("-");
+    if (entry_sep_i == std::string::npos) {
+      std::cout << "[WARN] Unable to parse tf_ignore entry \""
+                << entry << "\"" << std::endl;
+      continue;
+    }
+    auto from = entry.substr(0, entry_sep_i);
+    auto to = entry.substr(entry_sep_i + 1, entry.size() - entry_sep_i - 1);
+    ignores["/" + from].push_back("/" + to);
+  }
+  return ignores;
+}
 
 template <typename ObservT, typename MapT>
 std::shared_ptr<PoseCorrectionTfPublisher<ObservT>>
