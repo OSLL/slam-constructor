@@ -12,6 +12,7 @@
 #include "../core/scan_matchers/monte_carlo_scan_matcher.h"
 #include "../core/scan_matchers/hill_climbing_scan_matcher.h"
 #include "../core/scan_matchers/brute_force_scan_matcher.h"
+#include "../core/scan_matchers/connect_the_dots_ambiguous_drift_detector.h"
 #include "../core/scan_matchers/weighted_mean_point_probability_spe.h"
 
 static const std::string Slam_SM_NS = "slam/scmtch/";
@@ -47,6 +48,7 @@ auto init_swp(const PropertiesProvider &props) {
   auto type = props.get_str(SWP_Type, "<undefined>");
   auto swp = std::shared_ptr<ScanPointWeighing>{};
 
+  std::cout << "Used SWP: " << type << std::endl;
   if (type == "even") {
     swp = std::make_shared<EvenSPW>();
   } else if (type == "viny") {
@@ -137,6 +139,11 @@ auto init_scan_matcher(const PropertiesProvider &props) {
   else {
     std::cerr << "Unknown scan matcher type: " << sm_type << std::endl;
     std::exit(-1);
+  }
+
+  // TODO: do we need AmbDD to be a wrapper?
+  if (props.get_bool(Slam_SM_NS + "use_amb_drift_detector", false)) {
+    sm = std::make_shared<ConnectTheDotsAmbiguousDriftDetector>(sm);
   }
   return sm;
 }

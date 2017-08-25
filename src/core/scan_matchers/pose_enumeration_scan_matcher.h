@@ -4,16 +4,8 @@
 #include <functional>
 #include <memory>
 
+#include "pose_enumerators.h"
 #include "grid_scan_matcher.h"
-
-class PoseEnumerator {
-public:
-  virtual bool has_next() const = 0;
-  virtual RobotPose next(const RobotPose &prev_pose) = 0;
-  virtual void reset() {};
-  virtual void feedback(bool /* pose_is_acceptable */) = 0;
-  virtual ~PoseEnumerator() {}
-};
 
 // TODO: merge the logic with hill climbing scan matcher
 //       create free functions that create scan matchers

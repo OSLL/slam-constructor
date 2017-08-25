@@ -5,6 +5,7 @@
 
 #include "pose_enumeration_scan_matcher.h"
 
+// TODO: move to pose enumerators
 // FIXME: class name
 class BruteForcePoseEnumerator : public PoseEnumerator {
 public:
@@ -48,8 +49,7 @@ public:
       if (_y < _to_y) { _y += _step_y; break; }
       else            { _y = _from_y; /* to T */ }
     case 2:
-      if (_t < _to_t) { _t += _step_t; break; }
-      else            { /* we are done */ }
+      _t += _step_t;
     }
   }
 

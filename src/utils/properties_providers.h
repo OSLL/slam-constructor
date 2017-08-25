@@ -148,7 +148,9 @@ private:
         continue;
       }
 
-      auto delim = std::find(buf.begin(), buf.end(), Id_Value_Delimiter);
+      // FIXME: WA for compilaction w/o -Ox
+      auto ivd = Id_Value_Delimiter;
+      auto delim = std::find(buf.begin(), buf.end(), ivd);
       if (delim == buf.end()) {
         std::cout << "[WARN][FilePropertiesProvider] Unable to parse "
                   << path << " entry. Line: " << line

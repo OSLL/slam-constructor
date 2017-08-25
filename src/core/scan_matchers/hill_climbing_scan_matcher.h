@@ -5,6 +5,7 @@
 
 #include "pose_enumeration_scan_matcher.h"
 
+// TODO: move to pose enumerators
 class Distorsion1DPoseEnumerator : public PoseEnumerator {
 public:
   Distorsion1DPoseEnumerator(double translation_delta,
