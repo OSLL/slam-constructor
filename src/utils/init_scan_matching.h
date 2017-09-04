@@ -44,9 +44,9 @@ std::shared_ptr<OccupancyObservationProbabilityEstimator> init_oope(
 /*                 Scan Probability Estimator initialization                  */
 
 auto init_swp(const PropertiesProvider &props) {
-  static const std::string SWP_Type = Slam_SM_NS + "spe/wmpp/weighing/type";
+  static const std::string SWP_Type = Slam_SM_NS + "spe/wmpp/weighting/type";
   auto type = props.get_str(SWP_Type, "<undefined>");
-  auto swp = std::shared_ptr<ScanPointWeighing>{};
+  auto swp = std::shared_ptr<ScanPointWeighting>{};
 
   std::cout << "Used SWP: " << type << std::endl;
   if (type == "even") {
@@ -56,7 +56,7 @@ auto init_swp(const PropertiesProvider &props) {
   } else if (type == "ahr") {
     swp = std::make_shared<AngleHistogramReciprocalSPW>();
   } else {
-    std::cerr << "Unknown Scan Point Weighing type "
+    std::cerr << "Unknown Scan Point Weighting type "
               << "(" << SWP_Type << ") " << type << std::endl;
     std::exit(-1);
   }

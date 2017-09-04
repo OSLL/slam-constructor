@@ -7,17 +7,17 @@
 #include "../features/angle_histogram.h"
 
 //============================================================================//
-//                      Scan Point Weighing                                   //
+//                      Scan Point Weighting                                  //
 
-class ScanPointWeighing {
+class ScanPointWeighting {
 public:
   using PointId = LaserScan2D::Points::size_type;
   virtual void reset(const LaserScan2D &scan) {}
   virtual double weight(const LaserScan2D::Points &, PointId) const = 0;
-  virtual ~ScanPointWeighing() {}
+  virtual ~ScanPointWeighting() {}
 };
 
-class EvenSPW : public ScanPointWeighing {
+class EvenSPW : public ScanPointWeighting {
 public:
   void reset(const LaserScan2D &scan) override {
     _common_weight = 1.0 / scan.points().size();
@@ -30,7 +30,7 @@ private:
   double _common_weight;
 };
 
-class AngleHistogramReciprocalSPW : public ScanPointWeighing {
+class AngleHistogramReciprocalSPW : public ScanPointWeighting {
 public:
   void reset(const LaserScan2D &scan) override { _hist.reset(scan); }
 
@@ -41,7 +41,7 @@ private:
   AngleHistogram _hist;
 };
 
-class VinySlamSPW : public ScanPointWeighing {
+class VinySlamSPW : public ScanPointWeighting {
 public:
   double weight(const LaserScan2D::Points &pts, PointId id) const override {
     const auto &sp = pts[id];
@@ -61,7 +61,7 @@ public:
 
 class WeightedMeanPointProbabilitySPE : public ScanProbabilityEstimator {
 protected:
-  using SPW = std::shared_ptr<ScanPointWeighing>;
+  using SPW = std::shared_ptr<ScanPointWeighting>;
 public:
   WeightedMeanPointProbabilitySPE(OOPE oope, SPW spw)
     : ScanProbabilityEstimator{oope}, _spw{spw} {}
