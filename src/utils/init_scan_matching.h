@@ -11,6 +11,7 @@
 
 #include "../core/scan_matchers/monte_carlo_scan_matcher.h"
 #include "../core/scan_matchers/hill_climbing_scan_matcher.h"
+#include "../core/scan_matchers/hcsm_fixed.h"
 #include "../core/scan_matchers/brute_force_scan_matcher.h"
 #include "../core/scan_matchers/connect_the_dots_ambiguous_drift_detector.h"
 #include "../core/scan_matchers/weighted_mean_point_probability_spe.h"
@@ -133,10 +134,14 @@ auto init_scan_matcher(const PropertiesProvider &props) {
   auto spe = init_spe(props);
   auto sm = std::shared_ptr<GridScanMatcher>{};
   auto sm_type = props.get_str(Slam_SM_NS + "type", "<undefined>");
+  std::cout << "Used Scan Matcher: " << sm_type << std::endl;
   if      (sm_type == "MC") { sm = init_monte_carlo_sm(props, spe); }
   else if (sm_type == "HC") { sm = init_hill_climbing_sm(props, spe); }
   else if (sm_type == "BF") { sm = init_brute_force_sm(props, spe); }
-  else {
+  else if (sm_type == "HC_FIXED") {
+    // TODO: params setup
+    sm = std::make_shared<HillClimbingSMFixed>(spe);
+  } else {
     std::cerr << "Unknown scan matcher type: " << sm_type << std::endl;
     std::exit(-1);
   }

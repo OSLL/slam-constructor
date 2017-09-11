@@ -35,7 +35,9 @@ public:
   void reset(const LaserScan2D &scan) override { _hist.reset(scan); }
 
   double weight(const LaserScan2D::Points &pts, PointId id) const override {
-    return 1.0 / _hist.value(pts, id);
+    auto v = _hist.value(pts, id);
+    assert(v && "[BUG] AHR-SPW. Unknown point.");
+    return 1.0 / v;
   }
 private:
   AngleHistogram _hist;
@@ -92,6 +94,7 @@ public:
     auto total_weight = double{0};
     auto total_probability = double{0};
 
+    //_spw->reset(scan);
     auto observation = expected_scan_point_observation();
     scan.trig_cache->set_theta(pose.theta);
     const auto &points = scan.points();
