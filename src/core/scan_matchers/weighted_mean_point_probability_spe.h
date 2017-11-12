@@ -94,7 +94,6 @@ public:
     auto total_weight = double{0};
     auto total_probability = double{0};
 
-    //_spw->reset(scan);
     auto observation = expected_scan_point_observation();
     scan.trig_cache->set_theta(pose.theta);
     const auto &points = scan.points();

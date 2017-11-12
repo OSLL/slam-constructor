@@ -230,6 +230,10 @@ catkin_add_gtest(geom_dprimitives-test
 catkin_add_gtest(sensor_data-test
                  test/core/states/sensor_data_test.cpp)
 
+# Features
+catkin_add_gtest(angle_histogram-test
+                 test/core/features/angle_histogram_test.cpp)
+
 # Scan Matching
 catkin_add_gtest(occupancy_observation_probability-test
   test/core/scan_matchers/occupancy_observation_probability_test.cpp)

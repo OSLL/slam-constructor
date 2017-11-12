@@ -17,10 +17,13 @@ public:
   auto reset(const LaserScan2D &scan) {
     std::fill(std::begin(_hist), std::end(_hist), 0);
     std::fill(std::begin(_ang_sum), std::end(_ang_sum), 0.0);
-    _drift_dirs.resize(scan.points().size());
+
+    const auto &pts = scan.points();
+    _drift_dirs.resize(pts.size());
+
     using IndType = LaserScan2D::Points::size_type;
-    for (IndType i = 1; i < scan.points().size(); ++i) {
-      auto angle = undetectable_drift_direction(scan.points(), i);
+    for (IndType i = 1; i < pts.size(); ++i) {
+      auto angle = estimate_ox_based_angle(pts[i-1], pts[i]);
       auto hist_i = hist_index(angle);
       _hist[hist_i]++;
       _ang_sum[hist_i] += angle;
@@ -62,23 +65,32 @@ public:
     return deg2rad(180) / _n;
   }
 
+  // TODO: better naming
+  static double estimate_ox_based_angle(
+    const LaserScan2D::Points::value_type &base,
+    const LaserScan2D::Points::value_type &sp) {
+
+    auto d_x = sp.x() - base.x();
+    auto d_y = sp.y() - base.y();
+    if (d_y == 0) { // TODO: math utils
+      return 0; // 180 is equivalent to 0
+    }
+    auto d_d = std::sqrt(d_x*d_x + d_y*d_y);
+    auto angle = std::acos(d_x / d_d);
+
+    if (d_y < 0 && d_x != 0) { // TODO: math utils
+      angle = M_PI - angle;
+    }
+
+    return angle;
+  }
+
 protected:
   std::size_t hist_index(double angle) const {
     assert(0 <= angle && angle < M_PI);
     auto hist_i = std::size_t(std::floor(angle / angle_step()));
     assert(hist_i < _hist.size());
     return hist_i;
-  }
-
-  double undetectable_drift_direction(const LaserScan2D::Points &pts,
-                                      LaserScan2D::Points::size_type i) const {
-    assert(0 < i && i < pts.size());
-    auto &sp1 = pts[i-1], &sp2 = pts[i];
-    double d_x = sp1.x() - sp2.x();
-    double d_y = sp1.y() - sp2.y();
-    double d_d = std::sqrt(d_x*d_x + d_y*d_y);
-
-    return std::acos(d_x / d_d);
   }
 
 private:
