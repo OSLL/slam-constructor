@@ -6,6 +6,7 @@
 #include <string>
 
 #include "../core/math_utils.h"
+#include "../core/states/world.h"
 #include "../core/states/state_data.h"
 #include "../core/maps/grid_map.h"
 

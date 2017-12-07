@@ -2,6 +2,7 @@
 #define SLAM_CTOR_CORE_MATH_UTILS_H
 
 #include <cmath>
+#include <limits>
 
 // TODO: add unit tests for math utils
 
