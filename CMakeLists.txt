@@ -138,6 +138,7 @@ add_executable(gmapping src/slams/gmapping/gmapping.cpp)
 add_executable(tiny_slam src/slams/tiny/tiny_slam.cpp)
 add_executable(viny_slam src/slams/viny/viny_slam.cpp)
 add_executable(viny_slam_x src/slams/vinyx/vinyx_slam.cpp)
+add_executable(p2D_ss_evaluator src/utils/pose2D_search_space_evaluator.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
