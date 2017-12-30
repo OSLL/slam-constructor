@@ -155,7 +155,7 @@ public:
   }
 
   double discrepancy(const AreaOccupancyObservation &aoo) const override {
-    return std::min(_belief.discrepancy(aoo), 1.0);
+    return _belief.discrepancy(aoo);
   }
 
   std::vector<char> serialize() const override {

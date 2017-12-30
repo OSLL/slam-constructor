@@ -44,7 +44,7 @@ protected:
   virtual void handle_scan_point(GridMap &map, bool is_occ, double scan_quality,
                                  const Segment2D &beam) const = 0;
 
-private:
+public:
   std::shared_ptr<CellOccupancyEstimator> _occ_est;
 };
 
