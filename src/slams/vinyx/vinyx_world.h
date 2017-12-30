@@ -27,7 +27,8 @@ public:
 
   double discrepancy(const AreaOccupancyObservation &aoo) const override {
     // TODO: consider normalized discrepancy usage in plain vinySLAM
-    return belief().normalized_discrepancy(aoo);
+    // FIXME:
+    return 0;
   }
 };
 
