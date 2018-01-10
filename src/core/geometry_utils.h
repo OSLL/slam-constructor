@@ -17,13 +17,15 @@ public:
 
   inline double sin(double angle) const {
     // std::round is crucial to deal with inaccurate fp values
-    int angle_idx = std::round((angle - _angle_min) / _angle_delta);
+    //int angle_idx = std::round((angle - _angle_min) / _angle_delta);
+    int angle_idx = (angle - _angle_min) / _angle_delta;
     return _sin_theta * _cos[angle_idx] + _cos_theta * _sin[angle_idx];
   }
 
   inline double cos(double angle) const {
     // std::round is crucial to deal with inaccurate fp values
-    int angle_idx = std::round((angle - _angle_min) / _angle_delta);
+    //int angle_idx = std::round((angle - _angle_min) / _angle_delta);
+    int angle_idx = (angle - _angle_min) / _angle_delta;
     return _cos_theta * _cos[angle_idx] - _sin_theta * _sin[angle_idx];
   }
 
