@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
     ros_tf_buffer_size, ros_filter_queue, ros_subscr_queue
   );
   auto scan_obs = std::make_shared<LaserScanObserver>(
-    slam, init_skip_exceeding_lsr());
+    slam, get_skip_exceeding_lsr(props), get_use_trig_cache(props));
   scan_provider->subscribe(scan_obs);
 
   auto occup_grid_pub_pin = create_occupancy_grid_publisher<VinySlamMap>(

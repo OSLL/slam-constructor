@@ -21,12 +21,12 @@ public:
     if (scan.points().empty()) { return map; }
 
     const auto rp = pose.point();
-    scan.trig_cache->set_theta(pose.theta);
+    scan.trig_provider->set_base_angle(pose.theta);
     size_t last_pt_i = scan.points().size() - scan_margin - 1;
     for (size_t pt_i = scan_margin; pt_i <= last_pt_i; ++pt_i) {
       const auto &sp = scan.points()[pt_i];
       // move to world frame assume sensor is in robots' (0,0)
-      const auto &wp = sp.move_origin(rp, scan.trig_cache);
+      const auto &wp = sp.move_origin(rp, scan.trig_provider);
       handle_scan_point(map, sp.is_occupied(), scan_quality, {rp, wp});
     }
 

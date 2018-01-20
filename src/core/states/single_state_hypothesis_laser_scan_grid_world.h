@@ -74,14 +74,14 @@ public:
   void do_mapping(TransformedLaserScan &scan) {
     const RobotPose& pose = World<TransformedLaserScan, MapType>::pose();
 
-    scan.scan.trig_cache->set_theta(pose.theta);
+    scan.scan.trig_provider->set_base_angle(pose.theta);
     auto _scan_margin = 0;
     size_t last_pt_i = scan.scan.points().size() - _scan_margin - 1;
     for (size_t pt_i = _scan_margin; pt_i <= last_pt_i; ++pt_i) {
       auto &sp = scan.scan.points()[pt_i];
       // move to world frame assume sensor is in robots' (0,0)
-      double c = scan.scan.trig_cache->cos(sp.angle());
-      double s = scan.scan.trig_cache->sin(sp.angle());
+      double c = scan.scan.trig_provider->cos(sp.angle());
+      double s = scan.scan.trig_provider->sin(sp.angle());
 
       double x_world = pose.x + sp.range() * c;
       double y_world = pose.y + sp.range() * s;

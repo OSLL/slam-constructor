@@ -74,7 +74,7 @@ protected:
 
   bool map_contains_scan(const GridMap &map, const LaserScan2D &scan) {
     for (auto &sp : scan.points()) {
-      const auto &wp = sp.move_origin(pose.point(), scan.trig_cache);
+      const auto &wp = sp.move_origin(pose.point(), scan.trig_provider);
       const auto coord = map.world_to_cell(wp);
       if (!are_equal(1.0, map[coord])) { return false; }
     }
@@ -101,7 +101,7 @@ TEST_F(PlainScanIntegrationTest, smokeScanAdditionTest) {
   plain_adder()->append_scan(dst_map, pose, scan, 1.0 /* quality */, 0);
   ASSERT_TRUE(map_was_modified(dst_map));
 
-  scan.trig_cache->set_theta(pose.theta);
+  scan.trig_provider->set_base_angle(pose.theta);
   ASSERT_TRUE(map_contains_scan(dst_map, scan));
   ASSERT_TRUE(map_includes(src_map, dst_map));
 }
@@ -148,7 +148,7 @@ TEST_F(DistanceBasedWallBlurringTest, smokeDistanceBaseBlurringTest) {
   adder(Blur_Distance)->append_scan(dst_map, pose, scan, 1.0, 0);
   ASSERT_TRUE(map_was_modified(dst_map));
 
-  scan.trig_cache->set_theta(pose.theta);
+  scan.trig_provider->set_base_angle(pose.theta);
   ASSERT_TRUE(map_contains_scan(dst_map, scan));
 
   double prev_prob = 0;

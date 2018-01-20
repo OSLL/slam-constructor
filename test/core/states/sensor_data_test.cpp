@@ -118,14 +118,13 @@ TEST_F(ScanPoint2DTest, convertToPolarFromCartesianWithAltering) {
   ASSERT_EQ(cartesian_sp.is_occupied(), polar_sp.is_occupied());
 }
 
-TEST_F(ScanPoint2DTest, convertToCartesianWithCache) {
+TEST_F(ScanPoint2DTest, convertToCartesianWithProvider) {
   auto polar_sp = ScanPoint2D{SPPT::Polar, 4, deg2rad(10), true};
 
   const double D_Angle = deg2rad(23);
-  auto trig_cache = std::make_shared<TrigonometricCache>();
-  trig_cache->update(deg2rad(-90), deg2rad(91), deg2rad(10));
-  trig_cache->set_theta(D_Angle);
-  auto cartesian_sp = polar_sp.to_cartesian(trig_cache);
+  auto rtp = std::make_shared<RawTrigonometryProvider>();
+  rtp->set_base_angle(D_Angle);
+  auto cartesian_sp = polar_sp.to_cartesian(rtp);
 
   ASSERT_NEAR(polar_sp.range(), cartesian_sp.range(), Acc_Error);
   ASSERT_NEAR(polar_sp.angle() + D_Angle, cartesian_sp.angle(), Acc_Error);

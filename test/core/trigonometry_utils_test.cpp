@@ -1,17 +1,17 @@
 #include <gtest/gtest.h>
 
 #include <limits>
-
-#include "../../src/core/geometry_utils.h"
+#include "../../src/core/math_utils.h"
+#include "../../src/core/trigonometry_utils.h"
 
 //----------------------------------------------------------------------------//
-// Trigonometric Cache Test
+// Cached Trigorometry Provider Test
 
-class TrigonometricCacheTest : public ::testing::Test {
+class CachedTrigonometryProviderTest : public ::testing::Test {
 protected: // consts
   static constexpr double Acc_Trig_Err = std::numeric_limits<double>::epsilon();
 protected: // methods
-  void verify_cache(const TrigonometricCache &cache, double rotation,
+  void verify_cache(const CachedTrigonometryProvider &cache, double rotation,
                     double min, double max, double step) {
     for (double a = min; a < max; a += step) {
       ASSERT_NEAR(std::cos(a + rotation), cache.cos(a), Acc_Trig_Err);
@@ -20,22 +20,22 @@ protected: // methods
   }
 };
 
-TEST_F(TrigonometricCacheTest, sector135Step30NoRotation) {
+TEST_F(CachedTrigonometryProviderTest, sector135Step30NoRotation) {
   const double Min = deg2rad(-135), Max = deg2rad(135), Step = deg2rad(30);
 
-  auto cache = TrigonometricCache{};
-  cache.update(Min, Max, Step);
-  verify_cache(cache, 0, Min, Max, Step);
+  auto ctp = CachedTrigonometryProvider{};
+  ctp.update(Min, Max, Step);
+  verify_cache(ctp, 0, Min, Max, Step);
 }
 
-TEST_F(TrigonometricCacheTest, sector120Step7Rotation3) {
+TEST_F(CachedTrigonometryProviderTest, sector120Step7Rotation3) {
   const double Min = deg2rad(-120), Max = deg2rad(120), Step = deg2rad(7),
                D_Theta = deg2rad(3);
 
-  auto cache = TrigonometricCache{};
-  cache.update(Min, Max, Step);
-  cache.set_theta(D_Theta);
-  verify_cache(cache, D_Theta, Min, Max, Step);
+  auto ctp = CachedTrigonometryProvider{};
+  ctp.update(Min, Max, Step);
+  ctp.set_base_angle(D_Theta);
+  verify_cache(ctp, D_Theta, Min, Max, Step);
 }
 
 //----------------------------------------------------------------------------//

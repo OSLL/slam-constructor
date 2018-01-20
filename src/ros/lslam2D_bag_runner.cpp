@@ -86,7 +86,8 @@ struct ProgramArgs {
 template <typename MapType>
 void run_slam(std::shared_ptr<LaserScanGridWorld<MapType>> slam,
               const ProgramArgs &args) {
-  auto lscan_observer = LaserScanObserver{slam, true};
+  auto lscan_observer = LaserScanObserver{
+    slam, get_skip_exceeding_lsr(args.props), get_use_trig_cache(args.props)};
 
   ros::Time::init();
   assert(args.props.get_bool("in/lscan2D/ros/topic/enabled", false));

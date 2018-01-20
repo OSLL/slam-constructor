@@ -33,7 +33,7 @@ public:
 
     double last_dpoint_prob = -1;
     DiscretePoint2D last_handled_dpoint;
-    scan.trig_cache->set_theta(pose.theta);
+    scan.trig_provider->set_base_angle(pose.theta);
 
     double total_probability = 0;
     double handled_pts_nm = 0;
@@ -45,8 +45,8 @@ public:
 
       handled_pts_nm += 1;
       auto &sp = scan.points()[i];
-      double c = scan.trig_cache->cos(sp.angle());
-      double s = scan.trig_cache->sin(sp.angle());
+      double c = scan.trig_provider->cos(sp.angle());
+      double s = scan.trig_provider->sin(sp.angle());
       sp_observation.obstacle = {pose.x + sp.range() * c,
                                  pose.y + sp.range() * s};
 

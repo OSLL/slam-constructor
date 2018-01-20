@@ -44,12 +44,17 @@ bool is_async_correction() {
   return async_correction;
 }
 
-// TODO: to scan filtering
+// scan handling
 
-bool init_skip_exceeding_lsr() {
-  bool param_value;
-  ros::param::param<bool>("~ros/skip_exceeding_lsr_vals", param_value, false);
-  return param_value;
+bool get_skip_exceeding_lsr(const PropertiesProvider &props) {
+  return props.get_bool("in/lscan2D/skip_exceeding_vals",
+                        false);
+}
+
+// performance
+
+bool get_use_trig_cache(const PropertiesProvider &props) {
+  return props.get_bool("slam/performance/use_trig_cache", false);
 }
 
 // TODO: move to IO

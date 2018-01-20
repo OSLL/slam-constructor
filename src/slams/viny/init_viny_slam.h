@@ -20,7 +20,6 @@ auto init_viny_slam(const PropertiesProvider &props) {
   slam_props.raw_scan_quality = 0.6;
   slam_props.cell_prototype = std::make_shared<VinyDSCell>();
 
-
   slam_props.gsm = init_scan_matcher(props);
 
   // TODO: move to init utils, rename to map distorsion

@@ -36,9 +36,7 @@ public:
                             double occ_threshold = 1) {
 
     LaserScan2D scan;
-    scan.trig_cache = std::make_shared<TrigonometricCache>();
-    scan.trig_cache->update(-_lsp.h_hsector, _lsp.h_hsector + _lsp.h_angle_inc,
-                            _lsp.h_angle_inc);
+    scan.trig_provider = std::make_shared<RawTrigonometryProvider>();
     auto robot_point = pose.point();
     auto robot_coord = map.world_to_cell(robot_point);
     assert(!are_equal(robot_point.x, robot_coord.x * map.scale()) &&

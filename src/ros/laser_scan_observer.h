@@ -19,9 +19,11 @@ class LaserScanObserver : public TopicObserver<sensor_msgs::LaserScan> {
   using DstPtr = std::shared_ptr<SensorDataObserver<TransformedLaserScan>>;
 public: //methods
 
-  LaserScanObserver(DstPtr slam, bool skip_max_vals = false):
-    _slam(slam), _skip_max_vals(skip_max_vals),
-    _cache(std::make_shared<TrigonometricCache>()) {}
+  LaserScanObserver(DstPtr slam,
+                    bool skip_max_vals,
+                    bool use_cached_trig)
+    : _slam(slam), _skip_max_vals(skip_max_vals)
+    , _use_cached_trig_provider{use_cached_trig} {}
 
   virtual void handle_transformed_msg(
     const ScanPtr msg, const tf::StampedTransform& t) {
@@ -32,9 +34,8 @@ public: //methods
     TransformedLaserScan transformed_scan;
     transformed_scan.scan.points().reserve(msg->ranges.size());
     transformed_scan.quality = 1.0;
-    transformed_scan.scan.trig_cache = _cache;
-    _cache->update(msg->angle_min, msg->angle_max + msg->angle_increment,
-                   msg->angle_increment);
+    // TODO: move trig provider setup to the SLAM
+    transformed_scan.scan.trig_provider = trig_provider(msg);
 
     double sp_angle = msg->angle_min - msg->angle_increment;
     for (const auto &range : msg->ranges) {
@@ -68,11 +69,24 @@ public: //methods
   const RobotPose &odometry_pose() const { return _prev_pose; }
   void set_odometry_pose(const RobotPose& pose) { _prev_pose = pose; }
 
+private:
+
+  std::shared_ptr<TrigonometryProvider> trig_provider(const ScanPtr msg) {
+    if (_use_cached_trig_provider) {
+      auto provider = std::make_shared<CachedTrigonometryProvider>();
+      provider->update(msg->angle_min, msg->angle_max + msg->angle_increment,
+                       msg->angle_increment);
+      return provider;
+    } else {
+      return std::make_shared<RawTrigonometryProvider>();
+    }
+  }
+
 private: // fields
   DstPtr _slam;
   bool _skip_max_vals;
+  bool _use_cached_trig_provider;
   RobotPose _prev_pose;
-  std::shared_ptr<TrigonometricCache> _cache;
 };
 
 #endif

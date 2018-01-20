@@ -40,7 +40,7 @@ public:
 
     // TODO: move filtering to AngleHistogram
     LaserScan2D filtered_scan;
-    filtered_scan.trig_cache = scan.trig_cache;
+    filtered_scan.trig_provider = scan.trig_provider;
     auto &scan_pts = filtered_scan.points();
     for (LaserScan2D::Points::size_type i = 1; i < scan.points().size(); ++i) {
       auto &sp = scan.points()[i];

@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
   );
   // TODO: setup scan skip policy via param
   auto scan_obs_pin = std::make_shared<LaserScanObserver>(
-    slam, init_skip_exceeding_lsr());
+    slam, get_skip_exceeding_lsr(props), get_use_trig_cache(props));
   scan_provider->subscribe(scan_obs_pin);
 
   auto occup_grid_pub_pin = create_occupancy_grid_publisher<GmappingMap>(
