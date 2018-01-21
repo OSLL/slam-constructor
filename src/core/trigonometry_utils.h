@@ -44,15 +44,13 @@ public:
 
   double sin(double angle_rad) const override {
     // std::round is crucial to deal with inaccurate fp values
-    //int angle_idx = std::round((angle - _angle_min) / _angle_delta);
-    int angle_idx = (angle_rad - _angle_min) / _angle_delta;
+    int angle_idx = std::round((angle_rad - _angle_min) / _angle_delta);
     return _sin_base * _cos[angle_idx] + _cos_base * _sin[angle_idx];
   }
 
   double cos(double angle_rad) const override {
     // std::round is crucial to deal with inaccurate fp values
-    //int angle_idx = std::round((angle - _angle_min) / _angle_delta);
-    int angle_idx = (angle_rad - _angle_min) / _angle_delta;
+    int angle_idx = std::round((angle_rad - _angle_min) / _angle_delta);
     return _cos_base * _cos[angle_idx] - _sin_base * _sin[angle_idx];
   }
 

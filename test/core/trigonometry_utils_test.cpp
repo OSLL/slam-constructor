@@ -11,11 +11,12 @@ class CachedTrigonometryProviderTest : public ::testing::Test {
 protected: // consts
   static constexpr double Acc_Trig_Err = std::numeric_limits<double>::epsilon();
 protected: // methods
-  void verify_cache(const CachedTrigonometryProvider &cache, double rotation,
+  void verify_cache(CachedTrigonometryProvider &ctp, double rotation,
                     double min, double max, double step) {
+    ctp.set_base_angle(rotation);
     for (double a = min; a < max; a += step) {
-      ASSERT_NEAR(std::cos(a + rotation), cache.cos(a), Acc_Trig_Err);
-      ASSERT_NEAR(std::sin(a + rotation), cache.sin(a), Acc_Trig_Err);
+      ASSERT_NEAR(std::cos(a + rotation), ctp.cos(a), Acc_Trig_Err);
+      ASSERT_NEAR(std::sin(a + rotation), ctp.sin(a), Acc_Trig_Err);
     }
   }
 };
@@ -34,7 +35,6 @@ TEST_F(CachedTrigonometryProviderTest, sector120Step7Rotation3) {
 
   auto ctp = CachedTrigonometryProvider{};
   ctp.update(Min, Max, Step);
-  ctp.set_base_angle(D_Theta);
   verify_cache(ctp, D_Theta, Min, Max, Step);
 }
 
