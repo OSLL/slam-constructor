@@ -37,7 +37,8 @@ public: //methods
     // TODO: move trig provider setup to the SLAM
     transformed_scan.scan.trig_provider = trig_provider(msg);
 
-    double sp_angle = msg->angle_min - msg->angle_increment;
+    // Feb 17 BUG
+    double sp_angle = msg->angle_min;// - msg->angle_increment;
     for (const auto &range : msg->ranges) {
       bool sp_is_occupied = true;
       double sp_range = range;
@@ -58,7 +59,8 @@ public: //methods
       transformed_scan.scan.points().emplace_back(sp_range, sp_angle,
                                                   sp_is_occupied);
     }
-    assert(are_equal(sp_angle, msg->angle_max));
+    // FIXME: bug
+    //assert(are_equal(sp_angle, msg->angle_max));
 
     transformed_scan.pose_delta = new_pose - _prev_pose;
     _prev_pose = new_pose;
