@@ -17,6 +17,8 @@ public:
                      const GridMap &map) const override {
     assert(aoo.is_occupied);
     double prob = 1.0 - map[map.world_to_cell(aoo.obstacle)].discrepancy(aoo);
+    // TODO: fix viny discrepancy
+    prob = std::max(0.0, prob);
     assert(0 <= prob);
     return prob;
   }
