@@ -41,6 +41,7 @@ int main(int argc, char** argv) {
 
   auto pose_pub_pin = create_pose_correction_tf_publisher<ObservT, TinySlamMap>(
     slam.get(), scan_provider.get(), props);
+  auto rp_pub_pin = create_robot_pose_tf_publisher<TinySlamMap>(slam.get());
 
   ros::spin();
 }
