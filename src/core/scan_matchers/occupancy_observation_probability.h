@@ -16,8 +16,7 @@ public:
                      const LightWeightRectangle &,
                      const GridMap &map) const override {
     assert(aoo.is_occupied);
-    // TODO: FIX VINY DISCREPANCY MODEL
-    double prob = 5.0 - map[map.world_to_cell(aoo.obstacle)].discrepancy(aoo);
+    double prob = 1.0 - map[map.world_to_cell(aoo.obstacle)].discrepancy(aoo);
     assert(0 <= prob);
     return prob;
   }

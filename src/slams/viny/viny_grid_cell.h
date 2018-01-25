@@ -148,14 +148,14 @@ public:
     auto d_occ = std::abs(that_belief.occupied() - _belief.occupied());
     auto combined_belief = that_belief;
     combined_belief += _belief;
-    return combined_belief.conflict() + d_occ + total_unknown;
+    /* return combined_belief.conflict() + d_occ + total_unknown; */
 
     // original "combined.conflict() + d_occ + total_unknown" was replaced
     // with the following rule to put the discrepancy in [0; 1].
-    /* auto unknown = total_unknown / 2.0; */
-    /* auto known = 1 - unknown; */
-    /* auto known_discrepancy = known * (combined_belief.conflict() + d_occ) / 2.0; */
-    /* return unknown / 2 + known_discrepancy; */
+    auto unknown = total_unknown / 2.0;
+    auto known = 1 - unknown;
+    auto known_discrepancy = known * (combined_belief.conflict() + d_occ) / 2.0;
+    return unknown / 2 + known_discrepancy;
   }
 
   std::vector<char> serialize() const override {
