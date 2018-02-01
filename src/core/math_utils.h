@@ -2,15 +2,21 @@
 #define SLAM_CTOR_CORE_MATH_UTILS_H
 
 #include <cmath>
+#include <limits>
 
 // TODO: add unit tests for math utils
+
+template <typename T>
+constexpr inline bool are_equal(const T& a, const T& b, const T& eps) {
+  return std::abs(a - b) <= eps;
+}
 
 // FIXME: are_equal(infinity, 0) is true
 constexpr inline bool are_equal(double a, double b) {
   // cmp doubles according to http://realtimecollisiondetection.net/blog/?p=89
   double eps_scale = std::max(1.0, std::max(std::abs(a), std::abs(b)));
   constexpr double Eps = 1e-7; // num_limits::epsilon is too small
-  return std::abs(a - b) <= Eps * eps_scale;
+  return are_equal(a, b, Eps * eps_scale);
 }
 
 constexpr inline bool less(double a, double b) {
@@ -22,6 +28,10 @@ constexpr inline bool is_multiple_of(double value, double factor) {
   // TODO: verify numerical safety/bounds
   double ratio = value / factor;
   return are_equal(ratio, std::trunc(ratio));
+}
+
+inline double bound_value(double left, double v, double right) {
+  return std::max(left, std::min(right, v));
 }
 
 inline bool less_or_equal(double a, double b) {

@@ -7,14 +7,14 @@
 #include <ros/ros.h>
 
 #include "../core/states/world.h"
-#include "../core/maps/area_occupancy_estimator.h"
-#include "../core/maps/const_occupancy_estimator.h"
 
+#include "../utils/properties_providers.h"
 #include "topic_with_transform.h"
 #include "pose_correction_tf_publisher.h"
-#include "robot_pose_tf_publisher.h"
+#include "robot_pose_observers.h"
 #include "occupancy_grid_publisher.h"
 
+// TODO: remove
 std::string get_string_param(const std::string &name,
                              const std::string &dflt_value) {
   std::string value;
@@ -22,8 +22,12 @@ std::string get_string_param(const std::string &name,
   return value;
 }
 
-std::string tf_odom_frame_id() {
-  return get_string_param("~ros/tf/odom_frame_id", "odom_combined");
+std::string laser_scan_2D_ros_topic_name(const PropertiesProvider &props) {
+  return props.get_str("in/lscan2D/ros/topic/name", "/base_scan");
+}
+
+std::string tf_odom_frame_id(const PropertiesProvider &props) {
+  return props.get_str("in/odometry/ros/tf/odom_frame_id", "odom_combined");
 }
 
 std::string tf_map_frame_id() {
@@ -40,45 +44,56 @@ bool is_async_correction() {
   return async_correction;
 }
 
-bool init_skip_exceeding_lsr() {
-  bool param_value;
-  ros::param::param<bool>("~ros/skip_exceeding_lsr_vals", param_value, false);
-  return param_value;
+// scan handling
+
+bool get_skip_exceeding_lsr(const PropertiesProvider &props) {
+  return props.get_bool("in/lscan2D/skip_exceeding_vals",
+                        false);
 }
 
-std::shared_ptr<CellOccupancyEstimator> init_occ_estimator() {
-  double occ_prob, occ_qual, empty_prob, empty_qual;
-  ros::param::param<double>("~slam/occupancy_estimator/"        \
-                            "base_occupied/prob", occ_prob, 0.95);
-  ros::param::param<double>("~slam/occupancy_estimator/"        \
-                            "base_occupied/qual", occ_qual, 1.0);
-  ros::param::param<double>("~slam/occupancy_estimator/"        \
-                            "base_empty/prob", empty_prob, 0.01);
-  ros::param::param<double>("~slam/occupancy_estimator/"        \
-                            "base_empty/qual", empty_qual, 1.0);
+// performance
 
-  std::string est_type;
-  ros::param::param<std::string>("~slam/occupancy_estimator/type",
-                                 est_type, "const");
+bool get_use_trig_cache(const PropertiesProvider &props) {
+  return props.get_bool("slam/performance/use_trig_cache", false);
+}
 
-  auto base_occ = Occupancy{occ_prob, occ_qual};
-  auto base_empty = Occupancy{empty_prob, empty_qual};
-  if (est_type == "const") {
-    return std::make_shared<ConstOccupancyEstimator>(base_occ, base_empty);
-  } else if (est_type == "area") {
-    return std::make_shared<AreaOccupancyEstimator>(base_occ, base_empty);
-  } else {
-    std::cerr << "Unknown estimator type: " << est_type << std::endl;
-    std::exit(-1);
+// TODO: move to IO
+
+auto tf_ignored_transforms(const PropertiesProvider &props) {
+  std::string Rec_Sep = ":", Entry_Sep = "-";
+  std::unordered_map<std::string, std::vector<std::string>> ignores;
+
+  auto data = props.get_str("in/odometry/ros/tf/ignore", "");
+  auto next_entry_i = std::string::size_type{0};
+  while (next_entry_i < data.length()) {
+    auto next_sep_i = data.find(Rec_Sep, next_entry_i);
+    if (next_sep_i == std::string::npos) {
+      next_sep_i = data.length();
+    }
+
+    auto entry = data.substr(next_entry_i, next_sep_i - next_entry_i);
+    next_entry_i = next_sep_i + 1;
+
+    auto entry_sep_i = entry.find("-");
+    if (entry_sep_i == std::string::npos) {
+      std::cout << "[WARN] Unable to parse tf_ignore entry \""
+                << entry << "\"" << std::endl;
+      continue;
+    }
+    auto from = entry.substr(0, entry_sep_i);
+    auto to = entry.substr(entry_sep_i + 1, entry.size() - entry_sep_i - 1);
+    ignores["/" + from].push_back("/" + to);
   }
+  return ignores;
 }
 
 template <typename ObservT, typename MapT>
 std::shared_ptr<PoseCorrectionTfPublisher<ObservT>>
 create_pose_correction_tf_publisher(WorldObservable<MapT> *slam,
-                                    TopicWithTransform<ObservT> *scan_prov) {
+                                    TopicWithTransform<ObservT> *scan_prov,
+                                    const PropertiesProvider &props) {
   auto pose_publisher = std::make_shared<PoseCorrectionTfPublisher<ObservT>>(
-    tf_map_frame_id(), tf_odom_frame_id(), is_async_correction()
+    tf_map_frame_id(), tf_odom_frame_id(props), is_async_correction()
   );
   scan_prov->subscribe(pose_publisher);
   slam->subscribe_pose(pose_publisher);
@@ -104,14 +119,6 @@ create_occupancy_grid_publisher(WorldObservable<MapT> *slam,
     tf_map_frame_id(), ros_map_publishing_rate);
   slam->subscribe_map(map_publisher);
   return map_publisher;
-}
-
-GridMapParams init_grid_map_params() {
-  double h, w, scale;
-  ros::param::param<double>("~slam/map/height_in_meters", h, 10);
-  ros::param::param<double>("~slam/map/width_in_meters", w, 10);
-  ros::param::param<double>("~slam/map/meters_per_cell", scale, 0.1);
-  return {(int)std::ceil(w / scale), (int)std::ceil(h / scale), scale};
 }
 
 void init_constants_for_ros(double &ros_tf_buffer_size,

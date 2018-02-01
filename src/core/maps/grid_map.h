@@ -8,8 +8,8 @@
 #include "grid_cell.h"
 
 struct GridMapParams {
-  const int width_cells, height_cells;
-  const double meters_per_cell;
+  int width_cells, height_cells;
+  double meters_per_cell;
 };
 
 struct MapValues {

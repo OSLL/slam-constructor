@@ -1,79 +1,135 @@
-#ifndef SLAM_CTOR_CORE_HILL_CLIMBING_SCAN_MATCHER_H_INCLUDED
-#define SLAM_CTOR_CORE_HILL_CLIMBING_SCAN_MATCHER_H_INCLUDED
+#ifndef SLAM_CTOR_CORE_HILL_CLIMBING_SCAN_MATCHER_H
+#define SLAM_CTOR_CORE_HILL_CLIMBING_SCAN_MATCHER_H
 
-#include <math.h>
-#include <limits>
+#include <memory>
 
-#include "grid_scan_matcher.h"
-#include "../maps/grid_map.h"
+#include "pose_enumeration_scan_matcher.h"
 
-class HillClimbingScanMatcher : public GridScanMatcher {
+// TODO: move to pose enumerators
+class Distorsion1DPoseEnumerator : public PoseEnumerator {
 public:
-  HillClimbingScanMatcher(SPE est,
-                          int max_shrinks_nm = 6,
-                          double lin_delta = 0.1, double ang_delta = 0.1)
-    : GridScanMatcher(est), _angular_delta(ang_delta), _linear_delta(lin_delta)
-    , _max_step_shrinks(max_shrinks_nm) {}
-
-  double process_scan(const TransformedLaserScan &raw_scan,
-                      const RobotPose &init_pose,
-                      const GridMap &map,
-                      RobotPoseDelta &pose_delta) override {
-    auto scan = filter_scan(raw_scan.scan, init_pose, map);
-    double a_step = _angular_delta, l_step = _linear_delta;
-
-    // TODO: store pose as sampled value
-    RobotPose best_pose = init_pose;
-    double best_pose_prob = scan_probability(scan, best_pose, map);
-    for (unsigned step_shrinks = 0; step_shrinks < _max_step_shrinks;) {
-      RobotPose current_pose = best_pose;
-      bool pose_was_shifted = false;
-      for (size_t action = 0; action < DirNm * DimNm; ++action) {
-        RobotPose shifted_pose = shift(current_pose, a_step, l_step, action);
-        double shifted_pose_prob = scan_probability(scan, shifted_pose, map);
-
-        if (best_pose_prob < shifted_pose_prob) {
-          best_pose = shifted_pose;
-          best_pose_prob = shifted_pose_prob;
-          pose_was_shifted = true;
-        }
-      }
-
-      if (!pose_was_shifted) {
-        a_step *= 0.5, l_step *= 0.5;
-        ++step_shrinks;
-      }
-    }
-    pose_delta = best_pose - init_pose;
-    return best_pose_prob;
+  Distorsion1DPoseEnumerator(double translation_delta,
+                             double rotation_delta)
+    : _action_id{0}
+    , _translation_delta{translation_delta}
+    , _rotation_delta{rotation_delta}
+    , _base_pose_is_set{false} {
+    reset();
   }
+
+  bool has_next() const override { return _action_id < DirNm * DimNm; }
+
+  RobotPose next(const RobotPose &prev_pose) override {
+    if (!_base_pose_is_set) {
+      _base_pose = prev_pose;
+      _base_pose_is_set = true;
+    }
+    auto distorted_pose = _base_pose;
+
+    double shift_value = _action_id % DirNm ? -1 : 1;
+    double *shiftee;
+    switch (_action_id % DimNm) {
+    case X:
+      shiftee = &distorted_pose.x,     shift_value *= _translation_delta; break;
+    case Y:
+      shiftee = &distorted_pose.y,     shift_value *= _translation_delta; break;
+    case Th:
+      shiftee = &distorted_pose.theta, shift_value *= _rotation_delta;    break;
+    default:
+      assert(0 && "Missed shift destination");
+    }
+    *shiftee += shift_value;
+
+    ++_action_id;
+    return distorted_pose;
+  }
+
+  void reset() override {}
+  void feedback(bool pose_is_acceptable) override {}
 
 private:
   enum Dim {X = 0, Y, Th, DimNm};
   enum Dir {Inc = 0, Dec, DirNm};
   static_assert(DimNm % 2 != DirNm % 2, "");
+private:
+  std::size_t _action_id;
+  double _translation_delta, _rotation_delta;
 
-  // TODO: return RobotPoseDelta
-  RobotPose shift(const RobotPose &current_pose, double a_step, double l_step,
-                  size_t  action) {
-    RobotPose shifted = current_pose;
+  RobotPose _base_pose;
+  bool _base_pose_is_set;
+};
 
-    double shift_value = action % DirNm ? -1 : 1;
-    double *shiftee;
-    switch (action % DimNm) {
-    case X:  shiftee = &shifted.x, shift_value *= l_step; break;
-    case Y:  shiftee = &shifted.y, shift_value *= l_step; break;
-    case Th: shiftee = &shifted.theta, shift_value *= a_step; break;
-    default: assert(0 && "Missed shift destination");
+
+template <typename BasePoseEnumerator>
+class FailedRoundsLimitedPoseEnumerator : public PoseEnumerator {
+public:
+  FailedRoundsLimitedPoseEnumerator(unsigned max_failed_rounds,
+                        double translation_delta,
+                        double rotation_delta)
+    : _max_failed_rounds{max_failed_rounds}
+    , _base_translation_delta{translation_delta}
+    , _base_rotation_delta{rotation_delta} {
+    reset();
+  }
+
+  bool has_next() const override {
+    return _failed_rounds < _max_failed_rounds;
+  }
+
+  RobotPose next(const RobotPose &prev_pose) override {
+    if (!_round_pe.has_next()) {
+      if (_round_failed) {
+        _translation_delta *= 0.5;
+        _rotation_delta *= 0.5;
+        ++_failed_rounds;
+      }
+      reset_round(_translation_delta, _rotation_delta);
     }
+    return _round_pe.next(prev_pose);
+  }
 
-    *shiftee += shift_value;
-    return shifted;
+  void reset() override {
+    _failed_rounds = 0;
+    _translation_delta = _base_translation_delta;
+    _rotation_delta = _base_rotation_delta;
+
+    reset_round(_translation_delta, _rotation_delta);
+  }
+
+  void feedback(bool pose_is_acceptable) override {
+    _round_failed &= !pose_is_acceptable;
+    _round_pe.feedback(pose_is_acceptable);
   }
 
 private:
-  double _angular_delta, _linear_delta;
-  unsigned _max_step_shrinks;
+  void reset_round(double translation_delta, double rotation_delta) {
+    _round_pe = {_translation_delta, _rotation_delta};
+    _round_failed = true;
+  }
+private:
+  unsigned _max_failed_rounds;
+  double _base_translation_delta, _base_rotation_delta;
+
+  unsigned _failed_rounds;
+  double _translation_delta, _rotation_delta;
+
+  BasePoseEnumerator _round_pe{0, 0};
+  bool _round_failed;
+};
+
+class HillClimbingScanMatcher : public PoseEnumerationScanMatcher {
+private:
+  using HCPE = FailedRoundsLimitedPoseEnumerator<Distorsion1DPoseEnumerator>;
+public:
+  // FIXME: update enumerator on set_lookup_ranges update
+  HillClimbingScanMatcher(std::shared_ptr<ScanProbabilityEstimator> estimator,
+                          unsigned max_lookup_attempts_failed,
+                          double translation_delta, double rotation_delta)
+    : PoseEnumerationScanMatcher{
+        estimator,
+        std::make_shared<HCPE>(max_lookup_attempts_failed,
+                               translation_delta, rotation_delta)
+      } {}
 };
 
 #endif

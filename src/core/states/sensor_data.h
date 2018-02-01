@@ -74,22 +74,22 @@ public: // methods
   ScanPoint2D& set_factor(double factor) { _factor = factor; return *this; }
   double factor() const { return _factor; }
 
-  ScanPoint2D to_cartesian(std::shared_ptr<TrigonometricCache> cache) const {
-    auto point = move_origin(0, 0, cache);
+  ScanPoint2D to_cartesian(std::shared_ptr<TrigonometryProvider> tp) const {
+    auto point = move_origin(0, 0, tp);
     return ScanPoint2D{PointType::Cartesian, point.x, point.y, _is_occupied};
   }
 
-  // NB: a rotation is preset in a given trigonometric cache
+  // NB: a rotation is preset in a given trigonometry provider
   Point2D move_origin(double d_x, double d_y,
-                      std::shared_ptr<TrigonometricCache> cache) const {
-    return Point2D{d_x + range() * cache->cos(angle()),
-                   d_y + range() * cache->sin(angle())};
+                      std::shared_ptr<TrigonometryProvider> tp) const {
+    return Point2D{d_x + range() * tp->cos(angle()),
+                   d_y + range() * tp->sin(angle())};
 
   }
 
   Point2D move_origin(const Point2D &p,
-                      std::shared_ptr<TrigonometricCache> cache) const {
-    return move_origin(p.x, p.y, cache);
+                      std::shared_ptr<TrigonometryProvider> tp) const {
+    return move_origin(p.x, p.y, tp);
 
   }
 
@@ -142,23 +142,24 @@ inline std::ostream& operator<<(std::ostream &osm, const ScanPoint2D &sp) {
 }
 
 struct LaserScan2D {
-private:
-  using ScanPoints = std::vector<ScanPoint2D>;
 public:
-  const ScanPoints& points() const { return _points; }
-  ScanPoints& points() {
-    return const_cast<ScanPoints&>(
+  using Points = std::vector<ScanPoint2D>;
+public:
+  const Points& points() const { return _points; }
+  Points& points() {
+    return const_cast<Points&>(
       static_cast<const LaserScan2D*>(this)->points());
   }
 
   LaserScan2D to_cartesian(double angle) const {
     LaserScan2D cartsn_scan;
     cartsn_scan.points().reserve(_points.size());
-    cartsn_scan.trig_cache = trig_cache;
+    cartsn_scan.trig_provider = trig_provider;
 
-    cartsn_scan.trig_cache->set_theta(angle);
+    cartsn_scan.trig_provider->set_base_angle(angle);
     for (auto &sp : _points) {
-      cartsn_scan.points().push_back(sp.to_cartesian(cartsn_scan.trig_cache));
+      auto cartesian_sp = sp.to_cartesian(cartsn_scan.trig_provider);
+      cartsn_scan.points().push_back(cartesian_sp);
     }
     return cartsn_scan;
   }
@@ -166,10 +167,10 @@ public:
 public:
   // TODO: create simple and effective way
   //       to translate LS to world by a given pose
-  //       Move the cache to LaserScan2D.
-  std::shared_ptr<TrigonometricCache> trig_cache;
+  //       Move the provider to LaserScan2D.
+  std::shared_ptr<TrigonometryProvider> trig_provider;
 private:
-  std::vector<ScanPoint2D> _points;
+  Points _points;
 };
 
 struct TransformedLaserScan {

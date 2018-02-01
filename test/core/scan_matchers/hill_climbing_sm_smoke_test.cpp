@@ -3,10 +3,10 @@
 #include <limits>
 
 #include "../mock_grid_cell.h"
-#include "../data_generation_utils.h"
 #include "scan_matcher_test_utils.h"
 
 #include "../../../src/core/scan_matchers/hill_climbing_scan_matcher.h"
+#include "../../../src/core/scan_matchers/occupancy_observation_probability.h"
 #include "../../../src/core/maps/plain_grid_map.h"
 
 //------------------------------------------------------------------------------
@@ -34,16 +34,19 @@ protected: // consts
   static constexpr int Max_SM_Shirnks_Nm = 10;
   static constexpr double Init_Lin_Step = 0.1;
   static constexpr double Init_Ang_Step = deg2rad(30);
-
+protected: // type aliases
+  using SPE = typename ScanMatcherTestBase<UnboundedPlainGridMap>::DefaultSPE;
+  using OOPE = ObstacleBasedOccupancyObservationPE;
+  using SPW = EvenSPW;
 protected: // methods
   HillClimbingScanMatcherSmokeTest()
-    : ScanMatcherTestBase{std::make_shared<DefaultSPE>(),
+    : ScanMatcherTestBase{std::make_shared<SPE>(std::make_shared<OOPE>(),
+                                                std::make_shared<SPW>()),
                           Map_Width, Map_Height, Map_Scale,
                           to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
-    , hcsm{spe, Max_SM_Shirnks_Nm, Init_Lin_Step, Init_Ang_Step} {}
-protected: // fields
+    , _hcsm{spe, Max_SM_Shirnks_Nm, Init_Lin_Step, Init_Ang_Step} {}
 
-  GridScanMatcher& scan_matcher() override { return hcsm; };
+  GridScanMatcher& scan_matcher() override { return _hcsm; };
 
   void init_pose_facing_top_cecum_bound() {
     using CecumMp = CecumTextRasterMapPrimitive;
@@ -59,7 +62,7 @@ protected: // fields
   }
 
 protected: // fields
-  HillClimbingScanMatcher hcsm;
+  HillClimbingScanMatcher _hcsm;
 };
 
 TEST_F(HillClimbingScanMatcherSmokeTest, cecumNoPoseNoise) {

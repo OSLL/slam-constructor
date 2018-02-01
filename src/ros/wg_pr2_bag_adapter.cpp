@@ -7,6 +7,7 @@
 #include <tf/tfMessage.h>
 #include <tf/transform_broadcaster.h>
 
+#include "launch_properties_provider.h"
 #include "init_utils.h"
 
 using OccGridMsg = nav_msgs::OccupancyGrid;
@@ -21,9 +22,10 @@ void on_gt_grid(boost::shared_ptr<nav_msgs::OccupancyGrid> msg) {
 }
 
 void on_tf_msg(boost::shared_ptr<tf::tfMessage> msg) {
+  auto props = LaunchPropertiesProvider{};
   static tf::TransformBroadcaster br;
   static std::string map_frame_id = "/" + tf_map_frame_id();
-  static std::string odom_frame_id = "/" + tf_odom_frame_id();
+  static std::string odom_frame_id = "/" + tf_odom_frame_id(props);
 
   for (auto &t : msg->transforms) {
     if (t.header.frame_id != map_frame_id ||

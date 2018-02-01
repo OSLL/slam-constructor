@@ -11,9 +11,8 @@
 
 #include <vector>
 #include <memory>
-#include "../../core/states/world.h"
+#include "../../core/states/single_state_hypothesis_laser_scan_grid_world.h"
 
-#include "../viny/viny_world.h"
 #include "../viny/viny_grid_cell.h"
 
 #include "../../core/scan_matchers/m3rsm_engine.h"
@@ -28,7 +27,8 @@ public:
 
   double discrepancy(const AreaOccupancyObservation &aoo) const override {
     // TODO: consider normalized discrepancy usage in plain vinySLAM
-    return belief().normalized_discrepancy(aoo);
+    // FIXME:
+    return 0;
   }
 };
 
@@ -38,13 +38,12 @@ using VinyXMapT = RescalableCachingGridMap<UnboundedLazyTiledGridMap>;
 class VinyXWorld : public World<TransformedLaserScan,
                                 VinyXMapT> {
 public:
-  using WorldT = World<TransformedLaserScan, VinyXMapT>;
+  using WorldT = SingleStateHypothesisLaserScanGridWorld<VinyXMapT>;
+  using Properties = SingleStateHypothesisLSGWProperties;
 public: // methods
-  VinyXWorld(std::shared_ptr<GridCellStrategy> gcs,
-             std::shared_ptr<GridMapScanAdder> scan_adder,
-             const VinyWorldParams &vwp, const GridMapParams &gmp)
-    : _gcs{gcs} {
-    _hypotheses.push_back(VinyWorld<VinyXMapT>{gcs, scan_adder, vwp, gmp});
+  VinyXWorld(const Properties &props)
+    : _props{props} {
+    _hypotheses.push_back(WorldT{props});
   }
 
   void handle_sensor_data(TransformedLaserScan &scan) override {
@@ -84,7 +83,9 @@ private:
     engine.set_translation_lookup_range(0.4, 0.4);
     engine.set_rotation_lookup_range(0.2, 0.05);
     SafeRescalableMap rescalable_map{map()};
-    engine.add_scan_matching_request(_gcs->prob_est(), pose(),
+    // FIXME: use custom SPE, not necessary GridWorldOne
+    auto spe = _props.gsm->scan_probability_estimator();
+    engine.add_scan_matching_request(spe, pose(),
                                      raw_scan.scan, rescalable_map, true);
     double max_prob = -1;
     unsigned peaks_nm = 0;
@@ -110,8 +111,8 @@ private:
   }
 
 private: // fields
-  std::shared_ptr<GridCellStrategy> _gcs;
-  std::vector<VinyWorld<VinyXMapT>> _hypotheses;
+  Properties _props;
+  std::vector<WorldT> _hypotheses;
 };
 
 #endif

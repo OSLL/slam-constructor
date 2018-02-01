@@ -14,7 +14,7 @@ class ObstacleBasedOccupancyObservationPE
 public:
   double probability(const AreaOccupancyObservation &aoo,
                      const LightWeightRectangle &,
-                     const GridMap &map) override {
+                     const GridMap &map) const override {
     assert(aoo.is_occupied);
     double prob = 1.0 - map[map.world_to_cell(aoo.obstacle)].discrepancy(aoo);
     assert(0 <= prob);
@@ -27,7 +27,7 @@ class MaxOccupancyObservationPE
 public:
   double probability(const AreaOccupancyObservation &aoo,
                      const LightWeightRectangle &area,
-                     const GridMap &map) override {
+                     const GridMap &map) const override {
     assert(aoo.is_occupied);
     auto max_probability = double{0};
     auto area_ids = GridRasterizedRectangle{map, area};
@@ -47,7 +47,7 @@ class MeanOccupancyObservationPE
 public:
   double probability(const AreaOccupancyObservation &aoo,
                      const LightWeightRectangle &area,
-                     const GridMap &map) override {
+                     const GridMap &map) const override {
     assert(aoo.is_occupied);
     auto tot_probability = double{0};
     auto area_nm = unsigned{0};
@@ -68,7 +68,7 @@ class OverlapWeightedOccupancyObservationPE
 public:
   double probability(const AreaOccupancyObservation &aoo,
                      const LightWeightRectangle &area,
-                     const GridMap &map) override {
+                     const GridMap &map) const override {
     assert(aoo.is_occupied);
     double tot_probability = 0;
     double tot_weight = 0;

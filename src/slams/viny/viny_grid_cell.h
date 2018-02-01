@@ -72,18 +72,6 @@ public:
     return *this;
   }
 
-  double discrepancy(const BaseTBM &that) const {
-    double total_unknown = that.unknown() + unknown();
-    double d_occ = std::abs(that.occupied() - occupied());
-    BaseTBM combined = that;
-    combined += *this;
-    return combined.conflict() + d_occ + total_unknown;
-  }
-
-  double normalized_discrepancy(const BaseTBM &that) const {
-    return discrepancy(that) / 3;
-  }
-
   explicit operator Occupancy() {
     auto occ = Occupancy{_occupied + 0.5 * _unknown, 1.0};
     return occ;
@@ -140,7 +128,7 @@ private:
 
 class VinyDSCell : public GridCell {
 public:
-  VinyDSCell(): GridCell{Occupancy{-1, 1}} {}
+  VinyDSCell(): GridCell{Occupancy{0.5, 1}} {}
 
   std::unique_ptr<GridCell> clone() const override {
     return std::make_unique<VinyDSCell>(*this);
@@ -155,7 +143,19 @@ public:
   }
 
   double discrepancy(const AreaOccupancyObservation &aoo) const override {
-    return _belief.discrepancy(aoo);
+    auto that_belief = BaseTBM{aoo};
+    auto total_unknown = that_belief.unknown() + _belief.unknown();
+    auto d_occ = std::abs(that_belief.occupied() - _belief.occupied());
+    auto combined_belief = that_belief;
+    combined_belief += _belief;
+    /* return combined_belief.conflict() + d_occ + total_unknown; */
+
+    // original "combined.conflict() + d_occ + total_unknown" was replaced
+    // with the following rule to put the discrepancy in [0; 1].
+    auto unknown = total_unknown / 2.0;
+    auto known = 1 - unknown;
+    auto known_discrepancy = known * (combined_belief.conflict() + d_occ) / 2.0;
+    return unknown / 2 + known_discrepancy;
   }
 
   std::vector<char> serialize() const override {

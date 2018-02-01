@@ -65,9 +65,11 @@ private:
 };
 
 // TODO: try to simplify template params
-template <typename ObservationType, typename MapType>
-class World : public WorldObservable<MapType>
+template <typename ObservationType, typename MapT>
+class World : public WorldObservable<MapT>
             , public SensorDataObserver<ObservationType> {
+public: // type aliases
+  using MapType = MapT;
 public:
   // data-in
   virtual void update_robot_pose(const RobotPoseDelta& delta) {
@@ -78,6 +80,13 @@ public:
   virtual const World<ObservationType, MapType>& world() const { return *this; }
   virtual const RobotPose& pose() const { return _pose; }
   virtual const MapType& map() const = 0;
+
+  MapType& map() {
+    return const_cast<MapType&>(
+      // TODO: try to use decltype
+      static_cast<const World<ObservationType, MapT>*>(this)->map()
+    );
+  }
 protected:
   virtual void handle_observation(ObservationType&) = 0;
   virtual ~World() = default;

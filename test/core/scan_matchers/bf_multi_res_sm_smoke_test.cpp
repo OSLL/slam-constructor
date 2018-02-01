@@ -3,22 +3,25 @@
 #include <limits>
 
 #include "../mock_grid_cell.h"
-#include "../data_generation_utils.h"
 #include "scan_matcher_test_utils.h"
 
+#include "../../../src/core/scan_matchers/occupancy_observation_probability.h"
 #include "../../../src/core/scan_matchers/bf_multi_res_scan_matcher.h"
 #include "../../../src/core/maps/plain_grid_map.h"
 #include "../../../src/core/maps/lazy_tiled_grid_map.h"
 #include "../../../src/core/maps/rescalable_caching_grid_map.h"
 
-template <typename MapType>
+template <typename Map>
 class BFMRScanMatcherTestBase
-  :  public ScanMatcherTestBase<MapType> {
+  :  public ScanMatcherTestBase<Map> {
 protected: // names
-  using SPE = typename ScanMatcherTestBase<MapType>::DefaultSPE;
+  using SPE = typename ScanMatcherTestBase<Map>::DefaultSPE;
+  using OOPE = MaxOccupancyObservationPE;
+  using SPW = EvenSPW;
 protected: // methods
   BFMRScanMatcherTestBase()
-    : ScanMatcherTestBase<MapType>{std::make_shared<SPE>(),
+    : ScanMatcherTestBase<Map>{std::make_shared<SPE>(std::make_shared<OOPE>(),
+                                                     std::make_shared<SPW>()),
                                    Map_Width, Map_Height, Map_Scale,
                                    to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
     , bfmrsm{this->spe, SM_Ang_Step, SM_Transl_Step} {

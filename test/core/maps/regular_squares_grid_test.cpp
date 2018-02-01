@@ -285,7 +285,8 @@ TEST_F(RSGSegmentRasterizationTest, verticalLineAlinedBwd) {
 
 class RSGInfinityScalingTest : public ::testing::Test {
 protected:
-  static_assert(std::numeric_limits<double>::has_infinity);
+  static_assert(std::numeric_limits<double>::has_infinity,
+                "Infinity is not defined for doubles.");
   static constexpr double Inf = std::numeric_limits<double>::infinity();
 protected:
   RSGInfinityScalingTest() : grid{1, 1, Inf} {}

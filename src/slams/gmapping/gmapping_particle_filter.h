@@ -7,38 +7,35 @@
 #include <iostream>
 #include <iomanip>
 
-#include "../../core/states/world.h"
+#include "../../core/states/laser_scan_grid_world.h"
 #include "../../core/particle_filter.h"
 #include "gmapping_world.h"
 
 class GmappingParticleFactory : public ParticleFactory<GmappingWorld> {
-private:
-  using GcsPtr = std::shared_ptr<GridCellStrategy>;
 public:
-  GmappingParticleFactory(GcsPtr gcs, const GridMapParams& params,
+  GmappingParticleFactory(const SingleStateHypothesisLSGWProperties &shw_p,
                           const GMappingParams& gprms)
-    : _gcs(gcs), _map_params(params), _gprms(gprms) {}
+    : _shw_p(shw_p), _gprms(gprms) {}
 
-  virtual std::shared_ptr<GmappingWorld> create_particle() {
-    return std::make_shared<GmappingWorld>(_gcs, _map_params, _gprms);
+  std::shared_ptr<GmappingWorld> create_particle() override {
+    return std::make_shared<GmappingWorld>(_shw_p, _gprms);
   }
 private:
-  GcsPtr _gcs;
-  GridMapParams _map_params;
+  const SingleStateHypothesisLSGWProperties _shw_p;
   const GMappingParams _gprms;
 };
 
 // TODO: add restriction on particle type
 class GmappingParticleFilter :
-  public World<TransformedLaserScan, GmappingWorld::MapType> {
+  public LaserScanGridWorld<GmappingWorld::MapType> {
 public:
-  using WorldT = World<TransformedLaserScan, GmappingWorld::MapType>;
+  using MapType = GmappingWorld::MapType;
+  using WorldT = LaserScanGridWorld<MapType>;
 public: // methods
 
-  GmappingParticleFilter(std::shared_ptr<GridCellStrategy> gcs,
-                         const GridMapParams& params,
+  GmappingParticleFilter(const SingleStateHypothesisLSGWProperties &shw_p,
                          const GMappingParams& gprms, unsigned n = 1):
-    _pf(std::make_shared<GmappingParticleFactory>(gcs, params, gprms), n) {
+    _pf(std::make_shared<GmappingParticleFactory>(shw_p, gprms), n) {
 
     for (auto &p : _pf.particles()) {
       p->sample();

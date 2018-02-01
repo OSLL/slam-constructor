@@ -1,80 +1,102 @@
-#ifndef SLAM_CTOR_CORE_MONTE_CARLO_SCAN_MATCHER_H_INCLUDED
-#define SLAM_CTOR_CORE_MONTE_CARLO_SCAN_MATCHER_H_INCLUDED
+#ifndef SLAM_CTOR_CORE_MONTE_CARLO_SCAN_MATCHER_H
+#define SLAM_CTOR_CORE_MONTE_CARLO_SCAN_MATCHER_H
 
-#include <functional>
-#include <limits>
+#include <random>
 #include <memory>
 
-#include "grid_scan_matcher.h"
+#include "../random_utils.h"
+#include "pose_enumeration_scan_matcher.h"
 
-// TODO: move publish transform to observer
-class MonteCarloScanMatcher : public GridScanMatcher {
+class GaussianPoseEnumerator : public PoseEnumerator {
+protected:
+  using Engine = std::mt19937;
 public:
-  MonteCarloScanMatcher(SPE estimator,
-                        unsigned failed_iter, unsigned max_iter):
-    GridScanMatcher{estimator},
-    _failed_tries_limit(failed_iter), _total_tries_limit(max_iter) {}
-
-  double process_scan(const TransformedLaserScan &raw_scan,
-                      const RobotPose &init_pose,
-                      const GridMap &map,
-                      RobotPoseDelta &pose_delta) override {
-    do_for_each_observer([&init_pose, &raw_scan, &map](ObsPtr obs) {
-      obs->on_matching_start(init_pose, raw_scan, map);
-    });
-    auto scan = filter_scan(raw_scan.scan, init_pose, map);
-
-    unsigned failed_tries = 0, total_tries = 0;
-    RobotPose best_pose = init_pose;
-
-    auto best_pose_prob = scan_probability(scan, best_pose, map);
-
-    do_for_each_observer([best_pose, scan, best_pose_prob](ObsPtr obs) {
-      obs->on_scan_test(best_pose, scan, best_pose_prob);
-      obs->on_pose_update(best_pose, scan, best_pose_prob);
-    });
-
-    while (failed_tries < _failed_tries_limit &&
-           total_tries < _total_tries_limit) {
-      total_tries++;
-
-      RobotPose sampled_pose = best_pose;
-      sample_pose(sampled_pose);
-      double sampled_scan_prob = scan_probability(scan, sampled_pose, map);
-      do_for_each_observer([&sampled_pose, &scan,
-                            &sampled_scan_prob](ObsPtr obs) {
-        obs->on_scan_test(sampled_pose, scan, sampled_scan_prob);
-      });
-
-      if (sampled_scan_prob <= best_pose_prob) {
-        failed_tries++;
-        continue;
-      }
-
-      best_pose_prob = sampled_scan_prob;
-      best_pose = sampled_pose;
-      failed_tries = on_estimate_update(failed_tries, _failed_tries_limit);
-
-      do_for_each_observer([&best_pose, &scan, &best_pose_prob](ObsPtr obs) {
-        obs->on_pose_update(best_pose, scan, best_pose_prob);
-      });
-    }
-
-    pose_delta = best_pose - init_pose;
-    do_for_each_observer([&scan, &pose_delta, &best_pose_prob](ObsPtr obs) {
-        obs->on_matching_end(pose_delta, scan, best_pose_prob);
-    });
-    return best_pose_prob;
+  GaussianPoseEnumerator(unsigned seed,
+                         double translation_dispersion,
+                         double rotation_dispersion,
+                         unsigned max_dispersion_failed_attempts,
+                         unsigned max_poses_nm)
+    : _max_failed_attempts_per_shift{max_dispersion_failed_attempts}
+    , _max_poses_nm{max_poses_nm}
+    , _base_translation_dispersion{translation_dispersion}
+    , _base_rotation_dispersion{rotation_dispersion}
+    , _pose_shift_rv{GaussianRV1D<Engine>{0, 0},
+                     GaussianRV1D<Engine>{0, 0},
+                     GaussianRV1D<Engine>{0, 0}}
+    , _pr_generator{seed} {
+    reset();
   }
 
-protected:
-  virtual void sample_pose(RobotPose &base_pose) = 0;
-  virtual unsigned on_estimate_update(unsigned sample_num,
-                                      unsigned sample_limit) = 0;
+  bool has_next() const override {
+    return _failed_attempts_per_shift < _max_failed_attempts_per_shift &&
+           _poses_nm < _max_poses_nm;
+  }
+
+  RobotPose next(const RobotPose &prev_pose) override {
+    return prev_pose + _pose_shift_rv.sample(_pr_generator);
+  }
+
+  void reset() override {
+    _poses_nm = 0;
+    reset_shift(_base_translation_dispersion, _base_rotation_dispersion);
+  }
+
+  void feedback(bool pose_is_acceptable) override {
+    ++_poses_nm;
+    if (!pose_is_acceptable) {
+      ++_failed_attempts_per_shift;
+    } else {
+      if (_failed_attempts_per_shift <= _max_failed_attempts_per_shift / 3) {
+        // we haven't failed enough times to shrink the lookup area
+        return;
+      }
+      reset_shift(0.5);
+    }
+  }
 
 private:
-  unsigned _failed_tries_limit;
-  unsigned _total_tries_limit;
+  void reset_shift(double new_translation_dispersion,
+                   double new_rotation_dispersion) {
+    _failed_attempts_per_shift = 0;
+    _translation_dispersion = new_translation_dispersion;
+    _rotation_dispersion = new_rotation_dispersion;
+    _pose_shift_rv = {GaussianRV1D<Engine>{0, _translation_dispersion},
+                      GaussianRV1D<Engine>{0, _translation_dispersion},
+                      GaussianRV1D<Engine>{0, _rotation_dispersion}};
+  }
+
+  void reset_shift(double dispersion_scale_factor) {
+    reset_shift(_translation_dispersion * 0.5, _rotation_dispersion * 0.5);
+  }
+
+private:
+  // number of poses
+  unsigned _max_failed_attempts_per_shift, _max_poses_nm;
+  unsigned _failed_attempts_per_shift, _poses_nm;
+  // sampling params
+  double _base_translation_dispersion, _base_rotation_dispersion;
+  double _translation_dispersion, _rotation_dispersion;
+
+  RobotPoseDeltaRV<Engine> _pose_shift_rv;
+  Engine _pr_generator;
+};
+
+class MonteCarloScanMatcher : public PoseEnumerationScanMatcher {
+public:
+  // FIXME: update enumerator on set_lookup_ranges update
+  MonteCarloScanMatcher(std::shared_ptr<ScanProbabilityEstimator> estimator,
+                        unsigned seed,
+                        double translation_dispersion,
+                        double rotation_dispersion,
+                        unsigned failed_attempts_per_dispersion,
+                        unsigned total_attempts)
+    : PoseEnumerationScanMatcher{
+        estimator,
+        std::make_shared<GaussianPoseEnumerator>(
+          seed, translation_dispersion, rotation_dispersion,
+          failed_attempts_per_dispersion, total_attempts
+        )
+      } {}
 };
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef SLAM_CTOR_CORE_OCCUPANCY_GRID_PUBLISHER_H
-#define SLAM_CTOR_CORE_OCCUPANCY_GRID_PUBLISHER_H
+#ifndef SLAM_CTOR_ROS_OCCUPANCY_GRID_PUBLISHER_H
+#define SLAM_CTOR_ROS_OCCUPANCY_GRID_PUBLISHER_H
 
 #include <ros/ros.h>
 #include <nav_msgs/OccupancyGrid.h>
@@ -16,7 +16,7 @@ public: // method
     _map_pub{pub}, _tf_map_frame_id{tf_map_frame_id},
     _publishing_interval{publ_interval_secs} {}
 
-  virtual void on_map_update(const GridMapType &map) override {
+  void on_map_update(const GridMapType &map) override {
     if ((ros::Time::now() - _last_pub_time) < _publishing_interval) {
       return;
     }

@@ -302,12 +302,12 @@ TEST_F(LaserScanGeneratorTest, trigonometricCacheCorrectness) {
   auto scan = lsgen.laser_scan_2D(map, rpose, 1);
 
   const double D_Angle = deg2rad(1.3);
-  scan.trig_cache->set_theta(D_Angle);
+  scan.trig_provider->set_base_angle(D_Angle);
   for (auto &sp : scan.points()) {
     ASSERT_NEAR(std::cos(sp.angle() + D_Angle),
-                scan.trig_cache->cos(sp.angle()), 0.001);
+                scan.trig_provider->cos(sp.angle()), 0.001);
     ASSERT_NEAR(std::sin(sp.angle() + D_Angle),
-                scan.trig_cache->sin(sp.angle()), 0.001);
+                scan.trig_provider->sin(sp.angle()), 0.001);
   }
 }
 

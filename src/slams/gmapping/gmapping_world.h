@@ -6,9 +6,8 @@
 #include <cmath>
 
 #include "../../core/particle_filter.h"
-#include "../../core/states/laser_scan_grid_world.h"
+#include "../../core/states/single_state_hypothesis_laser_scan_grid_world.h"
 #include "../../core/maps/grid_cell.h"
-#include "../../core/maps/grid_cell_strategy.h"
 #include "../../core/maps/lazy_tiled_grid_map.h"
 #include "../../core/scan_matchers/hill_climbing_scan_matcher.h"
 
@@ -16,10 +15,11 @@
 
 struct GMappingParams {
 private:
-  using GRV1D = GaussianRV1D;
-  using URV1D = UniformRV1D;
+  using RandomEngine = std::mt19937;
+  using GRV1D = GaussianRV1D<RandomEngine>;
+  using URV1D = UniformRV1D<RandomEngine>;
 public:
-  RobotPoseDeltaRV<std::mt19937> pose_guess_rv, next_sm_delta_rv;
+  RobotPoseDeltaRV<RandomEngine> pose_guess_rv, next_sm_delta_rv;
 
   GMappingParams(double mean_sample_xy, double sigma_sample_xy,
                  double mean_sample_th, double sigma_sample_th,
@@ -33,21 +33,20 @@ public:
                        URV1D{min_sm_lim_th, max_sm_lim_th}} {}
 };
 
-class GmappingWorld : public Particle,
-                      public LaserScanGridWorld<UnboundedLazyTiledGridMap> {
+class GmappingWorld
+  : public Particle
+  , public SingleStateHypothesisLaserScanGridWorld<UnboundedLazyTiledGridMap> {
 public:
+  using RandomEngine = std::mt19937;
+  using GRV1D = GaussianRV1D<RandomEngine>;
   using MapType = UnboundedLazyTiledGridMap;
 public:
 
-  GmappingWorld(std::shared_ptr<GridCellStrategy> gcs,
-                const GridMapParams& params,
-                const GMappingParams& gparams)
+  GmappingWorld(const SingleStateHypothesisLSGWProperties &shw_params,
+                const GMappingParams &gparams)
     // FIXME: [Performance] The adder does extra computations
     //        related to blurring that are not actually used
-    : LaserScanGridWorld{gcs, std::make_shared<WallDistanceBlurringScanAdder>(
-                                gcs->occupancy_est(), 0),
-                         params}
-    , _matcher{gcs->prob_est()}
+    : SingleStateHypothesisLaserScanGridWorld{shw_params}
     , _rnd_engine(std::random_device{}())
     , _pose_guess_rv{gparams.pose_guess_rv}
     , _next_sm_delta_rv{gparams.next_sm_delta_rv} {
@@ -65,19 +64,22 @@ public:
       return;
     }
 
+    // TODO: consider super::handle_observation
+
     if (!_scan_is_first) {
       // add "noise" to guess extra cost function peak
       update_robot_pose(_pose_guess_rv.sample(_rnd_engine));
     }
 
     RobotPoseDelta pose_delta;
-    double scan_prob = _matcher.process_scan(scan, pose(), map(), pose_delta);
+    double scan_prob = scan_matcher()->process_scan(scan, pose(),
+                                                    map(), pose_delta);
     update_robot_pose(pose_delta);
 
     // TODO: scan_prob threshold to params
     if (0.0 < scan_prob || _scan_is_first) {
       // map update accordig to original gmapping code (ref?)
-      LaserScanGridWorld::handle_observation(scan);
+      scan_adder()->append_scan(map(), pose(), scan.scan, scan.quality, 0);
       _scan_is_first = false;
     }
 
@@ -88,10 +90,10 @@ public:
   void mark_master() {
     _is_master = true;
     // master is corrected on each step without noise
-    _pose_guess_rv = RobotPoseDeltaRV<std::mt19937>{
-      GaussianRV1D{0, 0}, GaussianRV1D{0, 0}, GaussianRV1D{0, 0}};
-    _next_sm_delta_rv = RobotPoseDeltaRV<std::mt19937>{
-      GaussianRV1D{0, 0}, GaussianRV1D{0, 0}, GaussianRV1D{0, 0}};
+    _pose_guess_rv = RobotPoseDeltaRV<RandomEngine>{
+      GRV1D{0, 0}, GRV1D{0, 0}, GRV1D{0, 0}};
+    _next_sm_delta_rv = RobotPoseDeltaRV<RandomEngine>{
+      GRV1D{0, 0}, GRV1D{0, 0}, GRV1D{0, 0}};
   }
   bool is_master() { return _is_master; }
   void sample() override { _is_master = false; }
@@ -106,9 +108,8 @@ private:
 private:
   bool _is_master = false;
   bool _scan_is_first = true;
-  HillClimbingScanMatcher _matcher;
-  std::mt19937 _rnd_engine;
-  RobotPoseDeltaRV<std::mt19937> _pose_guess_rv, _next_sm_delta_rv;
+  RandomEngine _rnd_engine;
+  RobotPoseDeltaRV<RandomEngine> _pose_guess_rv, _next_sm_delta_rv;
   RobotPoseDelta _delta_since_last_sm, _next_sm_delta;
 };
 

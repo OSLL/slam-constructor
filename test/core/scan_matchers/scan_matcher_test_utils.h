@@ -11,13 +11,13 @@
 #include "../../../src/utils/data_generation/laser_scan_generator.h"
 
 #include "../../../src/core/scan_matchers/grid_scan_matcher.h"
-#include "../../../src/core/scan_matchers/weighted_mean_discrepancy_spe.h"
+#include "../../../src/core/scan_matchers/weighted_mean_point_probability_spe.h"
 
 
 template<typename MapType>
 class ScanMatcherTestBase : public ::testing::Test {
 protected: // type aliases
-  using DefaultSPE = WeightedMeanDiscrepancySPEstimator;
+  using DefaultSPE = WeightedMeanPointProbabilitySPE;
 protected: // consts
   static constexpr RobotPoseDelta Acceptable_Error = {
     std::numeric_limits<double>::epsilon(),

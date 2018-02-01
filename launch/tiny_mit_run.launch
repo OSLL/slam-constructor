@@ -7,31 +7,37 @@
 
   <node name="tinySLAM" pkg="slam_fmwk" type="tiny_slam"
         cwd="node" required="true" output="screen">
-    <remap from="laser_scan" to="/base_scan" />
 
-    <!-- Modules setup -->
-    <param name="slam/cell/type" value="avg" />
-
-    <!-- Occupancy estimator setup -->
+    <!-- = Mapping = -->
+    <param name="slam/mapping/blur" value="0.5" />
+    <!-- * Occupancy Estimator setup -->
     <param name="slam/occupancy_estimator/type" value="const" />
     <param name="slam/occupancy_estimator/base_occupied/prob" value="0.95" />
     <param name="slam/occupancy_estimator/base_empty/prob" value="0.01" />
-
-    <param name="ros/skip_exceeding_lsr_vals" value="false" />
-    <param name="tinySLAM/hole_width" value="0.5" />
-
-    <!-- Map setup-->
+    <!-- * Occupancy Map setup -->
     <param name="slam/map/height_in_meters" value="100" />
     <param name="slam/map/width_in_meters" value="100" />
     <param name="slam/map/meters_per_cell" value="0.1" />
+    <!-- * FIXME -->
+    <param name="slam/cell/type" value="avg" />
 
-    <!-- Internal scan matcher constants-->
-    <param name="slam/scmtch/MC/sigma_XY" value="0.2" />
-    <param name="slam/scmtch/MC/sigma_theta" value="0.1" />
-    <param name="slam/scmtch/MC/limit_of_bad_attempts" value="20" />
-    <param name="slam/scmtch/MC/limit_of_total_attempts" value="100" />
+    <!-- = Localization = -->
+    <param name="slam/scmtch/type" value="MC" />
+    <param name="slam/scmtch/MC/dispersion/translation" value="0.2" />
+    <param name="slam/scmtch/MC/dispersion/rotation" value="0.1" />
+    <param name="slam/scmtch/MC/dispersion/failed_attempts_limit" value="20" />
+    <param name="slam/scmtch/MC/attempts_limit" value="100" />
+    <!-- <param name="slam/scmtch/MC/seed" value="666666" /> -->
+
+    <param name="slam/scmtch/spe/type" value="wmpp" />
+    <param name="slam/scmtch/spe/wmpp/weighting/type" value="even" />
+
+    <!-- = Input = -->
+    <param name="in/lscan2D/ros/topic/name" value="/base_scan" />
+    <param name="in/odometry/ros/tf/odom_frame_id" value="odom_combined" />
 
     <!-- Internal constants for ros-->
+    <param name="ros/skip_exceeding_lsr_vals" value="false" />
     <param name="ros/rviz/map_publishing_rate" value="5.0" />
     <param name="ros/tf/buffer_duration" value="5.0" /> <!-- in seconds-->
     <param name="ros/filter_queue_size" value="1000" />

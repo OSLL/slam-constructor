@@ -1,5 +1,5 @@
-#ifndef __AREA_OCCUPANCY_ESTIMATOR_H
-#define __AREA_OCCUPANCY_ESTIMATOR_H
+#ifndef AREA_OCCUPANCY_ESTIMATOR_H
+#define AREA_OCCUPANCY_ESTIMATOR_H
 
 #include <cassert>
 #include <vector>
