@@ -14,9 +14,9 @@
 
 class GmappingScanProbabilityEstimator : public ScanProbabilityEstimator {
 private:
-  constexpr static double FULLNESS_TH = 0.5;
-  constexpr static double SIGMA_SQ = 0.01;
-  constexpr static double FREE_CELL_DIST = std::sqrt(2.0);
+  constexpr static double FULLNESS_TH = 0.1;
+  constexpr static double SIGMA_SQ = 0.05;
+  //constexpr static double FREE_CELL_DIST = std::sqrt(2.0);
   constexpr static double DBL_INF = std::numeric_limits<double>::infinity();
 public:
   // FIXME: implement gmapping-specific OOPE (decoupling)
@@ -58,8 +58,9 @@ public:
 
       last_handled_dpoint = sp_coord;
       double best_dist = DBL_INF;
-      double d_free_x = FREE_CELL_DIST * c; // 0< int cast - implicit floor
-      double d_free_y = FREE_CELL_DIST * s;
+      /* double d_free_x = FREE_CELL_DIST * c;
+         // 0< int cast - implicit floor */
+      /* double d_free_y = FREE_CELL_DIST * s; */
       for (int d_x = -_window_sz; d_x <= _window_sz; ++d_x) {
         for (int d_y = -_window_sz; d_y <= _window_sz; ++d_y) {
           DiscretePoint2D cell_coord = sp_coord + DiscretePoint2D(d_x, d_y);
@@ -67,13 +68,13 @@ public:
           if (cell < FULLNESS_TH) {
             continue; // cell is not occupied
           }
-          cell_coord.x -= d_free_x;
-          cell_coord.y -= d_free_y;
-          const GridCell &free_cell = map[cell_coord];
+          /* cell_coord.x -= d_free_x; */
+          /* cell_coord.y -= d_free_y; */
+          /* const GridCell &free_cell = map[cell_coord]; */
 
-          if (FULLNESS_TH <= free_cell) {
-            continue; //occlusion is detected
-          }
+          /* if (FULLNESS_TH <= free_cell && free_cell != -1) { */
+          /*   continue; //occlusion is detected */
+          /* } */
 
           double dist = cell.discrepancy(sp_observation);
           if (dist < best_dist) {
@@ -82,12 +83,12 @@ public:
         }
       }
       double dist_sq = best_dist != DBL_INF ? best_dist : 9 * SIGMA_SQ;
-      last_dpoint_prob = exp(-dist_sq / SIGMA_SQ);
+      last_dpoint_prob = std::exp(-dist_sq / SIGMA_SQ);
       total_probability += last_dpoint_prob;
     }
 
     if (handled_pts_nm == 0) { return unknown_probability(); }
-    return total_probability / handled_pts_nm;
+    return total_probability;// / handled_pts_nm;
   }
 
 private:

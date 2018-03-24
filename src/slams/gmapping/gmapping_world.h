@@ -47,6 +47,7 @@ public:
     // FIXME: [Performance] The adder does extra computations
     //        related to blurring that are not actually used
     : SingleStateHypothesisLaserScanGridWorld{shw_params}
+    , _raw_odom_pose{0, 0, 0}
     , _rnd_engine(std::random_device{}())
     , _pose_guess_rv{gparams.pose_guess_rv}
     , _next_sm_delta_rv{gparams.next_sm_delta_rv} {
@@ -54,27 +55,40 @@ public:
   }
 
   void update_robot_pose(const RobotPoseDelta& delta) override {
-    _delta_since_last_sm += delta.abs();
-    LaserScanGridWorld<MapType>::update_robot_pose(delta);
+    auto d_th = (pose() - _raw_odom_pose).theta;
+    auto s = std::sin(d_th), c = std::cos(d_th);
+    // rotate delta's translation by d_th
+    auto corrected_delta = RobotPoseDelta{
+      c*delta.x - s*delta.y,
+      s*delta.x + c*delta.y,
+      delta.theta
+      //atan2(std::sin(delta.theta), std::cos(delta.theta)
+    };
+    _raw_odom_pose += delta;
+
+    _delta_since_last_sm += corrected_delta.abs();
+    LaserScanGridWorld<MapType>::update_robot_pose(corrected_delta);
   }
 
   void handle_observation(TransformedLaserScan &scan) override {
     if (_delta_since_last_sm.sq_dist() < _next_sm_delta.sq_dist() &&
         std::fabs(_delta_since_last_sm.theta) < _next_sm_delta.theta) {
+      // Q: handle all scans for the master particle?
       return;
     }
 
     // TODO: consider super::handle_observation
 
-    if (!_scan_is_first) {
+    if (!_scan_is_first) { // Q: skip noise for the master particle?
       // add "noise" to guess extra cost function peak
-      update_robot_pose(_pose_guess_rv.sample(_rnd_engine));
+      auto noise = _pose_guess_rv.sample(_rnd_engine);
+      LaserScanGridWorld<MapType>::update_robot_pose(noise);
     }
 
     RobotPoseDelta pose_delta;
     double scan_prob = scan_matcher()->process_scan(scan, pose(),
                                                     map(), pose_delta);
-    update_robot_pose(pose_delta);
+    LaserScanGridWorld<MapType>::update_robot_pose(pose_delta);
 
     // TODO: scan_prob threshold to params
     if (0.0 < scan_prob || _scan_is_first) {
@@ -106,6 +120,7 @@ private:
   }
 
 private:
+  RobotPose _raw_odom_pose;
   bool _is_master = false;
   bool _scan_is_first = true;
   RandomEngine _rnd_engine;

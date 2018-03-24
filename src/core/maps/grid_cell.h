@@ -2,6 +2,7 @@
 #define SLAM_CTOR_CORE_GRID_CELL_H
 
 #include <memory>
+#include "../math_utils.h"
 #include "../states/sensor_data.h"
 #include "../serialization.h"
 
@@ -15,7 +16,7 @@ public:
   virtual ~GridCell() = default;
 
   operator double() const { return occupancy().prob_occ; }
-  explicit operator bool() const { return double(*this) == 0; }
+  explicit operator bool() const { return are_equal(double(*this), 0.0); }
   virtual const Occupancy& occupancy() const { return _occupancy; }
 
   virtual std::unique_ptr<GridCell> clone() const {
