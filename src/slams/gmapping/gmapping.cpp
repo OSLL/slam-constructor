@@ -36,6 +36,8 @@ int main(int argc, char** argv) {
 
   auto pose_pub_pin = create_pose_correction_tf_publisher<ObservT, GmappingMap>(
     slam.get(), scan_provider.get(), props);
+  // publish a "raw" robot pose to be compatible with test service
+  auto rp_pub_pin = create_robot_pose_tf_publisher<GmappingMap>(slam.get());
 
   // TODO: setup scan skip policy via param
   auto scan_obs_pin = std::make_shared<LaserScanObserver>(
