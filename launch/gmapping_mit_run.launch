@@ -33,6 +33,7 @@
 
     <!-- = Input = -->
     <param name="in/lscan2D/ros/topic/name" value="/base_scan" />
+    <param name="in/lscan2D/skip_exceeding_vals" value="true" />
     <param name="in/odometry/ros/tf/odom_frame_id" value="odom_combined" />
 
   </node>

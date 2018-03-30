@@ -5,6 +5,7 @@
 #include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
 
+#include "topic_with_transform.h"
 #include "../core/states/world.h"
 
 class RobotPoseTfPublisher : public WorldPoseObserver {
@@ -19,14 +20,46 @@ public: //methods
       tf::createQuaternionFromRPY(0, 0, pose.theta),
       tf::Vector3(pose.x, pose.y, 0.0)};
 
-    auto transform = tf::StampedTransform{map2robot, ros::Time::now(),
+    auto transform = tf::StampedTransform{map2robot, robot_pose_timestamp(),
                                           _tf_map_frame_id, _tf_robot_frame_id};
     _tf_brcst.sendTransform(transform);
   }
 
+private:
+
+  virtual ros::Time robot_pose_timestamp() {
+    return ros::Time::now();
+  }
+
+
 private: // fields
   std::string _tf_map_frame_id, _tf_robot_frame_id;
   tf::TransformBroadcaster _tf_brcst;
+};
+
+template <typename ObsType>
+class ObservationStampedRoboPoseTfPublisher : public RobotPoseTfPublisher
+                                            , public TopicObserver<ObsType> {
+public:
+  ObservationStampedRoboPoseTfPublisher(const std::string &tf_map_frame_id,
+                                        const std::string &tf_robot_frame_id)
+    : RobotPoseTfPublisher{tf_map_frame_id, tf_robot_frame_id} {}
+
+  void handle_transformed_msg(
+    const boost::shared_ptr<ObsType> obs,
+    const tf::StampedTransform&) override {
+
+    _observation_time = ros::message_traits::TimeStamp<ObsType>::value(*obs);
+  }
+
+private:
+
+  ros::Time robot_pose_timestamp() override {
+    return _observation_time;
+  }
+
+private:
+  ros::Time _observation_time;
 };
 
 class RobotPoseTumTrajectoryDumper : public WorldPoseObserver {
