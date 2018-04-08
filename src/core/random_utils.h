@@ -3,6 +3,8 @@
 
 #include <random>
 
+// Random variables
+
 template<typename T>
 class RandomVariable1D {
 public:
@@ -14,20 +16,20 @@ public:
 template <typename Engine>
 class GaussianRV1D : public RandomVariable1D<Engine> {
 public:
-  GaussianRV1D(double mean, double dispersion)
-    : _mean{mean}, _dispersion{dispersion}, _distr{_mean, _dispersion} {}
+  GaussianRV1D(double mean, double stddev)
+    : _mean{mean}, _stddev{stddev}, _distr{_mean, _stddev} {}
 
   double sample(Engine &rnd_engine) override {
     return _distr(rnd_engine);
   }
 
   std::unique_ptr<RandomVariable1D<Engine>> clone() const override {
-    return std::make_unique<GaussianRV1D<Engine>>(_mean, _dispersion);
+    return std::make_unique<GaussianRV1D<Engine>>(_mean, _stddev);
   }
 
 private:
   double _mean;
-  double _dispersion;
+  double _stddev;
   std::normal_distribution<> _distr;
 };
 
