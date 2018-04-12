@@ -73,13 +73,12 @@ public:
   void handle_observation(TransformedLaserScan &scan) override {
     if (_delta_since_last_sm.sq_dist() < _next_sm_delta.sq_dist() &&
         std::fabs(_delta_since_last_sm.theta) < _next_sm_delta.theta) {
-      // Q: handle all scans for the master particle?
       return;
     }
 
     // TODO: consider super::handle_observation
 
-    if (!_scan_is_first) { // Q: skip noise for the master particle?
+    if (!_scan_is_first) {
       // add "noise" to guess extra cost function peak
       auto noise = _pose_guess_rv.sample(_rnd_engine);
       LaserScanGridWorld<MapType>::update_robot_pose(noise);

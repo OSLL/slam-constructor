@@ -141,11 +141,12 @@ int main(int argc, char **argv) {
 void dump_scan(const LaserScan2D &scan, const RobotPose &pose) {
   auto map = UnboundedPlainGridMap{std::make_shared<LastWriteWinsGridCell>(),
                                    {100, 100, 0.1}};
-  auto scan_adder = WallDistanceBlurringScanAdder(
-    std::make_shared<ConstOccupancyEstimator>(Occupancy{1.0, 1.0},
-                                              Occupancy{0.0, 1.0}),
-    0);
-  scan_adder.append_scan(map, pose, scan, 1.0);
+  auto scan_adder = WallDistanceBlurringScanAdder::builder()
+    .set_occupancy_estimator(
+      std::make_shared<ConstOccupancyEstimator>(Occupancy{1.0, 1.0},
+                                                Occupancy{0.0, 1.0}))
+    .build();
+  scan_adder->append_scan(map, pose, scan, 1.0);
   GridMapToPgmDumber<decltype(map)>{"scan"}.on_map_update(map);
 }
 

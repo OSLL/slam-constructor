@@ -64,16 +64,25 @@ auto init_swp(const PropertiesProvider &props) {
   return swp;
 }
 
-auto init_spe(const PropertiesProvider &props) {
+auto init_spe(const PropertiesProvider &props,
+              std::shared_ptr<OccupancyObservationProbabilityEstimator> oope) {
   auto type = props.get_str(Slam_SM_NS + "spe/type", "<undefined>");
   if (type == "wmpp") {
+    const std::string WMPP_Prefix = Slam_SM_NS + "spe/wmpp";
+    auto skip_rate = props.get_uint(WMPP_Prefix + "/sp_skip_rate", 0);
+    auto max_range = props.get_dbl(WMPP_Prefix + "/sp_max_usable_range", -1);
     using WmppSpe = WeightedMeanPointProbabilitySPE;
-    return std::make_shared<WmppSpe>(init_oope(props), init_swp(props));
+    return std::make_shared<WmppSpe>(oope, init_swp(props),
+                                     skip_rate, max_range);
   } else {
     std::cerr << "Unknown Scan Probability Estimator type ("
               << Slam_SM_NS << "spe/type): " << type << std::endl;
     std::exit(-1);
   }
+};
+
+auto init_spe(const PropertiesProvider &props) {
+  return init_spe(props, init_oope(props));
 };
 
 /*============================================================================*/

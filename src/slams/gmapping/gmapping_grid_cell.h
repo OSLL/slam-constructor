@@ -2,18 +2,22 @@
 #define SLAM_CTOR_SLAM_GMAPPING_GRID_CELL_H
 
 #include <memory>
+#include <cmath>
 #include "../../core/geometry_utils.h"
 #include "../../core/maps/grid_cell.h"
 
 class GmappingBaseCell : public GridCell {
+private:
+  // TODO: move to param
+  constexpr static double DIST_VARIANCE = 0.05;
 public:
   GmappingBaseCell(): GridCell{Occupancy{-1, 1}}, _hits(0), _tries(0) {}
 
-  virtual std::unique_ptr<GridCell> clone() const override {
+  std::unique_ptr<GridCell> clone() const override {
     return std::make_unique<GmappingBaseCell>(*this);
   }
 
-  virtual void operator+=(const AreaOccupancyObservation &aoo) override {
+  void operator+=(const AreaOccupancyObservation &aoo) override {
     if (!aoo.occupancy.is_valid()) { return; }
 
     ++_tries;
@@ -27,8 +31,9 @@ public:
     obst.y = (obst.y * (_hits - 1) + aoo.obstacle.y) / _hits;
   }
 
-  virtual double discrepancy(const AreaOccupancyObservation &aoo) const {
-    return obst.dist_sq(aoo.obstacle);
+  double discrepancy(const AreaOccupancyObservation &aoo) const override {
+    auto similarity = std::exp(-obst.dist_sq(aoo.obstacle) / DIST_VARIANCE);
+    return 1.0 - similarity;
   }
 
 private:

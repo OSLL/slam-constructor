@@ -3,8 +3,9 @@
 
 #include "../../utils/init_scan_matching.h"
 #include "../../utils/init_occupancy_mapping.h"
+#include "../../core/scan_matchers/weighted_mean_point_probability_spe.h"
 
-#include "gmapping_scan_probability_estimator.h"
+#include "gmapping_occupancy_observation_pe.h"
 #include "gmapping_particle_filter.h"
 
 auto init_particles_nm(const PropertiesProvider &props) {
@@ -32,6 +33,17 @@ auto init_gmapping_params(const PropertiesProvider &props) {
                         min_sm_lim_th, max_sm_lim_th};
 }
 
+auto init_gmapping_prob_estimator(const PropertiesProvider &props) {
+  const std::string OOPE_Pfx = "slam/scmtch/oope/";
+  assert(props.get_str(OOPE_Pfx + "type", "custom") == "custom");
+
+  using CustomOOPE = GmappingOccupancyObservationPE;
+  auto fullness_th = props.get_dbl(OOPE_Pfx + "custom/fullness_threshold", 0.1);
+  auto window_size = props.get_uint(OOPE_Pfx + "cutrom/window_size", 1);
+  auto oope = std::make_shared<CustomOOPE>(fullness_th, window_size);
+  return init_spe(props, oope);
+}
+
 using Gmapping = GmappingParticleFilter;
 
 auto init_gmapping(const PropertiesProvider &props) {
@@ -40,11 +52,9 @@ auto init_gmapping(const PropertiesProvider &props) {
     1.0, 1.0, 0, std::make_shared<GmappingBaseCell>(),
     // FIXME: move to params
     std::make_shared<HillClimbingScanMatcher>(
-      std::make_shared<GmappingScanProbabilityEstimator>(),
+      init_gmapping_prob_estimator(props),
       6, 0.1, 0.1),
-    std::make_shared<WallDistanceBlurringScanAdder>(
-      init_occ_estimator(props), 0
-    ),
+    init_scan_adder(props),
     init_grid_map_params(props)
   };
   return std::make_shared<GmappingParticleFilter>(shw_params,

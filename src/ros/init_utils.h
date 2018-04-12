@@ -30,7 +30,7 @@ std::string tf_odom_frame_id(const PropertiesProvider &props) {
   return props.get_str("in/odometry/ros/tf/odom_frame_id", "odom_combined");
 }
 
-std::string tf_map_frame_id() {
+std::string tf_map_frame_id() { // TODO: obtain from props
   return get_string_param("~ros/tf/map_frame_id", "map");
 }
 
@@ -107,6 +107,20 @@ create_robot_pose_tf_publisher(WorldObservable<MapT> *slam) {
     tf_map_frame_id(), tf_robot_pose_frame_id());
   slam->subscribe_pose(pose_publisher);
   return pose_publisher;
+}
+
+template <typename ObservT, typename MapT>
+auto make_pose_correction_observation_stamped_publisher(
+  WorldObservable<MapT> *slam,
+  TopicWithTransform<ObservT> *scan_provider,
+  const PropertiesProvider &props) {
+  using PosePubT = ObservationStampedRoboPoseTfPublisher<ObservT>;
+  auto stamped_pose_publisher =
+    std::make_shared<PosePubT>(tf_map_frame_id(),
+                               tf_robot_pose_frame_id());
+  scan_provider->subscribe(stamped_pose_publisher);
+  slam->subscribe_pose(stamped_pose_publisher);
+  return stamped_pose_publisher;
 }
 
 template <typename MapT>

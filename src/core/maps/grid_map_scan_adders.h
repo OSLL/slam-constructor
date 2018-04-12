@@ -2,6 +2,7 @@
 #define SLAM_CTOR_CORE_GRID_MAP_SCAN_ADDERS_H
 
 #include <cmath>
+#include <limits>
 #include <memory>
 
 #include "grid_map.h"
@@ -49,15 +50,52 @@ public:
 };
 
 class WallDistanceBlurringScanAdder : public GridMapScanAdder {
+private:
+  class WallDistanceBlurringScanAdderBuilder {
+  #define ADD_SETTER(type, prop_name)                            \
+    private:                                                     \
+      type _##prop_name;                                         \
+  public:                                                        \
+    auto& set_##prop_name(decltype(_##prop_name) prop_name) {    \
+      _##prop_name = prop_name;                                  \
+      return *this;                                              \
+    }                                                            \
+    const auto& prop_name() const { return _##prop_name; }
+
+    ADD_SETTER(double, blur_distance);
+    ADD_SETTER(std::shared_ptr<CellOccupancyEstimator>, occupancy_estimator);
+    ADD_SETTER(double, max_usable_range);
+  #undef ADD_SETTER
+
+  public:
+    WallDistanceBlurringScanAdderBuilder()
+      : _blur_distance{0}
+      , _max_usable_range{std::numeric_limits<double>::infinity()} {}
+
+    auto build() const {
+      return std::make_shared<WallDistanceBlurringScanAdder>(*this);
+    }
+  };
 public:
-  WallDistanceBlurringScanAdder(std::shared_ptr<CellOccupancyEstimator> e,
-                                double blur_dist)
-    : GridMapScanAdder{e}, _blur_dist(blur_dist) {}
+  static WallDistanceBlurringScanAdderBuilder builder() {
+    return WallDistanceBlurringScanAdderBuilder{};
+  }
+
+  using ScanAdderProperties = WallDistanceBlurringScanAdderBuilder;
+  WallDistanceBlurringScanAdder(const ScanAdderProperties &props)
+    : GridMapScanAdder{props.occupancy_estimator()}
+    , _props{props}
+    , _max_usable_range_sq{std::pow(_props.max_usable_range(), 2)}{}
 protected:
 
+  // TODO: limit beam randering by distance
+  //       either from a robot or a from obstace
+  // TODO: consider renaming blur to distortion
   void handle_scan_point(GridMap &map, bool is_occ, double scan_quality,
                          const Segment2D &beam) const override {
-
+    if (_max_usable_range_sq < beam.length_sq()) {
+      return;
+    }
     // TODO: simplify, consider performance if _blur_dist is not set
     //       (a static factory method)
     auto robot_pt = map.world_to_cell(beam.beg());
@@ -97,7 +135,7 @@ private:
       return 0;
     }
 
-    auto blur_dist = _blur_dist / map.scale();
+    auto blur_dist = _props.blur_distance() / map.scale();
     if (blur_dist < 0) {
       // dynamic wall blurring, Hole_Width is a scaling coefficient
       double dist_sq = beam.length_sq();
@@ -107,7 +145,8 @@ private:
   }
 
 private:
-  double _blur_dist;
+  ScanAdderProperties _props;
+  double _max_usable_range_sq;
 };
 
 #endif

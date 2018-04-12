@@ -2,10 +2,12 @@
 #define SLAM_CTOR_UTILS_INIT_OCCUPANCY_MAPPING_H
 
 #include <memory>
+#include <limits>
 
 #include "properties_providers.h"
 
 #include "../core/maps/grid_map.h"
+#include "../core/maps/grid_map_scan_adders.h"
 #include "../core/maps/area_occupancy_estimator.h"
 #include "../core/maps/const_occupancy_estimator.h"
 
@@ -17,10 +19,6 @@ auto init_grid_map_params(const PropertiesProvider &props) {
   return GridMapParams{static_cast<int>(std::ceil(w / scale)),
                        static_cast<int>(std::ceil(h / scale)),
                        scale};
-}
-
-auto init_mapping_blur(const PropertiesProvider &props) {
-  return props.get_dbl("slam/mapping/blur", 0.3);
 }
 
 std::shared_ptr<CellOccupancyEstimator> init_occ_estimator(
@@ -42,6 +40,17 @@ std::shared_ptr<CellOccupancyEstimator> init_occ_estimator(
     std::cerr << "Unknown estimator type: " << type << std::endl;
     std::exit(-1);
   }
+}
+
+auto init_scan_adder(const PropertiesProvider &props) {
+  static const auto DBL_INF = std::numeric_limits<double>::infinity();
+  auto builder = WallDistanceBlurringScanAdder::builder();
+  return
+    builder.set_occupancy_estimator(init_occ_estimator(props))
+           .set_blur_distance(props.get_dbl("slam/mapping/blur", 0.0))
+           .set_max_usable_range(props.get_dbl("slam/mapping/max_range",
+                                               DBL_INF))
+           .build();
 }
 
 #endif

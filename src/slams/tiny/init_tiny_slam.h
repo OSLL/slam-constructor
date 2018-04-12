@@ -40,10 +40,7 @@ auto init_tiny_slam(const PropertiesProvider &props) {
   setup_tiny_cell_prototype(props, slam_props);
 
   slam_props.gsm = init_scan_matcher(props);
-
-  // TODO: move to init utils, rename to map distorsion
-  slam_props.gmsa = std::make_shared<WallDistanceBlurringScanAdder>(
-    init_occ_estimator(props), init_mapping_blur(props));
+  slam_props.gmsa = init_scan_adder(props);
   slam_props.map_props = init_grid_map_params(props);
   return std::make_shared<TinySlam>(slam_props);
 }

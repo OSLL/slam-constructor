@@ -21,10 +21,7 @@ auto init_viny_slam(const PropertiesProvider &props) {
   slam_props.cell_prototype = std::make_shared<VinyDSCell>();
 
   slam_props.gsm = init_scan_matcher(props);
-
-  // TODO: move to init utils, rename to map distorsion
-  slam_props.gmsa = std::make_shared<WallDistanceBlurringScanAdder>(
-    init_occ_estimator(props), init_mapping_blur(props));
+  slam_props.gmsa = init_scan_adder(props);
   slam_props.map_props = init_grid_map_params(props);
   return std::make_shared<VinySlam>(slam_props);
 }

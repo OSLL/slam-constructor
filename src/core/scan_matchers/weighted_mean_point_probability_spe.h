@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include "grid_scan_matcher.h"
+#include "../math_utils.h"
 #include "../maps/grid_rasterization.h"
 #include "../features/angle_histogram.h"
 
@@ -65,8 +66,11 @@ class WeightedMeanPointProbabilitySPE : public ScanProbabilityEstimator {
 protected:
   using SPW = std::shared_ptr<ScanPointWeighting>;
 public:
-  WeightedMeanPointProbabilitySPE(OOPE oope, SPW spw)
-    : ScanProbabilityEstimator{oope}, _spw{spw} {}
+  WeightedMeanPointProbabilitySPE(OOPE oope, SPW spw,
+                                  unsigned skip_rate = 0,
+                                  double max_usable_range = -1)
+    : ScanProbabilityEstimator{oope}, _spw{spw}
+    , _pts_skip_rate{skip_rate}, _pt_max_usable_range{max_usable_range} {}
 
   LaserScan2D filter_scan(const LaserScan2D &raw_scan, const RobotPose &pose,
                           const GridMap &map) override {
@@ -75,7 +79,10 @@ public:
     scan.trig_provider->set_base_angle(pose.theta);
 
     auto &scan_pts = scan.points();
-    for (const auto &sp : raw_scan.points()) {
+    const auto &raw_points = raw_scan.points();
+    for (LaserScan2D::Points::size_type i = 0; i < raw_points.size(); ++i) {
+      if (_pts_skip_rate && i % _pts_skip_rate) { continue; }
+      auto &sp = raw_points[i];
       auto world_point = sp.move_origin(pose.x, pose.y, scan.trig_provider);
       auto area_id = map.world_to_cell(world_point);
       if (should_skip_point(sp, map, area_id)) { continue; }
@@ -134,11 +141,14 @@ protected:
   virtual bool should_skip_point(const ScanPoint2D &sp,
                                  const GridMap &map,
                                  const GridMap::Coord &area_id) const {
-    return !sp.is_occupied() || !map.has_cell(area_id);
+    return !sp.is_occupied() || !map.has_cell(area_id) ||
+           (are_strictly_ordered(0.0, _pt_max_usable_range, sp.range()));
   }
 
 private:
   SPW _spw;
+  unsigned _pts_skip_rate;
+  double _pt_max_usable_range;
 };
 
 #endif
