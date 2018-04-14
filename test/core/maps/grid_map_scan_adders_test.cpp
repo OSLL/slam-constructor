@@ -36,7 +36,9 @@ protected:
 
   std::shared_ptr<GridMapScanAdder> plain_adder() const {
     auto oe = std::make_shared<ConstOccupancyEstimator>(Occup, Empty);
-    return std::make_shared<WallDistanceBlurringScanAdder>(oe, 0);
+    auto builder = WallDistanceBlurringScanAdder::builder();
+    return builder.set_occupancy_estimator(oe)
+                  .build();
   }
 
   bool map_was_modified(const GridMap &map) const {
@@ -123,7 +125,10 @@ protected:
 
   std::shared_ptr<GridMapScanAdder> adder(double blurring_width) const {
     auto oe = std::make_shared<ConstOccupancyEstimator>(Occup, Empty);
-    return std::make_shared<WallDistanceBlurringScanAdder>(oe, blurring_width);
+    auto builder = WallDistanceBlurringScanAdder::builder();
+    return builder.set_occupancy_estimator(oe)
+                  .set_blur_distance(blurring_width)
+                  .build();
   }
 
 protected:
