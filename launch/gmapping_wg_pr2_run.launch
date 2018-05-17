@@ -2,10 +2,9 @@
   <machine name="local" address="localhost" default="true" />
 
   <param name="use_sim_time" value="true"/>
-  <arg name="dataset" default="" />
   <arg name="rate" default="1.0" />
 
-  <node name="gMappingSlam" pkg="slam_fmwk" type="gmapping"
+  <node name="gMappingSlam" pkg="slam_constructor" type="gmapping"
         cwd="node" required="true" output="screen">
     <param name="slam/particles/number" value="30" />
 
@@ -18,7 +17,7 @@
     <param name="ros/tf/map_frame_id" value="map" />
   </node>
 
-  <node name="bag_adapter" pkg="slam_fmwk"
+  <node name="bag_adapter" pkg="slam_constructor"
         type="wg_pr2_bag_adapter" required="true" output="screen">
     <param name="tf_map_frame_id" value="map" />
     <param name="tf_odom_frame_id" value="odom_combined" />
@@ -37,6 +36,6 @@
   </node>
 
   <node name="rviz" pkg="rviz" type="rviz" respawn="true"
-        args="-d $(find slam_fmwk)/rviz/wg_pr2.rviz" />
+        args="-d $(find slam_constructor)/rviz/wg_pr2.rviz" />
 
 </launch>

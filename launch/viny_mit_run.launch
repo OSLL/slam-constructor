@@ -2,10 +2,9 @@
   <machine name="local" address="localhost" default="true" />
 
   <param name="use_sim_time" value="true"/>
-  <arg name="dataset" default="" />
   <arg name="rate" default="1.0" />
 
-  <node name="vinySlam" pkg="slam_fmwk" type="viny_slam"
+  <node name="vinySlam" pkg="slam_constructor" type="viny_slam"
         cwd="node" required="true" output="screen">
 
     <!-- = Mapping = -->
@@ -47,6 +46,6 @@
         args="--delay=3 --clock --rate $(arg rate) $(arg path)" />
 
   <node name="rviz" pkg="rviz" type="rviz" respawn="true"
-        args="-d $(find slam_fmwk)/rviz/debug.rviz" />
+        args="-d $(find slam_constructor)/rviz/debug.rviz" />
 
 </launch>
