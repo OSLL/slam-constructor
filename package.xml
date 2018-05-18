@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>slam_constructor</name>
-  <version>0.9.0</version>
+  <version>0.9.1</version>
   <description>
     The package provides implementation of several 2D laser-based simultaneous
     localization and mapping (SLAM) algorithms (tinySLAM, vinySLAM, GMapping)
