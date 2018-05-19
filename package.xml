@@ -10,6 +10,7 @@
     accessed by provided links.
   </description>
   <maintainer email="ros@osll.ru">OSLL</maintainer>
+  <author>OSLL team</author>
   <license>MIT</license>
   <url type="repository">https://github.com/OSLL/slam-constructor</url>
 
