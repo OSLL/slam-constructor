@@ -56,8 +56,8 @@ public:
     , _id{0} {}
 
   void on_map_update(const GridMapType &map) override {
-    auto dst = std::ofstream{_base_fname + std::to_string(_id) + ".pgm",
-                             std::ios::binary | std::ios::out};
+    std::ofstream dst(_base_fname + std::to_string(_id) + ".pgm",
+                      std::ios::binary | std::ios::out);
     dump_map(dst, map);
     dst.close();
     ++_id;

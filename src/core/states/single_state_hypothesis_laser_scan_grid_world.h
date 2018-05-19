@@ -10,6 +10,25 @@
 #include "laser_scan_grid_world.h"
 
 struct SingleStateHypothesisLSGWProperties {
+#if __GNUC__ < 5
+  SingleStateHypothesisLSGWProperties() {}
+
+  SingleStateHypothesisLSGWProperties
+    (
+      double localized_scan_quality,
+      double raw_scan_quality,
+      std::size_t scan_margin,
+      std::shared_ptr<GridCell> cell_prototype,
+      std::shared_ptr<GridScanMatcher> gsm,
+      std::shared_ptr<GridMapScanAdder> gmsa,
+      GridMapParams map_props
+    )
+    : localized_scan_quality(localized_scan_quality)
+    , raw_scan_quality(raw_scan_quality)
+    , scan_margin(scan_margin)
+    , cell_prototype(cell_prototype)
+    , gsm(gsm), gmsa(gmsa), map_props(map_props) {}
+#endif
   double localized_scan_quality = 1.0;
   double raw_scan_quality = 1.0;
   std::size_t scan_margin = 0;

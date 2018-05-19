@@ -113,7 +113,7 @@ void run_slam(std::shared_ptr<LaserScanGridWorld<MapType>> slam,
   }
 
   if (!args.map_fname.empty()) {
-    auto map_file = std::ofstream{args.map_fname, std::ios::binary};
+    std::ofstream map_file(args.map_fname, std::ios::binary);
     GridMapToPgmDumber<MapType>::dump_map(map_file, slam->map());
   }
 }

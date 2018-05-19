@@ -106,7 +106,8 @@ private:
 
   MapPropertiesProvider parse_file(const std::string &path) {
     auto props = MapPropertiesProvider{};
-    auto file = std::ifstream{path};
+
+    std::ifstream file(path);
     if (!file) {
       std::cout << "[WARN][FilePropertiesProvider] File " << path
                 << "does not exist." << std::endl;

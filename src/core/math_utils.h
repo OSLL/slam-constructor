@@ -4,27 +4,34 @@
 #include <cmath>
 #include <limits>
 
+// Workaround to enable compiling on gcc-4.9
+#if __GNUC__ < 5
+#define CONSTEXPR
+#else
+#define CONSTEXPR constexpr
+#endif
+
 // TODO: add unit tests for math utils
 
 template <typename T>
-constexpr inline bool are_equal(const T& a, const T& b, const T& eps) {
+CONSTEXPR inline bool are_equal(const T& a, const T& b, const T& eps) {
   return std::abs(a - b) <= eps;
 }
 
 // FIXME: are_equal(infinity, 0) is true
-constexpr inline bool are_equal(double a, double b) {
+CONSTEXPR inline bool are_equal(double a, double b) {
   // cmp doubles according to http://realtimecollisiondetection.net/blog/?p=89
   double eps_scale = std::max(1.0, std::max(std::abs(a), std::abs(b)));
   constexpr double Eps = 1e-7; // num_limits::epsilon is too small
   return are_equal(a, b, Eps * eps_scale);
 }
 
-constexpr inline bool less(double a, double b) {
+CONSTEXPR inline bool less(double a, double b) {
   constexpr double Eps = std::numeric_limits<double>::epsilon();
   return a < b + Eps;
 }
 
-constexpr inline bool is_multiple_of(double value, double factor) {
+CONSTEXPR inline bool is_multiple_of(double value, double factor) {
   // TODO: verify numerical safety/bounds
   double ratio = value / factor;
   return are_equal(ratio, std::trunc(ratio));
@@ -55,7 +62,7 @@ constexpr inline double rad2deg(double angle_rad) {
 }
 
 template <unsigned N>
-constexpr int ge_pow(int i) {
+CONSTEXPR int ge_pow(int i) {
   int ge_p = 1;
   while (ge_p < i) {
     ge_p *= N;
