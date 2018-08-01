@@ -1,0 +1,38 @@
+<launch>
+
+  <machine name="local" address="localhost" default="true" />
+  <param name="use_sim_time" value="true"/>
+  <arg name="rate" default="1.0" />
+
+  <node name="credibilistSlam" pkg="slam_constructor" type="credibilist_slam"
+        cwd="node" required="true" output="screen">
+
+    <!-- = Mapping = -->
+    <param name="slam/mapping/blur" value="0.1" />
+    <!-- * Occupancy Estimator setup -->
+    <param name="slam/occupancy_estimator/type" value="const" />
+    <param name="slam/occupancy_estimator/base_occupied/prob" value="0.95" />
+    <param name="slam/occupancy_estimator/base_empty/prob" value="0.01" />
+    <!-- * Occupancy Map setup -->
+    <param name="slam/map/height_in_meters" value="100" />
+    <param name="slam/map/width_in_meters" value="100" />
+    <param name="slam/map/meters_per_cell" value="0.05" />
+
+    <!-- = Localization = -->
+    <param name="slam/scmtch/type" value="HC" />
+    <param name="slam/scmtch/spe/type" value="wmpp" />
+    <param name="slam/scmtch/spe/wmpp/weighting/type" value="even" />
+
+    <!-- = Input = -->
+    <param name="in/lscan2D/ros/topic/name" value="/base_scan" />
+    <param name="in/odometry/ros/tf/odom_frame_id" value="odom_combined" />
+
+  </node>
+
+  <node name="player" pkg="rosbag" type="play"
+        args="--delay=3 --clock --rate $(arg rate) $(arg path)" />
+
+  <node name="rviz" pkg="rviz" type="rviz" respawn="true"
+        args="-d $(find slam_constructor)/rviz/debug.rviz" />
+
+</launch>

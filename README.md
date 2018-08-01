@@ -1,6 +1,6 @@
 # SLAM Constructor Framework
 
-The SLAM constructor framework provides common functionality and classes that may be used to create custom SLAM algorithms (currently only 2D laser scan-based methods are supported). It also includes implementation of several SLAM algorithms: [tinySLAM](https://ieeexplore.ieee.org/document/5707402/), [vinySLAM](https://ieeexplore.ieee.org/document/8206595/) and [GMapping](https://ieeexplore.ieee.org/document/4084563/). They show an example of the framework usage and can be used as a base of a new SLAM algorithm.
+The SLAM constructor framework provides common functionality and classes that may be used to create custom SLAM algorithms (currently only 2D laser scan-based methods are supported). It also includes implementation of several SLAM algorithms: [tinySLAM](https://ieeexplore.ieee.org/document/5707402/), [vinySLAM](https://ieeexplore.ieee.org/document/8206595/), [GMapping](https://ieeexplore.ieee.org/document/4084563/) and [credibilistSLAM](https://ieeexplore.ieee.org/document/6942931/). They show an example of the framework usage and can be used as a base of a new SLAM algorithm.
 
 ## Hardware Requirements
 
