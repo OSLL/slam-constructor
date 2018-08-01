@@ -1,0 +1,37 @@
+<launch>
+  <machine name="local" address="localhost" default="true" />
+
+  <param name="use_sim_time" value="true"/>
+  <arg name="rate" default="1.0" />
+
+  <node name="graphDemoSlam" pkg="slam_constructor" type="graph_slam"
+        cwd="node" required="true" output="screen">
+
+    <!-- = Input = -->
+    <param name="in/lscan2D/ros/topic/name" value="/base_scan" />
+    <param name="in/odometry/ros/tf/odom_frame_id" value="odom_combined" />
+
+    <!-- = TODO: Output. pmg, traj/tum -->
+    <!-- = TODO sort = -->
+    <!-- Internal constants -->
+    <param name="ros/skip_exceeding_lsr_vals" value="false" />
+
+    <!-- = Localization = -->
+    <param name="slam/scmtch/type" value="HC" />
+    <param name="slam/scmtch/HC/distortion/translation" value="0.1" />
+    <param name="slam/scmtch/HC/distortion/rotation" value="0.1" />
+    <param name="slam/scmtch/MC/dispersion/failed_attempts_limit" value="6" />
+    <!-- <param name="slam/scmtch/MC/seed" value="666666" /> -->
+
+    <param name="slam/scmtch/spe/type" value="wmpp" />
+    <param name="slam/scmtch/spe/wmpp/weighting/type" value="even" />
+
+  </node>
+
+  <node name="player" pkg="rosbag" type="play"
+        args="--delay=3 --clock --rate $(arg rate) $(arg path)" />
+
+  <node name="rviz" pkg="rviz" type="rviz" respawn="true"
+        args="-d $(find slam_constructor)/rviz/debug.rviz" />
+
+</launch>

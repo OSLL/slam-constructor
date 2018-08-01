@@ -31,6 +31,10 @@ public: // methods
     return {x + rhs.x, y + rhs.y, theta + rhs.theta};
   }
 
+  RobotPoseDelta operator-() const {
+    return {-x, -y, -theta};
+  }
+
   bool is_abs_less(const RobotPoseDelta& that) const {
     //TODO: use double EQ (in this case this is not strictly required)
     #define LESS_ABS(comp) (std::fabs(comp) < std::fabs(that.comp))

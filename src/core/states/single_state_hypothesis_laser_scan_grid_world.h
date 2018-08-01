@@ -6,6 +6,7 @@
 
 #include "../maps/grid_map.h"
 #include "../maps/grid_map_scan_adders.h"
+#include "../scan_matchers/grid_scan_matcher.h"
 
 #include "laser_scan_grid_world.h"
 

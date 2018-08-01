@@ -11,7 +11,7 @@
 
 #include "viny_grid_cell.h"
 
-using VinySlam= SingleStateHypothesisLaserScanGridWorld<UnboundedPlainGridMap>;
+using VinySlam = SingleStateHypothesisLaserScanGridWorld<UnboundedPlainGridMap>;
 
 auto init_viny_slam(const PropertiesProvider &props) {
   auto slam_props = SingleStateHypothesisLSGWProperties{};
