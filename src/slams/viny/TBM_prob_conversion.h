@@ -6,10 +6,10 @@
 
 // TBM ---> Occupancy
 Occupancy TBM_to_O(const TBM& tbm) {
-  double qual = tbm.occupied() + tbm.empty();
-  double p_occu = tbm.occupied() / qual;
-  return Occupancy { p_occu, qual };
-  //return Occupancy{ tbm.occupied() + 0.5 * tbm.unknown(), 1.0 };
+  /* double qual = tbm.occupied() + tbm.empty(); */
+  /* double p_occu = tbm.occupied() / qual; */
+  /* return Occupancy { p_occu, qual }; */
+  return Occupancy{ tbm.occupied() + 0.5 * tbm.unknown(), 1.0 };
 }
 
 // AreaOccupancyObservation ---> TBM
