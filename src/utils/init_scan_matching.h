@@ -13,6 +13,7 @@
 #include "../core/scan_matchers/hill_climbing_scan_matcher.h"
 #include "../core/scan_matchers/hcsm_fixed.h"
 #include "../core/scan_matchers/brute_force_scan_matcher.h"
+#include "../core/scan_matchers/no_action_scan_matcher.h"
 #include "../core/scan_matchers/connect_the_dots_ambiguous_drift_detector.h"
 #include "../core/scan_matchers/weighted_mean_point_probability_spe.h"
 
@@ -147,6 +148,9 @@ auto init_scan_matcher(const PropertiesProvider &props) {
   if      (sm_type == "MC") { sm = init_monte_carlo_sm(props, spe); }
   else if (sm_type == "HC") { sm = init_hill_climbing_sm(props, spe); }
   else if (sm_type == "BF") { sm = init_brute_force_sm(props, spe); }
+  else if (sm_type == "N/A") {
+    sm = std::make_shared<NoActionScanMatcher>(spe);
+  }
   else if (sm_type == "HC_FIXED") {
     // TODO: params setup
     sm = std::make_shared<HillClimbingSMFixed>(spe);
