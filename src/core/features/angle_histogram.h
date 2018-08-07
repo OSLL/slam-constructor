@@ -56,14 +56,16 @@ public:
     return std::distance(_hist.begin(), max_e);
   }
 
-  auto least_freq_angle() const {
-    auto i = min_i();
-    return _ang_sum[i] / _hist[i];
-  }
-
   double angle_step() const {
     return deg2rad(180) / _n;
   }
+
+  auto mean_bin_angle(Storage::size_type ind) const {
+    return _ang_sum[ind] / _hist[ind];
+  }
+
+  auto major_direction() const { return mean_bin_angle(max_i()); }
+  auto minor_direction() const { return mean_bin_angle(min_i()); }
 
   // TODO: better naming
   static double estimate_ox_based_angle(
