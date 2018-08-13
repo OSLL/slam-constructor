@@ -148,7 +148,7 @@ auto init_scan_matcher(const PropertiesProvider &props) {
   if      (sm_type == "MC") { sm = init_monte_carlo_sm(props, spe); }
   else if (sm_type == "HC") { sm = init_hill_climbing_sm(props, spe); }
   else if (sm_type == "BF") { sm = init_brute_force_sm(props, spe); }
-  else if (sm_type == "N/A") {
+  else if (sm_type == "idle") {
     sm = std::make_shared<NoActionScanMatcher>(spe);
   }
   else if (sm_type == "HC_FIXED") {

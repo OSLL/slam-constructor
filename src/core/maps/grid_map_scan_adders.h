@@ -9,11 +9,47 @@
 #include "cell_occupancy_estimator.h"
 #include "../states/sensor_data.h"
 #include "../states/world.h"
+#include "../features/angle_histogram.h"
+
+//============================================================================//
+//                    Observation Mapping Quality                             //
+
+class ObservationMappingQualityEstimator {
+public:
+  using PointId = LaserScan2D::Points::size_type;
+  virtual void reset(const LaserScan2D &scan) {}
+  virtual double quality(const LaserScan2D::Points &, PointId) const = 0;
+  virtual ~ObservationMappingQualityEstimator() {}
+};
+
+class IdleOMQE : public ObservationMappingQualityEstimator {
+public:
+  double quality(const LaserScan2D::Points &, PointId) const override {
+    return 1.0;
+  }
+};
+
+class AngleHistogramResiprocalOMQE : public ObservationMappingQualityEstimator {
+public:
+  void reset(const LaserScan2D &scan) override { _hist.reset(scan); }
+
+  double quality(const LaserScan2D::Points &pts, PointId id) const override {
+    auto v = _hist.value(pts, id);
+    assert(v && "[BUG] AHR-SQMQE. Unknown point.");
+    return 1.0 / v;
+  }
+private:
+  AngleHistogram _hist;
+};
+
+//============================================================================//
+//                   Grid Map Scan Adder                                      //
 
 class GridMapScanAdder {
 public:
-  GridMapScanAdder(std::shared_ptr<CellOccupancyEstimator> e)
-    : _occ_est{e} {}
+  GridMapScanAdder(std::shared_ptr<CellOccupancyEstimator> e,
+                   std::shared_ptr<ObservationMappingQualityEstimator> omqe)
+    : _occ_est{e}, _omqe{omqe} {}
 
   GridMap& append_scan(GridMap &map, const RobotPose &pose,
                        const LaserScan2D &scan,
@@ -23,12 +59,16 @@ public:
 
     const auto rp = pose.point();
     scan.trig_provider->set_base_angle(pose.theta);
-    size_t last_pt_i = scan.points().size() - scan_margin - 1;
+    _omqe->reset(scan);
+
+    const auto &points = scan.points();
+    size_t last_pt_i = points.size() - scan_margin - 1;
     for (size_t pt_i = scan_margin; pt_i <= last_pt_i; ++pt_i) {
       const auto &sp = scan.points()[pt_i];
       // move to world frame assume sensor is in robots' (0,0)
       const auto &wp = sp.move_origin(rp, scan.trig_provider);
-      handle_scan_point(map, sp.is_occupied(), scan_quality, {rp, wp});
+      const auto quality = scan_quality * _omqe->quality(points, pt_i);
+      handle_scan_point(map, sp.is_occupied(), quality, {rp, wp});
     }
 
     return map;
@@ -47,6 +87,7 @@ protected:
 
 public:
   std::shared_ptr<CellOccupancyEstimator> _occ_est;
+  std::shared_ptr<ObservationMappingQualityEstimator> _omqe;
 };
 
 class WallDistanceBlurringScanAdder : public GridMapScanAdder {
@@ -64,6 +105,8 @@ private:
 
     ADD_SETTER(double, blur_distance);
     ADD_SETTER(std::shared_ptr<CellOccupancyEstimator>, occupancy_estimator);
+    ADD_SETTER(std::shared_ptr<ObservationMappingQualityEstimator>,
+               observation_quality_estimator);
     ADD_SETTER(double, max_usable_range);
   #undef ADD_SETTER
 
@@ -83,7 +126,8 @@ public:
 
   using ScanAdderProperties = WallDistanceBlurringScanAdderBuilder;
   WallDistanceBlurringScanAdder(const ScanAdderProperties &props)
-    : GridMapScanAdder{props.occupancy_estimator()}
+    : GridMapScanAdder{props.occupancy_estimator(),
+                       props.observation_quality_estimator()}
     , _props{props}
     , _max_usable_range_sq{std::pow(_props.max_usable_range(), 2)}{}
 protected:

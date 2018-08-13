@@ -24,8 +24,8 @@ auto init_grid_map_params(const PropertiesProvider &props) {
 std::shared_ptr<CellOccupancyEstimator> init_occ_estimator(
     const PropertiesProvider &props) {
 
-  // TODO: add mapping namespace, rename to ObservationToOccupancyConverver
-  static const std::string COE_NS = "slam/occupancy_estimator/";
+  static const auto MAPPING_NS = std::string{"slam/mapping/"};
+  static const auto COE_NS = MAPPING_NS + "occupancy_estimator/";
   auto base_occ = Occupancy{props.get_dbl(COE_NS + "base_occupied/prob", 0.95),
                             props.get_dbl(COE_NS + "base_occupied/qual", 1.0)};
   auto base_empty = Occupancy{props.get_dbl(COE_NS + "base_empty/prob", 0.01),
@@ -42,11 +42,30 @@ std::shared_ptr<CellOccupancyEstimator> init_occ_estimator(
   }
 }
 
+std::shared_ptr<ObservationMappingQualityEstimator> init_omqe(
+    const PropertiesProvider &props) {
+
+  static const auto MAPPING_NS = std::string{"slam/mapping/"};
+  static const auto OMQE_NS = MAPPING_NS + "observation_quality_estimator/type";
+  // TODO: replace with <undefined> after config refactoring
+  auto type = props.get_str(OMQE_NS + "type", "idle");
+  std::cout << "Used OMQE: " << type << std::endl;
+  if (type == "idle") {
+    return std::make_shared<IdleOMQE>();
+  } else if (type == "ahr") {
+    return std::make_shared<AngleHistogramResiprocalOMQE>();
+  } else {
+    std::cerr << "[ERROR] Unknown OMQE type: " << type << std::endl;
+    std::exit(-1);
+  }
+}
+
 auto init_scan_adder(const PropertiesProvider &props) {
   static const auto DBL_INF = std::numeric_limits<double>::infinity();
   auto builder = WallDistanceBlurringScanAdder::builder();
   return
     builder.set_occupancy_estimator(init_occ_estimator(props))
+           .set_observation_quality_estimator(init_omqe(props))
            .set_blur_distance(props.get_dbl("slam/mapping/blur", 0.0))
            .set_max_usable_range(props.get_dbl("slam/mapping/max_range",
                                                DBL_INF))
