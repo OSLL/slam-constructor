@@ -36,8 +36,10 @@ protected:
 
   std::shared_ptr<GridMapScanAdder> plain_adder() const {
     auto oe = std::make_shared<ConstOccupancyEstimator>(Occup, Empty);
+    auto omqe = std::make_shared<IdleOMQE>();
     auto builder = WallDistanceBlurringScanAdder::builder();
     return builder.set_occupancy_estimator(oe)
+                  .set_observation_quality_estimator(omqe)
                   .build();
   }
 
@@ -125,8 +127,10 @@ protected:
 
   std::shared_ptr<GridMapScanAdder> adder(double blurring_width) const {
     auto oe = std::make_shared<ConstOccupancyEstimator>(Occup, Empty);
+    auto omqe = std::make_shared<IdleOMQE>();
     auto builder = WallDistanceBlurringScanAdder::builder();
     return builder.set_occupancy_estimator(oe)
+                  .set_observation_quality_estimator(omqe)
                   .set_blur_distance(blurring_width)
                   .build();
   }

@@ -19,7 +19,7 @@ public:
 
     _belief = conjunctive(_belief, AOO_to_TBM(aoo));
     _belief.normalize_conflict();
-    _occupancy.prob_occ = TBM_to_O(_belief).prob_occ;
+    _occupancy = TBM_to_O(_belief);
   }
 
   double discrepancy(const AreaOccupancyObservation &aoo) const override {

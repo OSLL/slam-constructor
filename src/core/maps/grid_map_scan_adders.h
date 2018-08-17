@@ -64,7 +64,7 @@ public:
     const auto &points = scan.points();
     size_t last_pt_i = points.size() - scan_margin - 1;
     for (size_t pt_i = scan_margin; pt_i <= last_pt_i; ++pt_i) {
-      const auto &sp = scan.points()[pt_i];
+      const auto &sp = points[pt_i];
       // move to world frame assume sensor is in robots' (0,0)
       const auto &wp = sp.move_origin(rp, scan.trig_provider);
       const auto quality = scan_quality * _omqe->quality(points, pt_i);

@@ -24,7 +24,8 @@ auto init_grid_map_params(const PropertiesProvider &props) {
 std::shared_ptr<CellOccupancyEstimator> init_occ_estimator(
     const PropertiesProvider &props) {
 
-  static const auto MAPPING_NS = std::string{"slam/mapping/"};
+  // TODO: replace with "slam/mapping" after the config refactoring
+  static const auto MAPPING_NS = std::string{"slam/"};
   static const auto COE_NS = MAPPING_NS + "occupancy_estimator/";
   auto base_occ = Occupancy{props.get_dbl(COE_NS + "base_occupied/prob", 0.95),
                             props.get_dbl(COE_NS + "base_occupied/qual", 1.0)};
