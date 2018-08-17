@@ -116,9 +116,11 @@ auto init_hill_climbing_sm(const PropertiesProvider &props,
   auto transl_distorsion = props.get_dbl(DIST_NS + "translation", 0.1);
   auto rot_distorsion = props.get_dbl(DIST_NS + "rotation", 0.1);
   auto fal = props.get_uint(DIST_NS + "failed_attempts_limit", 6);
+  auto use_frame_alignement = props.get_bool(
+    SM_NS + "use_frame_alignement", false);
 
   return std::make_shared<HillClimbingScanMatcher>(
-      spe, fal, transl_distorsion, rot_distorsion);
+    spe, fal, transl_distorsion, rot_distorsion, use_frame_alignement);
 }
 
 auto init_brute_force_sm(const PropertiesProvider &props,
