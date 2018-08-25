@@ -8,6 +8,7 @@
 
 #include "../core/maps/grid_map.h"
 #include "../core/maps/grid_map_scan_adders.h"
+#include "../core/maps/tbm_grid_cells.h"
 #include "../core/maps/area_occupancy_estimator.h"
 #include "../core/maps/const_occupancy_estimator.h"
 
@@ -71,6 +72,21 @@ auto init_scan_adder(const PropertiesProvider &props) {
            .set_max_usable_range(props.get_dbl("slam/mapping/max_range",
                                                DBL_INF))
            .build();
+}
+
+auto init_occupied_area_model(const PropertiesProvider &props) {
+  auto area_type = props.get_str("slam/mapping/grid/area/type", "<undefined>");
+  auto model = std::shared_ptr<GridCell>{nullptr};
+
+  if (area_type == "tbm_consistent") {
+    model = std::make_shared<TbmOccConsistentCell>();
+  } else if (area_type == "tbm_unknown_even_occ") {
+    model = std::make_shared<TbmUnknownEvenOccCell>();
+  } else {
+    std::cerr << "Unknown occupied area type: " << area_type << std::endl;
+    std::exit(-1);
+  }
+  return model;
 }
 
 #endif
