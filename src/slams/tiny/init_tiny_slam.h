@@ -10,34 +10,17 @@
 #include "../../core/maps/plain_grid_map.h"
 #include "../../core/states/single_state_hypothesis_laser_scan_grid_world.h"
 
-#include "tiny_grid_cell.h"
-
 using TinySlam= SingleStateHypothesisLaserScanGridWorld<UnboundedPlainGridMap>;
-
-void setup_tiny_cell_prototype(const PropertiesProvider &props,
-                               SingleStateHypothesisLSGWProperties &sg_props) {
-  auto cell_type = props.get_str("slam/cell/type", "avg");
-
-  if (cell_type == "base") {
-    // FIXME: move to params
-    sg_props.localized_scan_quality = 0.2;
-    sg_props.raw_scan_quality = 0.1;
-    sg_props.cell_prototype = std::make_shared<BaseTinyCell>();
-  } else if (cell_type == "avg") {
-    // FIXME: move to params
-    sg_props.localized_scan_quality = 0.9;
-    sg_props.raw_scan_quality = 0.6;
-    sg_props.cell_prototype = std::make_shared<AvgTinyCell>();
-  } else {
-    std::cerr << "Unknown cell type: " << cell_type << std::endl;
-    std::exit(-1);
-  }
-}
 
 // FIXME: ~code duplication init_viny_slam.cpp
 auto init_tiny_slam(const PropertiesProvider &props) {
   auto slam_props = SingleStateHypothesisLSGWProperties{};
-  setup_tiny_cell_prototype(props, slam_props);
+
+  double loc, raw;
+  std::tie(loc, raw) = init_pose_quality_estimators(props);
+  slam_props.localized_scan_quality = loc;
+  slam_props.raw_scan_quality = raw;
+  slam_props.cell_prototype = init_occupied_area_model(props);
 
   slam_props.gsm = init_scan_matcher(props);
   slam_props.gmsa = init_scan_adder(props);

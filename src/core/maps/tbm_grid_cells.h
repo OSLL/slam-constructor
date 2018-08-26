@@ -1,5 +1,5 @@
-#ifndef SLAM_CTOR_CORE_TBM_GRID_CELL_H
-#define SLAM_CTOR_CORE_TBM_GRID_CELL_H
+#ifndef SLAM_CTOR_CORE_TBM_GRID_CELLS_H
+#define SLAM_CTOR_CORE_TBM_GRID_CELLS_H
 
 #include "grid_cell.h"
 #include "transferable_belief_model.h"

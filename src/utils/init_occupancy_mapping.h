@@ -10,6 +10,7 @@
 #include "../core/maps/grid_map.h"
 #include "../core/maps/grid_map_scan_adders.h"
 #include "../core/maps/tbm_grid_cells.h"
+#include "../core/maps/naive_grid_cells.h"
 #include "../core/maps/area_occupancy_estimator.h"
 #include "../core/maps/const_occupancy_estimator.h"
 
@@ -93,6 +94,10 @@ auto init_occupied_area_model(const PropertiesProvider &props) {
     model = std::make_shared<TbmOccConsistentCell>();
   } else if (area_type == "tbm_unknown_even_occ") {
     model = std::make_shared<TbmUnknownEvenOccCell>();
+  } else if (area_type == "affine_quality_merge") {
+    model = std::make_shared<AffineQualityMergeCell>();
+  } else if (area_type == "mean_probability") {
+    model = std::make_shared<MeanProbabilityCell>();
   } else {
     std::cerr << "Unknown occupied area type: " << area_type << std::endl;
     std::exit(-1);

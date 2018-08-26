@@ -1,17 +1,14 @@
-#ifndef SLAM_CTOR_SLAM_TINY_GRID_CELL_H
-#define SLAM_CTOR_SLAM_TINY_GRID_CELL_H
+#ifndef SLAM_CTOR_CORE_NAIVE_GRID_CELLS_H
+#define SLAM_CTOR_CORE_NAIVE_GRID_CELLS_H
 
-#include "../../core/maps/grid_cell.h"
+#include "grid_cell.h"
 
-//------------------------------------------------------------------------------
-// Base cell
-
-class BaseTinyCell : public GridCell {
+class AffineQualityMergeCell : public GridCell {
 public:
-  BaseTinyCell(): GridCell{Occupancy{0.5, 1}} {}
+  AffineQualityMergeCell(): GridCell{Occupancy{0.5, 1}} {}
 
   virtual std::unique_ptr<GridCell> clone() const {
-    return std::make_unique<BaseTinyCell>(*this);
+    return std::make_unique<AffineQualityMergeCell>(*this);
   }
 
   virtual void operator+=(const AreaOccupancyObservation &aoo) {
@@ -23,14 +20,13 @@ public:
 };
 
 //------------------------------------------------------------------------------
-// Modified cell
 
-class AvgTinyCell : public GridCell {
+class MeanProbabilityCell : public GridCell {
 public:
-  AvgTinyCell(): GridCell{Occupancy{0.5, 1}}, _n(0) {}
+  MeanProbabilityCell(): GridCell{Occupancy{0.5, 1}}, _n(0) {}
 
   virtual std::unique_ptr<GridCell> clone() const {
-    return std::make_unique<AvgTinyCell>(*this);
+    return std::make_unique<MeanProbabilityCell>(*this);
   }
 
   virtual void operator+=(const AreaOccupancyObservation &aoo) {
