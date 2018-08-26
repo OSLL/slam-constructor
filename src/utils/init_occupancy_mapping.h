@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <limits>
+#include <tuple>
 
 #include "properties_providers.h"
 
@@ -11,6 +12,16 @@
 #include "../core/maps/tbm_grid_cells.h"
 #include "../core/maps/area_occupancy_estimator.h"
 #include "../core/maps/const_occupancy_estimator.h"
+
+auto init_pose_quality_estimators(const PropertiesProvider &props) {
+  static const auto MAPPING_NS = std::string{"slam/mapping/"};
+
+  auto corrected_pose_quality = props.get_dbl(
+    MAPPING_NS + "corrected_pose_quality", 1.0);
+  auto odometry_pose_quality = props.get_dbl(
+    MAPPING_NS + "raw_pose_quality", 0.5);
+  return std::make_tuple(corrected_pose_quality, odometry_pose_quality);
+}
 
 auto init_grid_map_params(const PropertiesProvider &props) {
   static const std::string Map_NS = "slam/map/";

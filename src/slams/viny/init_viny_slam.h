@@ -2,6 +2,7 @@
 #define SLAM_CTOR_SLAMS_VINY_SLAM_H
 
 #include <memory>
+#include <tuple>
 
 #include "../../utils/init_scan_matching.h"
 #include "../../utils/init_occupancy_mapping.h"
@@ -13,9 +14,10 @@ using VinySlam = SingleStateHypothesisLaserScanGridWorld<UnboundedPlainGridMap>;
 
 auto init_viny_slam(const PropertiesProvider &props) {
   auto slam_props = SingleStateHypothesisLSGWProperties{};
-  // FIXME: move to params
-  slam_props.localized_scan_quality = 0.9;
-  slam_props.raw_scan_quality = 0.6;
+  double loc, raw;
+  std::tie(loc, raw) = init_pose_quality_estimators(props);
+  slam_props.localized_scan_quality = loc;
+  slam_props.raw_scan_quality = raw;
   slam_props.cell_prototype = init_occupied_area_model(props);
 
   slam_props.gsm = init_scan_matcher(props);
