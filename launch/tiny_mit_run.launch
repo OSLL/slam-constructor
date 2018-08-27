@@ -4,7 +4,7 @@
   <param name="use_sim_time" value="true"/>
   <arg name="rate" default="1.0" />
 
-  <node name="tinySLAM" pkg="slam_constructor" type="tiny_slam"
+  <node name="tinySLAM" pkg="slam_constructor" type="sh_slam"
         cwd="node" required="true" output="screen">
 
     <!-- = Mapping = -->
