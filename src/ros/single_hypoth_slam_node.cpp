@@ -19,7 +19,7 @@ using ObservT = sensor_msgs::LaserScan;
 using SlamT = SingleStateHypothesisLaserScanGridWorld<UnboundedPlainGridMap>;
 using SlamMapT = SlamT::MapType;
 
-auto init_properties_provider(ros::NodeHandle nh) {
+auto init_properties_provider() {
   auto launch_pp = LaunchPropertiesProvider{};
   auto cfg_path = launch_pp.get_str("slam/config", "");
   if (cfg_path.empty()) { return launch_pp; }
