@@ -10,6 +10,10 @@
 class LaunchPropertiesProvider : public PropertiesProvider {
 public:
 
+  void set_property(const std::string &id, const str &value) override {
+    ros::param::set("~" + id, value);
+  }
+
   int get_int(const std::string &id, int dflt) const override {
     return launch_param<int>(id, dflt);
   }

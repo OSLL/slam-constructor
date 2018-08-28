@@ -6,6 +6,7 @@
 #include <fstream>
 #include <algorithm>
 #include <sstream>
+#include <vector>
 
 // TODO: replace with filesystem on standard update
 #include <libgen.h>
@@ -23,12 +24,22 @@ public:
   virtual str      get_str(const std::string &id, const str &dflt) const = 0;
   virtual unsigned get_uint(const std::string &id, unsigned dflt) const = 0;
   virtual bool     get_bool(const std::string &id, bool dflt) const = 0;
+  virtual void     set_property(const std::string &id, const str &val) = 0;
 };
 
 class MapPropertiesProvider : public PropertiesProvider {
 public:
 
-  void set_property(const std::string &id, const std::string &value) {
+  auto available_properties() const {
+    auto names = std::vector<typename decltype(_props)::key_type>{};
+    names.reserve(_props.size());
+    for (const auto &entry : _props) {
+      names.push_back(entry.first);
+    }
+    return names;
+  }
+
+  void set_property(const std::string &id, const str &value) override {
     _props[id] = value;
   }
 
@@ -52,7 +63,7 @@ public:
     return has_property(id) ? std::stoul(_props.at(id)) : dflt;
   }
 
-  bool  get_bool(const std::string &id, bool dflt) const override {
+  bool get_bool(const std::string &id, bool dflt) const override {
     if (!has_property(id)) { return dflt; }
     auto value = _props.at(id);
     return !(value == "false" || value == "0");
@@ -78,8 +89,17 @@ public:
 
   FilePropertiesProvider() {}
 
-  void append_file_content(const std::string &path) {
+  decltype(auto) available_properties() const {
+    return _props.available_properties();
+  }
+
+  decltype(auto) append_file_content(const std::string &path) {
     _props += parse_file(path);
+    return *this;
+  }
+
+  void set_property(const std::string &id, const str &value) override {
+    _props.set_property(id, value);
   }
 
   int get_int(const std::string &id, int dflt) const override {
