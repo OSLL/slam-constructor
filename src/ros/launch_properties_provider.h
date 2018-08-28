@@ -15,11 +15,15 @@ public:
   }
 
   int get_int(const std::string &id, int dflt) const override {
-    return launch_param<int>(id, dflt);
+    static const std::string Dflt_Str="<unset>";
+    auto val = get_str(id, Dflt_Str);
+    return val == Dflt_Str ? launch_param<int>(id, dflt) : std::stoi(val);
   }
 
   double get_dbl(const std::string &id, double dflt) const override {
-    return launch_param<double>(id, dflt);
+    static const std::string Dflt_Str="<unset>";
+    auto val = get_str(id, Dflt_Str);
+    return val == Dflt_Str ? launch_param<double>(id, dflt) : std::stod(val);
   }
 
   str get_str(const std::string &id, const str &dflt) const override {
@@ -27,13 +31,16 @@ public:
   }
 
   unsigned get_uint(const std::string &id, unsigned dflt) const override {
-    int v = launch_param<int>(id, dflt);
+    int v = get_int(id, dflt); // FIXME: huge dflt
     assert(0 <= v);
     return v;
   }
 
   bool get_bool(const std::string &id, bool dflt) const override {
-    return launch_param<bool>(id, dflt);
+    static const std::string Dflt_Str="<unset>";
+    auto val = get_str(id, Dflt_Str);
+    if (val == Dflt_Str) { return launch_param<bool>(id, dflt); }
+    return  !(val == "false" || val == "0");
   }
 
 private:
