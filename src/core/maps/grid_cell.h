@@ -8,7 +8,7 @@
 
 class GridCell {
 public:
-  GridCell(const Occupancy &occ) : _occupancy{occ} {}
+  GridCell(const Occupancy &occ) : _occupancy{occ}, _is_unknown{true} {}
   GridCell(const GridCell& gc) = default;
   GridCell& operator=(const GridCell& gc) = default;
   GridCell(GridCell&& gc) = default;
@@ -18,6 +18,7 @@ public:
   operator double() const { return occupancy().prob_occ; }
   explicit operator bool() const { return are_equal(double(*this), 0.0); }
   virtual const Occupancy& occupancy() const { return _occupancy; }
+  bool is_unknown() const { return _is_unknown; }
 
   virtual std::unique_ptr<GridCell> clone() const {
     return std::make_unique<GridCell>(*this);
@@ -25,6 +26,7 @@ public:
 
   virtual void operator+=(const AreaOccupancyObservation &aoo) {
     _occupancy = aoo.occupancy;
+    _is_unknown = false;
   }
 
   // must be in interval [0, 1.0]
@@ -45,6 +47,7 @@ public:
 
 protected:
   Occupancy _occupancy;
+  bool _is_unknown;
 };
 
 #endif

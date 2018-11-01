@@ -183,7 +183,7 @@ public:
   double vside_len() const { return top() - bot(); }
   double hside_len() const { return right() - left(); }
   bool is_square() const { return vside_len() == hside_len(); }
-  double side() const { return vside_len(); }
+  double side() const { return vside_len(); } // TODO: assert vside != hside
   double area() const { return vside_len() * hside_len(); }
   Point2D center() const {
     return {left() + hside_len() / 2, bot() + vside_len() / 2};

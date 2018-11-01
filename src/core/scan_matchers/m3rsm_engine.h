@@ -53,7 +53,9 @@ public:
       drifted_pose += RobotPoseDelta{avg_drift.x, avg_drift.y, rotation};
     }
     if (scan_is_prerotated && is_root) { filter_prerotated_scan(); }
-    map->rescale(translation_drift.side()); // FIXME: non-squared areas handling
+    auto target_scale = std::max(translation_drift.vside_len(),
+                                 translation_drift.hside_len());
+    map->rescale(target_scale);
     prob_upper_bound = spe->estimate_scan_probability(
        *filtered_scan, drifted_pose, *map,
        SPEParams{translation_drift, scan_is_prerotated});

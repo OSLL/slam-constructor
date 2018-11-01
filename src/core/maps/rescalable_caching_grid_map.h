@@ -107,6 +107,8 @@ public:
 private:
 
   void on_area_update(const Coord &area_id) {
+    // FIXME: code duplication expected_scan_point_observation
+    auto aoo = AreaOccupancyObservation{true, {1.0, 1.0}, {0, 0}, 1.0};
     using GRRectangle = GridRasterizedRectangle;
     // TODO: update if a "non-finest" cell is updated?
     assert(_scale_id == finest_scale_id());
@@ -121,8 +123,10 @@ private:
       while (cm_coords.has_next()) {
         auto coord = cm_coords.next();
         auto &coarser_area = coarser_map[coord];
-        if (double(modified_area) <= double(coarser_area)) { continue; }
+        auto prob_md = 1.0 - modified_area.discrepancy(aoo);
+        auto prob_cr = 1.0 - coarser_area.discrepancy(aoo);
 
+        if (!coarser_area.is_unknown() && prob_md <= prob_cr) { continue; }
         coarser_map.reset(coord, modified_area);
         coarser_area_is_updated = true;
       }

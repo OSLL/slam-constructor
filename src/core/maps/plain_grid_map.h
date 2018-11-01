@@ -57,7 +57,9 @@ public: // methods
 
   void reset(const Coord &area_id, const GridCell &new_area) override {
     ensure_inside(area_id);
-    PlainGridMap::reset(area_id, new_area);
+    auto ic = external2internal(area_id);
+    _cells[ic.y][ic.x].reset(new_area.clone().release());
+    //PlainGridMap::reset(area_id, new_area);
   }
 
   const GridCell &operator[](const Coord& ec) const override {

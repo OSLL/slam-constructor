@@ -11,23 +11,27 @@
 #include "../../../src/core/maps/lazy_tiled_grid_map.h"
 #include "../../../src/core/maps/rescalable_caching_grid_map.h"
 
-template <typename Map>
+#include "../../../src/slams/viny/viny_grid_cell.h"
+
+template <typename Map, typename GridCellType = VinyDSCell>
 class BFMRScanMatcherTestBase
-  :  public ScanMatcherTestBase<Map> {
+  :  public ScanMatcherTestBase<Map, GridCellType> {
 protected: // names
   using SPE = typename ScanMatcherTestBase<Map>::DefaultSPE;
   using OOPE = MaxOccupancyObservationPE;
   using SPW = EvenSPW;
 protected: // methods
   BFMRScanMatcherTestBase()
-    : ScanMatcherTestBase<Map>{std::make_shared<SPE>(std::make_shared<OOPE>(),
-                                                     std::make_shared<SPW>()),
-                                   Map_Width, Map_Height, Map_Scale,
-                                   to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
+    : ScanMatcherTestBase<Map, GridCellType> {
+        std::make_shared<SPE>(std::make_shared<OOPE>(),
+                              std::make_shared<SPW>()),
+          Map_Width, Map_Height, Map_Scale,
+          to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
     , bfmrsm{this->spe, SM_Ang_Step, SM_Transl_Step} {
     bfmrsm.set_lookup_ranges(SM_Max_Translation_Error, SM_Max_Translation_Error,
                             SM_Max_Rotation_Error);
   }
+
 protected: // consts
   // map patching params
   static constexpr int Cecum_Patch_W = 15, Cecum_Patch_H = 13;
@@ -68,6 +72,55 @@ protected: // fields
       (-cecum_mp.height() * Patch_Scale + 1) * this->map.scale(),
       deg2rad(90)
     };
+
+    // auto aoo = AreaOccupancyObservation{true, {1.0, 1.0}, {0, 0}, 1.0};
+    // auto &map = this->map;
+    // for (unsigned scale_id = map.finest_scale_id();
+    //      scale_id <= map.coarsest_scale_id(); ++scale_id) {
+    //   std::cout << " === " << scale_id << " === " << std::endl;
+    //   map.set_scale_id(scale_id);
+    //   auto raw_crd = DiscretePoint2D{0, 0};
+    //   for (raw_crd.x = 0; raw_crd.x < map.width(); ++raw_crd.x) {
+    //     for (raw_crd.y = 0; raw_crd.y < map.height(); ++raw_crd.y) {
+    //       auto coord = map.internal2external(raw_crd);
+    //       printf("%.1f", 1.0 - map[coord].discrepancy(aoo));
+    //       if (raw_crd.y % 2) { std::cout << "|"; }
+    //     }
+    //     if (raw_crd.x % 2) { std::cout << "\n--------------------"; }
+    //     std::cout << std::endl;
+    //   }
+    // }
+
+    // std::cout << " [FINE] " << std::endl;
+    // map.set_scale_id(map.finest_scale_id());
+    // std::cout << "SCALE: " << map.scale() << " [15, 3]" << std::endl;
+    // std::cout << map[map.internal2external({15, 3})].discrepancy(aoo)
+    //           << std::endl;
+
+    // auto fine_area   = (const VinyDSCell&)map[map.internal2external({15, 3})];
+    // auto &ftbm = fine_area.belief();
+    // std::cout << "PROB: " << double(fine_area) << std::endl;
+    // std::cout << "DISC: " << 1.0 - fine_area.discrepancy(aoo) << std::endl;
+    // std::cout << "U: " << ftbm.unknown() << "; E: " << ftbm.empty()
+    //           << "; O: " << ftbm.occupied() << "; C: " << ftbm.conflict()
+    //           << std::endl;
+
+    // std::cout << " [COARSE] " << std::endl;
+    // map.set_scale_id(1);
+    // auto coarse_area = (const VinyDSCell&)map[map.internal2external({8, 2})];
+    // auto &ctbm = coarse_area.belief();
+    // std::cout << "PROB: " << double(coarse_area) << std::endl;
+    // std::cout << "DISC: " << 1.0 - coarse_area.discrepancy(aoo) << std::endl;
+    // std::cout << "U: " << ctbm.unknown() << "; E: " << ctbm.empty()
+    //           << "; O: " << ctbm.occupied() << "; C: " << ctbm.conflict()
+    //           << std::endl;
+
+    // std::cout << "Scale: " << map.scale() << " [8, 2]: ";
+    // std::cout << double(map[map.internal2external({8, 2})]) << std::endl;
+    // std::cout << 1.0 - map[map.internal2external({8, 2})].discrepancy(aoo)
+    //           << std::endl;
+    // map.set_scale_id(map.finest_scale_id());  // FIXME: assert fail if commented
+    // std::cout << "[DONE]\n";
   }
 
 protected: // fields
@@ -82,7 +135,7 @@ protected: // fields
 
 template <typename MapType>
 class BFMRScanMatcherSmokeTest
-  :  public BFMRScanMatcherTestBase<MapType> {};
+  : public BFMRScanMatcherTestBase<MapType> {};
 
 //------------------------------------------------------------------------------
 // Tests

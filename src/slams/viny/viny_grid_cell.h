@@ -9,6 +9,7 @@
 class VinyDSCell : public GridCell {
 public:
   VinyDSCell(): GridCell{Occupancy{0.5, 1}} {}
+  VinyDSCell(double prob): GridCell{Occupancy{prob, 1}} {}
 
   std::unique_ptr<GridCell> clone() const override {
     return std::make_unique<VinyDSCell>(*this);
@@ -20,6 +21,7 @@ public:
     _belief = conjunctive(_belief, AOO_to_TBM(aoo));
     _belief.normalize_conflict();
     _occupancy = TBM_to_O(_belief);
+    _is_unknown = false;
   }
 
   double discrepancy(const AreaOccupancyObservation &aoo) const override {

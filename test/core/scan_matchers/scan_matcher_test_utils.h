@@ -13,10 +13,11 @@
 #include "../../../src/core/scan_matchers/grid_scan_matcher.h"
 #include "../../../src/core/scan_matchers/weighted_mean_point_probability_spe.h"
 
+#include "../../../src/core/scan_matchers/bf_multi_res_scan_matcher.h"
 
-template<typename MapType>
+template<typename MapType, typename GridCellType = MockGridCell>
 class ScanMatcherTestBase : public ::testing::Test {
-protected: // type aliases
+public: // type aliases
   using DefaultSPE = WeightedMeanPointProbabilitySPE;
 protected: // consts
   static constexpr RobotPoseDelta Acceptable_Error = {
@@ -29,7 +30,7 @@ protected: // methods
   ScanMatcherTestBase(std::shared_ptr<ScanProbabilityEstimator> prob_est,
                       int map_w, int map_h, double map_scale,
                       const LaserScannerParams &dflt_lsp)
-    : map{std::make_shared<MockGridCell>(), {map_w, map_h, map_scale}}
+    : map{std::make_shared<GridCellType>(), {map_w, map_h, map_scale}}
     , rpose{map.scale() / 2, map.scale() / 2, 0}
     , spe{prob_est}
     , default_lsp{dflt_lsp} {}
@@ -66,6 +67,27 @@ protected: // methods
 
     auto correction = RobotPoseDelta{};
     auto original_map_scale = map.scale();
+    //-----------------
+    /* using Rect = LightWeightRectangle; */
+    /* auto rrpose = rpose + noise; */
+    /* auto fscan = std::make_shared<LaserScan2D>(spe->filter_scan(tr_scan.scan, */
+    /*                                                             rrpose, map)); */
+    /* auto scan = std::make_shared<LaserScan2D>( */
+    /*                                  fscan->to_cartesian(rrpose.theta)); */
+
+    /* std::cout << "=== [FINE MATCH] ===" << std::endl; */
+    /* auto fine_match = Match(0.0, Rect{-1.17188, -1.09375, -1.17188, -1.09375}, */
+    /*                         spe, scan, true, rrpose, map, false); */
+    /* std::cout << "[Done] " << fine_match << std::endl; */
+
+    /* std::cout << "=== [COARSE MATCH] ===" << std::endl; */
+    /* auto coarse_match = Match(0.0, Rect{-1.25, -1.09375, -1.25, -1.09375}, */
+    /*                           spe, scan, true, rrpose, map, false); */
+    /* std::cout << "[Done] " << coarse_match << std::endl; */
+
+
+
+    //-----------
     scan_matcher().process_scan(tr_scan, rpose + noise,  map, correction);
     assert(map.scale() == original_map_scale);
     auto result_noise = noise + correction;

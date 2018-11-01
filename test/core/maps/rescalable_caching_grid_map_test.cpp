@@ -31,13 +31,14 @@ protected:
   }
 
   void smoke_map_init(GridMap &map) {
-    auto val = AreaOccupancyObservation{true, Occupancy{0, 0},
+    auto val = AreaOccupancyObservation{true, Occupancy{0, 1},
                                         Point2D{0, 0}, 1};
 
     auto coord = DiscretePoint2D{0, 0};
     for (coord.x = 0; coord.x < map.width(); ++coord.x) {
       for (coord.y = 0; coord.y < map.height(); ++coord.y) {
         map.update(map.internal2external(coord), val);
+        // NB: map.update is assumed to replace cell content with the val value
         assert(are_equal(map[map.internal2external(coord)],
                          val.occupancy.prob_occ));
         val.occupancy.prob_occ += 1;
