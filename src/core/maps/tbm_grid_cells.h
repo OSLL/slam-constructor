@@ -15,6 +15,7 @@ public:
     _belief = conjunctive(_belief, aoo2tbm(aoo));
     _belief.normalize_conflict();
     _occupancy = tbm2occ(_belief);
+    GridCell::on_update();
   }
 
   double discrepancy(const AreaOccupancyObservation &aoo) const override {
@@ -88,6 +89,7 @@ protected:
   Occupancy tbm2occ(const TBM& tbm) const override {
     double qual = tbm.occupied() + tbm.empty();
     double p_occu = tbm.occupied() / qual;
+    GridCell::on_update();
     return Occupancy { p_occu, qual };
   }
 };

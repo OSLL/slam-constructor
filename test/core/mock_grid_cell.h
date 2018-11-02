@@ -16,6 +16,7 @@ public:
 
    void operator+=(const AreaOccupancyObservation &aoo) override {
     _occupancy = aoo.occupancy;
+    GridCell::on_update();
   }
 
   double discrepancy(const AreaOccupancyObservation &aoo) const override {

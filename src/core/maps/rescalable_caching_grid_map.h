@@ -16,6 +16,8 @@ private: // type aliases
   using MapCache = std::vector<std::unique_ptr<GridMap>>;
 private: // consts
   static constexpr int Coarsest_Map_W = 1, Coarsest_Map_H = 1;
+public: // type aliases
+  using BackMapT = BackGridMap;
 public: // consts
   static constexpr unsigned Map_Scale_Factor = 2;
 public:
@@ -121,7 +123,11 @@ private:
       while (cm_coords.has_next()) {
         auto coord = cm_coords.next();
         auto &coarser_area = coarser_map[coord];
-        if (double(modified_area) <= double(coarser_area)) { continue; }
+
+        auto coarser_update_is_required =
+          !coarser_area.is_unknown() &&
+          less_or_equal(double(modified_area), double(coarser_area));
+        if (coarser_update_is_required) { continue; }
 
         coarser_map.reset(coord, modified_area);
         coarser_area_is_updated = true;

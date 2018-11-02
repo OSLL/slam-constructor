@@ -20,6 +20,7 @@ public:
   void operator+=(const AreaOccupancyObservation &aoo) override {
     if (!aoo.occupancy.is_valid()) { return; }
 
+    GridMap::on_update();
     ++_tries;
     bool aoo_is_free = aoo.occupancy <= 0.5;
     double aoo_p = aoo_is_free ? 0.0 : aoo.occupancy.prob_occ;

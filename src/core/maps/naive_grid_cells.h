@@ -16,6 +16,7 @@ public:
 
     const double q = aoo.quality;
     _occupancy.prob_occ = (1.0 - q) * (*this) + q * aoo.occupancy;
+    GridCell::on_update();
   }
 };
 
@@ -35,6 +36,7 @@ public:
     _n += 1;
     double that_p = 0.5 + (aoo.occupancy - 0.5) * aoo.quality;
     _occupancy.prob_occ = ((*this) * (_n - 1) + that_p) / _n;
+    GridCell::on_update();
   }
 
 private:

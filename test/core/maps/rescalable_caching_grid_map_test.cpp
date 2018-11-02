@@ -30,8 +30,8 @@ protected:
     ASSERT_EQ(ExpectedCoarsestScaleId, map.coarsest_scale_id());
   }
 
-  void smoke_map_init(GridMap &map) {
-    auto val = AreaOccupancyObservation{true, Occupancy{0, 0},
+  void smoke_map_init(GridMap &map, double from, double step) {
+    auto val = AreaOccupancyObservation{true, Occupancy{from, 0},
                                         Point2D{0, 0}, 1};
 
     auto coord = DiscretePoint2D{0, 0};
@@ -40,7 +40,7 @@ protected:
         map.update(map.internal2external(coord), val);
         assert(are_equal(map[map.internal2external(coord)],
                          val.occupancy.prob_occ));
-        val.occupancy.prob_occ += 1;
+        val.occupancy.prob_occ += step;
       }
     }
   }
@@ -54,13 +54,8 @@ protected:
     return expected;
   }
 
-  template<typename T, int Width, int Height>
-  void test_read_write_inside_map() {
-    auto map = TesteeMapType<T>{cell_proto, {Width, Height, 1}};
-    map.set_scale_id(map.finest_scale_id());
-    smoke_map_init(map);
-    // read values
-    int scale = 1;
+  template<typename BaseMapType>
+  void verify_map_state(TesteeMapType<BaseMapType> &map) {
     for (unsigned scale_id = map.finest_scale_id();
          scale_id <= map.coarsest_scale_id(); ++scale_id) {
       map.set_scale_id(scale_id);
@@ -75,8 +70,15 @@ protected:
           ASSERT_EQ(expected, double(map[coord]));
         }
       }
-      scale *= map.Map_Scale_Factor;;
     }
+  }
+
+  template<typename T, int Width, int Height>
+  void test_read_write_inside_map() {
+    auto map = TesteeMapType<T>{cell_proto, {Width, Height, 1}};
+    map.set_scale_id(map.finest_scale_id());
+    smoke_map_init(map, 0, 1);
+    verify_map_state<T>(map);
   }
 
 protected: // fields
@@ -187,6 +189,16 @@ TEST_F(RescalableCachingGridMapTest, readWriteUPGM_1000x1000) {
 
 TEST_F(RescalableCachingGridMapTest, readWriteULTGM_1000x1000) {
   test_read_write_inside_map<UnboundedLazyTiledGridMap, 1000, 1000>();
+}
+
+TEST_F(RescalableCachingGridMapTest, unoccupiedPropagation) {
+  // Tests bottom-up values propagation through default (unknown)
+  // ones in case their values _below_ default
+  auto const DFLT_OCC_PROB = 0.5, UNOCC_PROB = 0.0;
+  cell_proto = std::make_shared<MockGridCell>(DFLT_OCC_PROB);
+  auto map = TesteeMapType<>{cell_proto, GridMapParams{16, 16, 1}};
+  smoke_map_init(map, UNOCC_PROB, 0);
+  verify_map_state<typename decltype(map)::BackMapT>(map);
 }
 
 TEST_F(RescalableCachingGridMapTest, approximationLevelExtension) {

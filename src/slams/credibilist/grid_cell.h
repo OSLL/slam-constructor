@@ -25,6 +25,7 @@ public:
     _belief = conjunctive(_belief, AOO_to_TBM(aoo));
     _belief.normalize_conflict();
     refresh_grid_cell();
+    GridMap::on_update();
   }
   
   double discrepancy(const AreaOccupancyObservation &aoo) const override {
