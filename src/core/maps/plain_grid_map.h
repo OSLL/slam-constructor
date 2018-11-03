@@ -29,6 +29,11 @@ public:
     return cell_internal(coord);
   }
 
+  void reset(const Coord &area_id, const GridCell &new_area) override {
+    auto ic = external2internal(area_id);
+    _cells[ic.y][ic.x].reset(new_area.clone().release());
+  }
+
 protected: // fields
 
   const GridCell& cell_internal(const Coord& ic) const {

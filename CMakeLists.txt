@@ -70,6 +70,8 @@ if(CATKIN_ENABLE_TESTING)
                    test/core/maps/grid_map_scan_adders_test.cpp)
   catkin_add_gtest(unbounded_plain_grid_map-test
                    test/core/maps/unbounded_plain_grid_map_test.cpp)
+  catkin_add_gtest(grid_common-test
+                   test/core/maps/grid_common_test.cpp)
   catkin_add_gtest(unbounded_lazy_tiled_grid_maps-test
                    test/core/maps/unbounded_lazy_tiled_grid_map_test.cpp)
   catkin_add_gtest(regular_squares_grid-test

@@ -54,6 +54,8 @@ public:
   virtual void reset(const Coord &area_id, const GridCell &new_area) {
     auto const_this = static_cast<const decltype(this)>(this);
     auto &area = const_cast<GridCell&>((*const_this)[area_id]);
+    // NB: "slicing", GridMap::op= is invoked.
+    //     Override in the descendents if required.
     area = new_area;
   }
 

@@ -40,7 +40,8 @@ public:
 
   void reset(const Coord &area_id, const GridCell &new_area) override {
     ensure_sole_owning(area_id);
-    GridMap::reset(area_id, new_area);
+    auto ic = external2internal(area_id);
+    tile(ic)->cell(ic).reset(new_area.clone().release());
   }
 
   const GridCell &operator[](const Coord& c) const override {
