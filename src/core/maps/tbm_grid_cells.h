@@ -89,7 +89,6 @@ protected:
   Occupancy tbm2occ(const TBM& tbm) const override {
     double qual = tbm.occupied() + tbm.empty();
     double p_occu = tbm.occupied() / qual;
-    GridCell::on_update();
     return Occupancy { p_occu, qual };
   }
 };
