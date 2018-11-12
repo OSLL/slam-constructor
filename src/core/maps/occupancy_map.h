@@ -3,8 +3,11 @@
 
 #include "../states/state_data.h"
 
-template <typename AreaId, typename OccupancyInfo>
+template <typename AreaIdT, typename OccupancyInfo>
 class OccupancyMap {
+public:
+  using AreaId = AreaIdT;
+public:
   // TODO: [API Clean Up] Rename, e.g. add_observation.
   /* Updates area with a given observation. */
   virtual void update(const AreaId &, const AreaOccupancyObservation &) = 0;

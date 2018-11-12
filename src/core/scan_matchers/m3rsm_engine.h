@@ -9,8 +9,69 @@
 
 #include "../geometry_primitives.h"
 #include "grid_scan_matcher.h"
+#include "../maps/rescalable_caching_grid_map.h"
 
 // Many-to-Many Multiple Resolution Scan Matching Engine based on Olson (2015).
+
+template <typename BackGridMap>
+class M3RSMRescalableGridMap : public RescalableCachingGridMap<BackGridMap> {
+private:
+  using AreaId = typename RescalableCachingGridMap<BackGridMap>::AreaId;
+public:
+  M3RSMRescalableGridMap(std::shared_ptr<GridCell> prototype,
+                         const GridMapParams& params = MapValues::gmp)
+    : RescalableCachingGridMap<BackGridMap>{prototype, params} {}
+
+public:
+  using RescalableCachingGridMap<BackGridMap>::scale_id;
+  using RescalableCachingGridMap<BackGridMap>::finest_scale_id;
+  using RescalableCachingGridMap<BackGridMap>::coarsest_scale_id;
+
+protected:
+  using RescalableCachingGridMap<BackGridMap>::active_map;
+  using RescalableCachingGridMap<BackGridMap>::map;
+
+  // estimates impact of the obstacle observation inside the area
+  // to scan probability. Additive model is assumed.
+  double estimate_spe_obstacle_impact(const GridCell &area) const {
+    // FIXME: Code duplication. Method mimics the method used in SPE.
+    //        Currently we have a sole SPE implementation, but the CD
+    //        should be fixed to make the Framework a better place.
+    static const auto AOO = AreaOccupancyObservation{true, {1.0, 1.0},
+                                                           {0, 0}, 1.0};
+    return 1.0 - area.discrepancy(AOO);
+  }
+
+  void on_area_update(const AreaId &area_id) {
+    using GRRectangle = GridRasterizedRectangle;
+    // TODO: update if a "non-finest" cell is updated?
+    assert(scale_id() == finest_scale_id());
+    auto modified_area = active_map()[area_id];
+    auto modified_space = active_map().world_cell_bounds(area_id);
+    auto fine_impact = estimate_spe_obstacle_impact(modified_area);
+
+    for (unsigned coarser_scale_id = scale_id() + 1;
+         coarser_scale_id <= coarsest_scale_id(); ++coarser_scale_id) {
+      auto& coarser_map = map(coarser_scale_id);
+      bool coarser_area_is_updated = false;
+      auto cm_coords = GRRectangle{coarser_map, modified_space, false};
+      while (cm_coords.has_next()) {
+        auto coord = cm_coords.next();
+        auto &coarser_area = coarser_map[coord];
+        auto coarser_impact = estimate_spe_obstacle_impact(coarser_area);
+        // TODO: move "propagate max" to the strategy if required.
+        auto coarser_update_is_not_required =
+          !coarser_area.is_unknown() &&
+          less_or_equal(fine_impact, coarser_impact);
+        if (coarser_update_is_not_required) { continue; }
+
+        coarser_map.reset(coord, modified_area);
+        coarser_area_is_updated = true;
+      }
+      if (!coarser_area_is_updated) { break; }
+    }
+  }
+};
 
 struct Match {
 private: // types
@@ -53,7 +114,9 @@ public:
       drifted_pose += RobotPoseDelta{avg_drift.x, avg_drift.y, rotation};
     }
     if (scan_is_prerotated && is_root) { filter_prerotated_scan(); }
-    map->rescale(translation_drift.side()); // FIXME: non-squared areas handling
+    auto target_scale = std::max(translation_drift.vside_len(),
+                                 translation_drift.hside_len());
+    map->rescale(target_scale);
     prob_upper_bound = spe->estimate_scan_probability(
        *filtered_scan, drifted_pose, *map,
        SPEParams{translation_drift, scan_is_prerotated});
@@ -113,7 +176,7 @@ private: // methods
       auto effective_sp = points_in_area[0].set_factor(points_in_area.size());
       filtered_pts.push_back(effective_sp);
     }
-    //std::cout << scan->points().size() << " -> " << filtered_pts.size() << std::endl;
+
     scan->points() = std::move(filtered_pts);
     */
   }

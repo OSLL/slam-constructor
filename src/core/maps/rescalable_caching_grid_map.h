@@ -106,50 +106,10 @@ public:
     on_area_update(area_id);
   }
 
-private:
+protected:
 
-  // TODO: move on_area_update to a subclass.
-
-  // Estimates impact of the obstacle observation inside the area
-  // to scan probability. Additive model is assumed.
-  double estimate_spe_obstacle_impact(const GridCell &area) const {
-    // FIXME: Code duplication. Method mimics the method used in SPE.
-    //        Currently we have a sole SPE implementation, but the CD
-    //        should be fixed to make the Framework a better place.
-    static const auto AOO = AreaOccupancyObservation{true, {1.0, 1.0},
-                                                           {0, 0}, 1.0};
-    return 1.0 - area.discrepancy(AOO);
-  }
-
-  void on_area_update(const Coord &area_id) {
-    using GRRectangle = GridRasterizedRectangle;
-    // TODO: update if a "non-finest" cell is updated?
-    assert(_scale_id == finest_scale_id());
-    auto modified_area = active_map()[area_id];
-    auto modified_space = active_map().world_cell_bounds(area_id);
-    auto fine_impact = estimate_spe_obstacle_impact(modified_area);
-
-    for (unsigned coarser_scale_id = _scale_id + 1;
-         coarser_scale_id <= coarsest_scale_id(); ++coarser_scale_id) {
-      auto& coarser_map = map(coarser_scale_id);
-      bool coarser_area_is_updated = false;
-      auto cm_coords = GRRectangle{coarser_map, modified_space, false};
-      while (cm_coords.has_next()) {
-        auto coord = cm_coords.next();
-        auto &coarser_area = coarser_map[coord];
-        auto coarser_impact = estimate_spe_obstacle_impact(coarser_area);
-        // TODO: move "propagate max" to the strategy if required.
-        auto coarser_update_is_not_required =
-          !coarser_area.is_unknown() &&
-          less_or_equal(fine_impact, coarser_impact);
-        if (coarser_update_is_not_required) { continue; }
-
-        coarser_map.reset(coord, modified_area);
-        coarser_area_is_updated = true;
-      }
-      if (!coarser_area_is_updated) { break; }
-    }
-  }
+  // coraser areas update policy
+  virtual void on_area_update(const AreaId &area_id) {}
 
   const GridMap& map(unsigned scale_id) const {
     return *(*_map_cache)[scale_id];

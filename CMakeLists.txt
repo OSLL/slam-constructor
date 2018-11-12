@@ -99,13 +99,15 @@ if(CATKIN_ENABLE_TESTING)
 
   # Scan Matching
   catkin_add_gtest(occupancy_observation_probability-test
-                   test/core/scan_matchers/occupancy_observation_probability_test.cpp)
+             test/core/scan_matchers/occupancy_observation_probability_test.cpp)
   catkin_add_gtest(hill_climbing_sm-smoke_test
                    test/core/scan_matchers/hill_climbing_sm_smoke_test.cpp)
   catkin_add_gtest(brute_force_sm-smoke_test
                    test/core/scan_matchers/brute_force_sm_smoke_test.cpp)
   catkin_add_gtest(bfmrsm-smoke_test
                    test/core/scan_matchers/bf_multi_res_sm_smoke_test.cpp)
+  catkin_add_gtest(m3rsm_rescalable_map-test
+                   test/core/scan_matchers/m3rsm_rescalable_map_test.cpp)
 
   # Utils common
   catkin_add_gtest(grid_map_patcher-test

@@ -30,57 +30,6 @@ protected:
     ASSERT_EQ(ExpectedCoarsestScaleId, map.coarsest_scale_id());
   }
 
-  void smoke_map_init(GridMap &map, double from, double step) {
-    auto val = AreaOccupancyObservation{true, Occupancy{from, 0},
-                                        Point2D{0, 0}, 1};
-
-    auto coord = DiscretePoint2D{0, 0};
-    for (coord.x = 0; coord.x < map.width(); ++coord.x) {
-      for (coord.y = 0; coord.y < map.height(); ++coord.y) {
-        map.update(map.internal2external(coord), val);
-        assert(are_equal(map[map.internal2external(coord)],
-                         val.occupancy.prob_occ));
-        val.occupancy.prob_occ += step;
-      }
-    }
-  }
-
-  double estimate_max_value(const GridMap &map, const Rectangle &area) const {
-    double expected = std::numeric_limits<double>::lowest();
-    for (auto &coord : GridRasterizedRectangle{map, area, false}.to_vector()) {
-      expected = std::max(double(map[coord]), expected);
-    }
-
-    return expected;
-  }
-
-  template<typename BaseMapType>
-  void verify_map_state(TesteeMapType<BaseMapType> &map) {
-    for (unsigned scale_id = map.finest_scale_id();
-         scale_id <= map.coarsest_scale_id(); ++scale_id) {
-      map.set_scale_id(scale_id);
-      auto raw_crd = DiscretePoint2D{0, 0};
-      for (raw_crd.x = 0; raw_crd.x < map.width(); ++raw_crd.x) {
-        for (raw_crd.y = 0; raw_crd.y < map.height(); ++raw_crd.y) {
-          auto coord = map.internal2external(raw_crd);
-          auto area = map.world_cell_bounds(coord);
-          map.set_scale_id(map.finest_scale_id());
-          double expected = estimate_max_value(map, area);
-          map.set_scale_id(scale_id);
-          ASSERT_EQ(expected, double(map[coord]));
-        }
-      }
-    }
-  }
-
-  template<typename T, int Width, int Height>
-  void test_read_write_inside_map() {
-    auto map = TesteeMapType<T>{cell_proto, {Width, Height, 1}};
-    map.set_scale_id(map.finest_scale_id());
-    smoke_map_init(map, 0, 1);
-    verify_map_state<T>(map);
-  }
-
 protected: // fields
   std::shared_ptr<GridCell> cell_proto;
 };
@@ -149,76 +98,6 @@ TEST_F(RescalableCachingGridMapTest, initDefaultValues) {
                   Default_Occupancy_Prob);
       }
     }
-  }
-}
-
-//------------------------------------------------------------------------------
-// Approximations update
-
-TEST_F(RescalableCachingGridMapTest, readWrite_16x16) {
-  test_read_write_inside_map<UnboundedPlainGridMap, 16, 16>();
-}
-
-TEST_F(RescalableCachingGridMapTest, readWrite_16x1) {
-  test_read_write_inside_map<UnboundedPlainGridMap, 16, 1>();
-}
-
-TEST_F(RescalableCachingGridMapTest, readWrite_1x16) {
-  test_read_write_inside_map<UnboundedPlainGridMap, 1, 16>();
-}
-
-TEST_F(RescalableCachingGridMapTest, readWrite_15x15) {
-  test_read_write_inside_map<UnboundedPlainGridMap, 15, 15>();
-}
-
-TEST_F(RescalableCachingGridMapTest, readWrite_33x33) {
-  test_read_write_inside_map<UnboundedPlainGridMap, 33, 33>();
-}
-
-TEST_F(RescalableCachingGridMapTest, readWrite_15x3) {
-  test_read_write_inside_map<UnboundedPlainGridMap, 15, 3>();
-}
-
-TEST_F(RescalableCachingGridMapTest, readWrite_3x15) {
-  test_read_write_inside_map<UnboundedPlainGridMap, 3, 15>();
-}
-
-TEST_F(RescalableCachingGridMapTest, readWriteUPGM_1000x1000) {
-   test_read_write_inside_map<UnboundedPlainGridMap, 1000, 1000>();
-}
-
-TEST_F(RescalableCachingGridMapTest, readWriteULTGM_1000x1000) {
-  test_read_write_inside_map<UnboundedLazyTiledGridMap, 1000, 1000>();
-}
-
-TEST_F(RescalableCachingGridMapTest, unoccupiedPropagation) {
-  // Tests bottom-up values propagation through default (unknown)
-  // ones in case their values _below_ default
-  auto const DFLT_OCC_PROB = 0.5, UNOCC_PROB = 0.0;
-  cell_proto = std::make_shared<MockGridCell>(DFLT_OCC_PROB);
-  auto map = TesteeMapType<>{cell_proto, GridMapParams{16, 16, 1}};
-  smoke_map_init(map, UNOCC_PROB, 0);
-  verify_map_state<typename decltype(map)::BackMapT>(map);
-}
-
-TEST_F(RescalableCachingGridMapTest, approximationLevelExtension) {
-  auto map = TesteeMapType<>{cell_proto, {16, 16, 1}};
-  map.set_scale_id(map.finest_scale_id());
-  ASSERT_EQ(map.coarsest_scale_id(), 4);
-
-  // init map
-  auto val = AreaOccupancyObservation{true, Occupancy{128, 0},
-                                      Point2D{0, 0}, 1};
-  {
-    auto updated_point = Point2D{15, 15};
-    map.update(map.world_to_cell(updated_point), val);
-    ASSERT_EQ(map.coarsest_scale_id(), 5);
-  }
-
-  {
-    auto updated_point = Point2D{16, 16};
-    map.update(map.world_to_cell(updated_point), val);
-    ASSERT_EQ(map.coarsest_scale_id(), 6);
   }
 }
 

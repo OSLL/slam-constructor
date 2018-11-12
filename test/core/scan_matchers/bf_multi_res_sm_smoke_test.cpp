@@ -9,7 +9,6 @@
 #include "../../../src/core/scan_matchers/bf_multi_res_scan_matcher.h"
 #include "../../../src/core/maps/plain_grid_map.h"
 #include "../../../src/core/maps/lazy_tiled_grid_map.h"
-#include "../../../src/core/maps/rescalable_caching_grid_map.h"
 
 template <typename Map>
 class BFMRScanMatcherTestBase
@@ -88,7 +87,8 @@ class BFMRScanMatcherSmokeTest
 // Tests
 
 using MapTs = ::testing::Types<UnboundedPlainGridMap,
-                               RescalableCachingGridMap<UnboundedPlainGridMap>>;
+    M3RSMRescalableGridMap<UnboundedPlainGridMap>,
+    M3RSMRescalableGridMap<UnboundedLazyTiledGridMap>>;
 
 TYPED_TEST_CASE(BFMRScanMatcherSmokeTest, MapTs);
 
@@ -146,7 +146,7 @@ TYPED_TEST(BFMRScanMatcherSmokeTest, cecumComboStepsDrift) {
 // A suit with tests specific to RescalabeMap
 // Motivation: some test cases run slowly on a plain map.
 
-using RescalableMap = RescalableCachingGridMap<UnboundedPlainGridMap>;
+using RescalableMap = M3RSMRescalableGridMap<UnboundedPlainGridMap>;
 
 class BFMRScanMatcherResclalableMapSpecificTest
   :  public BFMRScanMatcherTestBase<RescalableMap> {};
