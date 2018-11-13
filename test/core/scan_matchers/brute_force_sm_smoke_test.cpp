@@ -3,6 +3,7 @@
 #include "../mock_grid_cell.h"
 #include "scan_matcher_test_utils.h"
 
+#include "../../../src/core/scan_matchers/observation_impact_estimators.h"
 #include "../../../src/core/scan_matchers/brute_force_scan_matcher.h"
 #include "../../../src/core/scan_matchers/occupancy_observation_probability.h"
 #include "../../../src/core/maps/plain_grid_map.h"
@@ -14,7 +15,7 @@
 // NB: the suit checks _fundamental_ abilities to find a correction.
 
 class BruteForceScanMatcherSmokeTest
-  : public ScanMatcherTestBase<UnboundedPlainGridMap> {
+  : public ScanMatcherTestBase {
 
   // TODO: remove duplication (hc-test, m3mrsm-test)
 protected: // consts
@@ -40,15 +41,19 @@ protected: // consts
   static constexpr double To_Rotation   = deg2rad(10);
   static constexpr double Step_Rotation = deg2rad(1);
 protected: // type aliases
-  using SPE = typename ScanMatcherTestBase<UnboundedPlainGridMap>::DefaultSPE;
+  using MapT = UnboundedPlainGridMap;
+  using SPE = typename ScanMatcherTestBase::DefaultSPE;
   using OOPE = ObstacleBasedOccupancyObservationPE;
+  using OIE = DiscrepancyOIE;
   using SPW = EvenSPW;
 protected: // methods
   BruteForceScanMatcherSmokeTest()
-    : ScanMatcherTestBase{std::make_shared<SPE>(std::make_shared<OOPE>(),
-                                                std::make_shared<SPW>()),
-                          Map_Width, Map_Height, Map_Scale,
-                          to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
+    : ScanMatcherTestBase{
+        make_test_map<MapT>(Map_Width, Map_Height, Map_Scale),
+        std::make_shared<SPE>(std::make_shared<OOPE>(std::make_shared<OIE>()),
+                              std::make_shared<SPW>()),
+        to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)
+      }
     , _bfsm{spe,
             From_Translation, To_Translation, Step_Translation,
             From_Translation, To_Translation, Step_Translation,
@@ -62,11 +67,10 @@ protected: // methods
     auto cecum_mp = CecumMp{Cecum_Patch_W, Cecum_Patch_H, bnd_pos};
     add_primitive_to_map(cecum_mp, {}, Patch_Scale, Patch_Scale);
 
-    rpose += RobotPoseDelta{
-      (cecum_mp.width() * Patch_Scale / 2) * map.scale(),
-      (-cecum_mp.height() * Patch_Scale + 1) * map.scale(),
-      deg2rad(90)
-    };
+    auto map_scale = map().scale();
+    rpose += RobotPoseDelta{(cecum_mp.width() * Patch_Scale / 2) * map_scale,
+                            (-cecum_mp.height() * Patch_Scale + 1) * map_scale,
+                            deg2rad(90)};
   }
 
 protected: // fields

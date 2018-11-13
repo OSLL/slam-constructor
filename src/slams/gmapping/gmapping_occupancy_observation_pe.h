@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cassert>
 
+#include "../../core/scan_matchers/observation_impact_estimators.h"
 #include "../../core/scan_matchers/occupancy_observation_probability.h"
 #include "../../core/geometry_utils.h"
 
@@ -11,7 +12,8 @@ class GmappingOccupancyObservationPE
   : public OccupancyObservationProbabilityEstimator {
 public:
   GmappingOccupancyObservationPE(double fullness_th, unsigned window_size)
-    : Fullness_Th{fullness_th}, Window_Sz{int(window_size)}, _cached_prob{-1} {}
+    : OccupancyObservationProbabilityEstimator{std::make_shared<MockOIE>()}
+    , Fullness_Th{fullness_th}, Window_Sz{int(window_size)}, _cached_prob{-1} {}
   double probability(const AreaOccupancyObservation &aoo,
                      const LightWeightRectangle &,
                      const GridMap &map) const override {

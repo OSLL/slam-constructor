@@ -5,6 +5,7 @@
 #include "../mock_grid_cell.h"
 #include "scan_matcher_test_utils.h"
 
+#include "../../../src/core/scan_matchers/observation_impact_estimators.h"
 #include "../../../src/core/scan_matchers/occupancy_observation_probability.h"
 #include "../../../src/core/scan_matchers/bf_multi_res_scan_matcher.h"
 #include "../../../src/core/maps/plain_grid_map.h"
@@ -12,21 +13,26 @@
 
 template <typename Map>
 class BFMRScanMatcherTestBase
-  :  public ScanMatcherTestBase<Map> {
+  : public ScanMatcherTestBase {
 protected: // names
-  using SPE = typename ScanMatcherTestBase<Map>::DefaultSPE;
+  using SPE = typename ScanMatcherTestBase::DefaultSPE;
   using OOPE = MaxOccupancyObservationPE;
+  using OIE = DiscrepancyOIE;
   using SPW = EvenSPW;
 protected: // methods
-  BFMRScanMatcherTestBase()
-    : ScanMatcherTestBase<Map>{std::make_shared<SPE>(std::make_shared<OOPE>(),
-                                                     std::make_shared<SPW>()),
-                                   Map_Width, Map_Height, Map_Scale,
-                                   to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)}
-    , bfmrsm{this->spe, SM_Ang_Step, SM_Transl_Step} {
+  BFMRScanMatcherTestBase(std::shared_ptr<Map> map)
+    : ScanMatcherTestBase{
+        // NB: assume OIE is stateless for M3RSMRescalableMap cases
+        map,
+        std::make_shared<SPE>(std::make_shared<OOPE>(std::make_shared<OIE>()),
+                              std::make_shared<SPW>()),
+        to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)
+      }
+    , bfmrsm{spe, SM_Ang_Step, SM_Transl_Step} {
     bfmrsm.set_lookup_ranges(SM_Max_Translation_Error, SM_Max_Translation_Error,
                             SM_Max_Rotation_Error);
   }
+
 protected: // consts
   // map patching params
   static constexpr int Cecum_Patch_W = 15, Cecum_Patch_H = 13;
@@ -60,35 +66,57 @@ protected: // fields
     using CecumMp = CecumTextRasterMapPrimitive;
     auto bnd_pos = CecumMp::BoundPosition::Top;
     auto cecum_mp = CecumMp{Cecum_Patch_W, Cecum_Patch_H, bnd_pos};
-    this->add_primitive_to_map(cecum_mp, {}, Patch_Scale, Patch_Scale);
+    add_primitive_to_map(cecum_mp, {}, Patch_Scale, Patch_Scale);
 
-    this->rpose += RobotPoseDelta{
-      (cecum_mp.width() * Patch_Scale / 2) * this->map.scale(),
-      (-cecum_mp.height() * Patch_Scale + 1) * this->map.scale(),
-      deg2rad(90)
-    };
+    double map_scale = map().scale();
+    rpose += RobotPoseDelta{(cecum_mp.width() * Patch_Scale / 2) * map_scale,
+                            (-cecum_mp.height() * Patch_Scale + 1) * map_scale,
+                            deg2rad(90)};
   }
 
 protected: // fields
   BruteForceMultiResolutionScanMatcher bfmrsm;
 };
 
+template <typename MapT, typename OIE>
+std::shared_ptr<MapT> make_m3rsm_map(int w, int h, double scale) {
+  return std::make_shared<MapT>(std::make_shared<OIE>(),
+                                std::make_shared<MockGridCell>(),
+                                GridMapParams{w, h, scale});
+}
 
 //------------------------------------------------------------------------------
 // Smoke Tests Suite
 // NB: the suit checks _fundamental_ abilities to find a correction.
 //     The suit check raw (w/o a map approximator speed up) BFMRSM correctness.
 
-template <typename MapType>
+template <typename MapT>
 class BFMRScanMatcherSmokeTest
-  :  public BFMRScanMatcherTestBase<MapType> {};
+  : public BFMRScanMatcherTestBase<MapT> {
+public:
+  using T = BFMRScanMatcherTestBase<MapT>;
+  BFMRScanMatcherSmokeTest()
+    : T{make_test_map<MapT>(T::Map_Width, T::Map_Height, T::Map_Scale)} {}
+};
+
+template <typename BackMapT>
+class BFMRScanMatcherSmokeTest<M3RSMRescalableGridMap<BackMapT>>
+  : public BFMRScanMatcherTestBase<M3RSMRescalableGridMap<BackMapT>> {
+public:
+  using MapT = M3RSMRescalableGridMap<BackMapT>;
+  using T = BFMRScanMatcherTestBase<MapT>;
+  using OIE = typename T::OIE;
+  BFMRScanMatcherSmokeTest()
+    : T{make_m3rsm_map<MapT, OIE>(T::Map_Width, T::Map_Height, T::Map_Scale)} {}
+};
 
 //------------------------------------------------------------------------------
 // Tests
 
-using MapTs = ::testing::Types<UnboundedPlainGridMap,
-    M3RSMRescalableGridMap<UnboundedPlainGridMap>,
-    M3RSMRescalableGridMap<UnboundedLazyTiledGridMap>>;
+using MapTs = ::testing::Types<
+  UnboundedPlainGridMap,
+  M3RSMRescalableGridMap<UnboundedPlainGridMap>,
+  M3RSMRescalableGridMap<UnboundedLazyTiledGridMap>>;
 
 TYPED_TEST_CASE(BFMRScanMatcherSmokeTest, MapTs);
 
@@ -149,7 +177,14 @@ TYPED_TEST(BFMRScanMatcherSmokeTest, cecumComboStepsDrift) {
 using RescalableMap = M3RSMRescalableGridMap<UnboundedPlainGridMap>;
 
 class BFMRScanMatcherResclalableMapSpecificTest
-  :  public BFMRScanMatcherTestBase<RescalableMap> {};
+  : public BFMRScanMatcherTestBase<RescalableMap> {
+public:
+  using MapT = RescalableMap;
+  using T = BFMRScanMatcherTestBase<MapT>;
+  using OIE = typename T::OIE;
+  BFMRScanMatcherResclalableMapSpecificTest()
+    : T{make_m3rsm_map<MapT, OIE>(T::Map_Width, T::Map_Height, T::Map_Scale)} {}
+};
 
 TEST_F(BFMRScanMatcherResclalableMapSpecificTest, hugeWindowLookup) {
   const auto Translation_Error = this->SM_Max_Translation_Error / 2;

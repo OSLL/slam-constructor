@@ -12,6 +12,7 @@
 
 #include "../core/maps/grid_map_scan_adders.h"
 #include "../core/maps/const_occupancy_estimator.h"
+#include "../core/scan_matchers/observation_impact_estimators.h"
 #include "../core/scan_matchers/occupancy_observation_probability.h"
 #include "../core/scan_matchers/weighted_mean_point_probability_spe.h"
 #include "../core/scan_matchers/brute_force_scan_matcher.h"
@@ -161,7 +162,8 @@ void run_evaluation(const GridMap &map, double resolution) {
   // generate plan brute force search space map
   auto bfsm = BruteForceScanMatcher{
     std::make_shared<WeightedMeanPointProbabilitySPE>(
-      std::make_shared<ObstacleBasedOccupancyObservationPE>(),
+      std::make_shared<ObstacleBasedOccupancyObservationPE>(
+        std::make_shared<DiscrepancyOIE>()),
       std::make_shared<EvenSPW>()
      ),
     -1, 1, resolution,

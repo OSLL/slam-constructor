@@ -8,6 +8,7 @@
 
 #include "../../../src/core/maps/grid_rasterization.h"
 #include "../../../src/core/scan_matchers/m3rsm_engine.h"
+#include "../../../src/core/scan_matchers/observation_impact_estimators.h"
 #include "../../../src/core/maps/rescalable_caching_grid_map.h"
 #include "../../../src/core/maps/plain_grid_map.h"
 #include "../../../src/core/maps/lazy_tiled_grid_map.h"
@@ -18,11 +19,14 @@ constexpr double Default_Occupancy_Prob = -42.0;
 
 class M3RSMRescalableMapTest : public ::testing::Test {
 protected:
-  template <typename BackMapType = UnboundedPlainGridMap>
+  using DefaultBackMapType = UnboundedPlainGridMap;
+  template <typename BackMapType = DefaultBackMapType>
   using TesteeMapType = M3RSMRescalableGridMap<BackMapType>;
+  using OIE = DiscrepancyOIE; // TODO: templatize
 protected: // methods
   M3RSMRescalableMapTest()
-    : cell_proto{std::make_shared<MockGridCell>(Default_Occupancy_Prob)} {}
+    : cell_proto{std::make_shared<MockGridCell>(Default_Occupancy_Prob)}
+    , oie{std::make_shared<OIE>()} {}
 protected:
 
   void smoke_map_init(GridMap &map, double from, double step) {
@@ -41,9 +45,7 @@ protected:
   }
 
   double estimate_impact(const GridCell &area) const {
-    static const auto AOO = AreaOccupancyObservation{true, {1.0, 1.0},
-                                                     {0, 0}, 1.0};
-    return 1.0 - area.discrepancy(AOO);
+    return OIE{}.estimate_obstacle_impact(area);
   }
 
   double estimate_max_impact(const GridMap &map, const Rectangle &area) const {
@@ -59,7 +61,7 @@ protected:
     return expected;
   }
 
-  template<typename BaseMapType>
+  template <typename BaseMapType>
   void verify_map_state(TesteeMapType<BaseMapType> &map) {
     for (unsigned scale_id = map.finest_scale_id();
          scale_id <= map.coarsest_scale_id(); ++scale_id) {
@@ -78,16 +80,21 @@ protected:
     }
   }
 
-  template<typename T, int Width, int Height>
+  template <typename T, int Width, int Height>
   void test_read_write_inside_map() {
-    auto map = TesteeMapType<T>{cell_proto, {Width, Height, 1}};
+    auto map = make_map<T>(Width, Height, 1);
     map.set_scale_id(map.finest_scale_id());
     smoke_map_init(map, 0, 1);
     verify_map_state<T>(map);
   }
 
+  template <typename T = DefaultBackMapType>
+  TesteeMapType<T> make_map(int width, int height, double scale) {
+    return TesteeMapType<T>{oie, cell_proto, {width, height, 1}};
+  }
 protected: // fields
   std::shared_ptr<GridCell> cell_proto;
+  std::shared_ptr<OIE> oie;
 };
 
 //------------------------------------------------------------------------------
@@ -140,13 +147,13 @@ TEST_F(M3RSMRescalableMapTest, unoccupiedPropagation) {
   // ones in case their values _below_ default
   auto const DFLT_OCC_PROB = 0.5, UNOCC_PROB = 0.0;
   cell_proto = std::make_shared<MockGridCell>(DFLT_OCC_PROB);
-  auto map = TesteeMapType<>{cell_proto, GridMapParams{16, 16, 1}};
+  auto map = make_map<>(16, 16, 1);
   smoke_map_init(map, UNOCC_PROB, 0);
   verify_map_state<typename decltype(map)::BackMapT>(map);
 }
 
 TEST_F(M3RSMRescalableMapTest, approximationLevelExtension) {
-  auto map = TesteeMapType<>{cell_proto, {16, 16, 1}};
+  auto map = make_map<>(16, 16, 1);
   map.set_scale_id(map.finest_scale_id());
   ASSERT_EQ(map.coarsest_scale_id(), 4);
 

@@ -13,8 +13,6 @@
 #include "../../../src/core/scan_matchers/grid_scan_matcher.h"
 #include "../../../src/core/scan_matchers/weighted_mean_point_probability_spe.h"
 
-
-template<typename MapType>
 class ScanMatcherTestBase : public ::testing::Test {
 protected: // type aliases
   using DefaultSPE = WeightedMeanPointProbabilitySPE;
@@ -26,18 +24,19 @@ protected: // consts
   };
 protected: // methods
 
-  ScanMatcherTestBase(std::shared_ptr<ScanProbabilityEstimator> prob_est,
-                      int map_w, int map_h, double map_scale,
+  ScanMatcherTestBase(std::shared_ptr<GridMap> map,
+                      std::shared_ptr<ScanProbabilityEstimator> prob_est,
                       const LaserScannerParams &dflt_lsp)
-    : map{std::make_shared<MockGridCell>(), {map_w, map_h, map_scale}}
-    , rpose{map.scale() / 2, map.scale() / 2, 0}
+    : map_ptr{map}
+    , rpose{map->scale() / 2, map->scale() / 2, 0}
     , spe{prob_est}
     , default_lsp{dflt_lsp} {}
+  virtual ~ScanMatcherTestBase() = default;
 
   virtual void add_primitive_to_map(const TextRasterMapPrimitive &mp,
                                     const DiscretePoint2D &offset,
                                     int w_scale, int h_scale) {
-    GridMapPatcher{}.apply_text_raster(map, mp.to_stream(),
+    GridMapPatcher{}.apply_text_raster(map(), mp.to_stream(),
                                        offset, w_scale, h_scale);
   }
 
@@ -47,9 +46,10 @@ protected: // methods
   virtual bool is_result_noise_acceptable(const TransformedLaserScan &raw_scan,
                                           const RobotPoseDelta &init_noise,
                                           const RobotPoseDelta &noise) {
-    auto scan = spe->filter_scan(raw_scan.scan, rpose, map);
-    auto no_noise_prob = spe->estimate_scan_probability(scan, rpose, map);
-    auto noise_prob = spe->estimate_scan_probability(scan, rpose + noise, map);
+    auto scan = spe->filter_scan(raw_scan.scan, rpose, map());
+    auto no_noise_prob = spe->estimate_scan_probability(scan, rpose, map());
+    auto noisy_pose = rpose + noise;
+    auto noise_prob = spe->estimate_scan_probability(scan, noisy_pose, map());
     //std::cout << no_noise_prob << " vs " << noise_prob << std::endl;
     return are_equal(no_noise_prob, noise_prob);
   }
@@ -59,15 +59,15 @@ protected: // methods
                          const RobotPoseDelta &acc_error) {
     auto tr_scan = TransformedLaserScan{};
     tr_scan.pose_delta = RobotPoseDelta{rpose.x, rpose.y, rpose.theta};
-    tr_scan.scan = LaserScanGenerator{lsp}.laser_scan_2D(map, rpose, 1);
+    tr_scan.scan = LaserScanGenerator{lsp}.laser_scan_2D(map(), rpose, 1);
     tr_scan.quality = 1.0;
 
     ASSERT_TRUE(tr_scan.scan.points().size() != 0);
 
     auto correction = RobotPoseDelta{};
-    auto original_map_scale = map.scale();
-    scan_matcher().process_scan(tr_scan, rpose + noise,  map, correction);
-    assert(map.scale() == original_map_scale);
+    auto original_map_scale = map().scale();
+    scan_matcher().process_scan(tr_scan, rpose + noise, map(), correction);
+    assert(map().scale() == original_map_scale);
     auto result_noise = noise + correction;
     if (is_result_noise_acceptable(tr_scan, noise, result_noise)) {
       return;
@@ -88,11 +88,19 @@ protected: // methods
     test_scan_matcher(default_lsp, noise, default_acceptable_error());
   }
 
+  GridMap& map() { return *map_ptr; }
+
 protected: // fields
-  MapType map;
+  std::shared_ptr<GridMap> map_ptr;
   RobotPose rpose;
   std::shared_ptr<ScanProbabilityEstimator> spe;
   LaserScannerParams default_lsp;
 };
+
+template <typename MapT, typename CellT = MockGridCell>
+std::shared_ptr<MapT> make_test_map(int w, int h, double scale) {
+  return std::make_shared<MapT>(std::make_shared<CellT>(),
+                                GridMapParams{w, h, scale});
+}
 
 #endif

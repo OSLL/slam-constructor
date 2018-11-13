@@ -133,11 +133,6 @@ public:
   }
 
 protected:
-  virtual AreaOccupancyObservation expected_scan_point_observation() const {
-    // TODO: use a strategy to convert obstacle->occupancy
-    return {true, {1.0, 1.0}, {0, 0}, 1.0};
-  }
-
   virtual bool should_skip_point(const ScanPoint2D &sp,
                                  const GridMap &map,
                                  const GridMap::Coord &area_id) const {

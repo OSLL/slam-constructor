@@ -6,6 +6,7 @@
 #include "../mock_grid_cell.h"
 #include "../../../src/core/maps/plain_grid_map.h"
 #include "../../../src/core/scan_matchers/occupancy_observation_probability.h"
+#include "../../../src/core/scan_matchers/observation_impact_estimators.h"
 
 // FIXME: [Refactoring] single case per method.
 
@@ -32,8 +33,9 @@ protected:
   template <typename OOPE>
   void test_oope(double expected, const Point2D &obstacle,
                  const LWR &range = {0, 0, 0, 0}) const {
-    auto actual = OOPE{}.probability(AOO{true, {1, 1}, obstacle, 1},
-                                     range.move_center(obstacle), map);
+    auto oope = OOPE{std::make_shared<DiscrepancyOIE>()};
+    auto actual = oope.probability(AOO{true, {1, 1}, obstacle, 1},
+                                   range.move_center(obstacle), map);
     ASSERT_NEAR(expected, actual, std::numeric_limits<double>::epsilon());
   }
 

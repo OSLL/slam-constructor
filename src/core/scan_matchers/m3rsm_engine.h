@@ -18,9 +18,13 @@ class M3RSMRescalableGridMap : public RescalableCachingGridMap<BackGridMap> {
 private:
   using AreaId = typename RescalableCachingGridMap<BackGridMap>::AreaId;
 public:
-  M3RSMRescalableGridMap(std::shared_ptr<GridCell> prototype,
+  M3RSMRescalableGridMap(std::shared_ptr<ObservationImpactEstimator> oie,
+                         std::shared_ptr<GridCell> prototype,
                          const GridMapParams& params = MapValues::gmp)
-    : RescalableCachingGridMap<BackGridMap>{prototype, params} {}
+    : RescalableCachingGridMap<BackGridMap>{prototype, params}
+    , _oie{oie} {
+    assert(_oie.get() && "OIE is null");
+  }
 
 public:
   using RescalableCachingGridMap<BackGridMap>::scale_id;
@@ -34,12 +38,7 @@ protected:
   // estimates impact of the obstacle observation inside the area
   // to scan probability. Additive model is assumed.
   double estimate_spe_obstacle_impact(const GridCell &area) const {
-    // FIXME: Code duplication. Method mimics the method used in SPE.
-    //        Currently we have a sole SPE implementation, but the CD
-    //        should be fixed to make the Framework a better place.
-    static const auto AOO = AreaOccupancyObservation{true, {1.0, 1.0},
-                                                           {0, 0}, 1.0};
-    return 1.0 - area.discrepancy(AOO);
+    return _oie->estimate_obstacle_impact(area);
   }
 
   void on_area_update(const AreaId &area_id) {
@@ -71,6 +70,8 @@ protected:
       if (!coarser_area_is_updated) { break; }
     }
   }
+private:
+  std::shared_ptr<ObservationImpactEstimator> _oie;
 };
 
 struct Match {

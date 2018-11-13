@@ -7,6 +7,7 @@
 
 #include "properties_providers.h"
 
+#include "../core/scan_matchers/observation_impact_estimators.h"
 #include "../core/scan_matchers/occupancy_observation_probability.h"
 
 #include "../core/scan_matchers/monte_carlo_scan_matcher.h"
@@ -20,21 +21,41 @@
 static const std::string Slam_SM_NS = "slam/scmtch/";
 
 /*============================================================================*/
+/* Init Obeservation Impact Estimator                                         */
+
+std::shared_ptr<ObservationImpactEstimator>
+init_oie(const PropertiesProvider &props) {
+  static const std::string OIE_NS = Slam_SM_NS + "oie/";
+  auto type = props.get_str(OIE_NS + "type", "discrepancy");
+
+  if (type == "discrepancy") {
+    return std::make_shared<DiscrepancyOIE>();
+  } else if (type == "occupancy") {
+    return std::make_shared<OccupancyOIE>();
+  } else {
+    std::cerr << "Unknown observation impact estimator type "
+              << "(" << OIE_NS << ") " << type << std::endl;
+    std::exit(-1);
+  }
+}
+
+/*============================================================================*/
 /* Init Occupancy Obeservation Probability Estimator                          */
 
 std::shared_ptr<OccupancyObservationProbabilityEstimator> init_oope(
     const PropertiesProvider &props) {
   static const std::string OOPE_NS = Slam_SM_NS + "oope/";
   auto type = props.get_str(OOPE_NS + "type", "obstacle");
+  auto oie = init_oie(props);
 
   if (type == "obstacle") {
-    return std::make_shared<ObstacleBasedOccupancyObservationPE>();
+    return std::make_shared<ObstacleBasedOccupancyObservationPE>(oie);
   } else if (type == "max") {
-    return std::make_shared<MaxOccupancyObservationPE>();
+    return std::make_shared<MaxOccupancyObservationPE>(oie);
   } else if (type == "mean") {
-    return std::make_shared<MeanOccupancyObservationPE>();
+    return std::make_shared<MeanOccupancyObservationPE>(oie);
   } else if (type == "overlap") {
-    return std::make_shared<OverlapWeightedOccupancyObservationPE>();
+    return std::make_shared<OverlapWeightedOccupancyObservationPE>(oie);
   } else {
     std::cerr << "Unknown occupancy observation probability estimator type "
               << "(" << OOPE_NS + "type) " << type << std::endl;

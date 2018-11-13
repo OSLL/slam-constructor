@@ -14,6 +14,8 @@
 
 class GridScanMatcherObserver {
 public:
+  virtual ~GridScanMatcherObserver() = default;
+
   virtual void on_matching_start(const RobotPose &,            /*pose*/
                                  const TransformedLaserScan &, /*scan*/
                                  const GridMap &) {}           /*map*/
@@ -28,14 +30,46 @@ public:
                                double) {};          /*best_score*/
 };
 
+class ObservationImpactEstimator {
+public:
+  virtual ~ObservationImpactEstimator() = default;
+
+  virtual double estimate_impact(const GridCell &area,
+                                 const AreaOccupancyObservation &aoo) const = 0;
+  double estimate_obstacle_impact(const GridCell &area) const {
+    return estimate_impact(area, obstacle_AOO());
+  }
+
+  virtual AreaOccupancyObservation obstacle_AOO() const {
+    return {true, {1.0, 1.0}, {0, 0}, 1.0};
+  }
+};
+
 /* Estimates p(observation | map & area) */
 class OccupancyObservationProbabilityEstimator {
+protected:
+  using OIE = ObservationImpactEstimator;
 public:
+  OccupancyObservationProbabilityEstimator(std::shared_ptr<OIE> oie)
+    : _oie{oie} {}
+  virtual ~OccupancyObservationProbabilityEstimator() = default;
+
   // TODO: [API Clean Up] GridMap -> OccupancyMap
   virtual double probability(const AreaOccupancyObservation &aoo,
                              const LightWeightRectangle &area,
                              const GridMap &map) const = 0;
-  virtual ~OccupancyObservationProbabilityEstimator() = default;
+
+  decltype(auto) impact_estimator() const { return _oie; }
+  decltype(auto) observation_impact(const GridCell &area,
+                                    const AreaOccupancyObservation &aoo) const {
+    return impact_estimator()->estimate_impact(area, aoo);
+  }
+
+  bool is_probality_bounded(double v) const {
+    return less_or_equal(0, v) && less_or_equal(v, 1);
+  }
+private:
+  std::shared_ptr<OIE> _oie;
 };
 
 /* Client (e.g. a scan matcher) code example:
@@ -73,6 +107,10 @@ public:
                                            const LightWeightRectangle &area,
                                            const GridMap &map) const {
     return _oope->probability(aoo, area, map);
+  }
+
+  AreaOccupancyObservation expected_scan_point_observation() const {
+    return _oope->impact_estimator()->obstacle_AOO();
   }
 
   virtual LaserScan2D filter_scan(const LaserScan2D &scan, const RobotPose &,
