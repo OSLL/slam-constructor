@@ -9,21 +9,18 @@
 
 #include "../core/states/single_state_hypothesis_laser_scan_grid_world.h"
 
-template <typename MapT>
 auto init_1h_slam(const PropertiesProvider &props) {
   auto slam_props = SingleStateHypothesisLSGWProperties{};
   double loc, raw;
   std::tie(loc, raw) = init_pose_quality_estimators(props);
   slam_props.localized_scan_quality = loc;
   slam_props.raw_scan_quality = raw;
-  slam_props.cell_prototype = init_occupied_area_model(props);
 
+  slam_props.grid_map = init_grid_map(props);
   slam_props.gsm = init_scan_matcher(props);
   slam_props.gmsa = init_scan_adder(props);
-  slam_props.map_props = init_grid_map_params(props);
 
-  using SlamT = SingleStateHypothesisLaserScanGridWorld<MapT>;
-  return std::make_shared<SlamT>(slam_props);
+  return std::make_shared<SingleStateHypothesisLaserScanGridWorld>(slam_props);
 }
 
 #endif

@@ -14,6 +14,7 @@
     <param name="slam/occupancy_estimator/base_occupied/prob" value="0.95" />
     <param name="slam/occupancy_estimator/base_empty/prob" value="0.01" />
     <!-- * Occupancy Map setup -->
+    <param name="slam/mapping/grid/type" value="unbounded_plain" />
     <param name="slam/map/height_in_meters" value="100" />
     <param name="slam/map/width_in_meters" value="100" />
     <param name="slam/map/meters_per_cell" value="0.05" />

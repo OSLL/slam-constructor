@@ -14,7 +14,7 @@
 #include "init_slam.h"
 
 using ObservT = sensor_msgs::LaserScan;
-using CredibilistSlamMap = CredibilistSlam::MapType;
+using CredibilistSlamMap = GridMap;
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "credibilistSLAM");

@@ -47,15 +47,18 @@ auto init_gmapping_prob_estimator(const PropertiesProvider &props) {
 using Gmapping = GmappingParticleFilter;
 
 auto init_gmapping(const PropertiesProvider &props) {
+  // TODO: move component selection to config
   // TODO: remove grid cell strategy
+  using MapT = typename GmappingWorld::MapType;
+  auto map = std::make_shared<MapT>(std::make_shared<GmappingBaseCell>(),
+                                    init_grid_map_params(props));
   auto shw_params = SingleStateHypothesisLSGWProperties{
-    1.0, 1.0, 0, std::make_shared<GmappingBaseCell>(),
+    1.0, 1.0, 0, map,
     // FIXME: move to params
     std::make_shared<HillClimbingScanMatcher>(
       init_gmapping_prob_estimator(props),
       6, 0.1, 0.1),
-    init_scan_adder(props),
-    init_grid_map_params(props)
+    init_scan_adder(props)
   };
   return std::make_shared<GmappingParticleFilter>(shw_params,
     init_gmapping_params(props), init_particles_nm(props));

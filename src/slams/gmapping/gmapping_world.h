@@ -35,7 +35,7 @@ public:
 
 class GmappingWorld
   : public Particle
-  , public SingleStateHypothesisLaserScanGridWorld<UnboundedLazyTiledGridMap> {
+  , public SingleStateHypothesisLaserScanGridWorld {
 public:
   using RandomEngine = std::mt19937;
   using GRV1D = GaussianRV1D<RandomEngine>;
@@ -67,7 +67,7 @@ public:
     _raw_odom_pose += delta;
 
     _delta_since_last_sm += corrected_delta.abs();
-    LaserScanGridWorld<MapType>::update_robot_pose(corrected_delta);
+    LaserScanGridWorld::update_robot_pose(corrected_delta);
   }
 
   void handle_observation(TransformedLaserScan &scan) override {
@@ -81,13 +81,13 @@ public:
     if (!_scan_is_first) {
       // add "noise" to guess extra cost function peak
       auto noise = _pose_guess_rv.sample(_rnd_engine);
-      LaserScanGridWorld<MapType>::update_robot_pose(noise);
+      LaserScanGridWorld::update_robot_pose(noise);
     }
 
     RobotPoseDelta pose_delta;
     double scan_prob = scan_matcher()->process_scan(scan, pose(),
                                                     map(), pose_delta);
-    LaserScanGridWorld<MapType>::update_robot_pose(pose_delta);
+    LaserScanGridWorld::update_robot_pose(pose_delta);
 
     // TODO: scan_prob threshold to params
     if (0.0 < scan_prob || _scan_is_first) {

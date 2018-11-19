@@ -8,6 +8,8 @@
 #include "properties_providers.h"
 
 #include "../core/maps/grid_map.h"
+#include "../core/maps/plain_grid_map.h"
+#include "../core/maps/lazy_tiled_grid_map.h"
 #include "../core/maps/grid_map_scan_adders.h"
 #include "../core/maps/tbm_grid_cells.h"
 #include "../core/maps/naive_grid_cells.h"
@@ -103,6 +105,34 @@ auto init_occupied_area_model(const PropertiesProvider &props) {
     std::exit(-1);
   }
   return model;
+}
+
+decltype(auto) init_grid_map(const PropertiesProvider &props,
+                             std::shared_ptr<GridCell> area_model) {
+  auto const GM_Name = "slam/mapping/grid/type";
+  auto map_type = props.get_str(GM_Name, "<undefined>");
+  auto map_params = init_grid_map_params(props);
+  auto map = std::shared_ptr<GridMap>{nullptr};
+
+  // TODO: add M3RSM support (type wrapping with M3RSMRescalableGridMap)
+  if (map_type == "plain") {
+    map = std::make_shared<PlainGridMap>(area_model, map_params);
+  } else if (map_type == "unbounded_plain") {
+    map = std::make_shared<UnboundedPlainGridMap>(area_model, map_params);
+  } else if (map_type == "lazy_tiled") {
+    map = std::make_shared<LazyTiledGridMap>(area_model, map_params);
+  } else if (map_type == "unbounded_lazy_tiled") {
+    map = std::make_shared<UnboundedLazyTiledGridMap>(area_model, map_params);
+  } else {
+    std::cerr << "Unknown grid map type (" << GM_Name << "): "
+              << map_type << std::endl;
+    std::exit(-1);
+  }
+  return map;
+}
+
+decltype(auto) init_grid_map(const PropertiesProvider &props) {
+  return init_grid_map(props, init_occupied_area_model(props));
 }
 
 #endif

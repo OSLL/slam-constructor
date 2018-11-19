@@ -3,20 +3,32 @@
 
 #include "sensor_data.h"
 #include "world.h"
+#include "../maps/grid_map.h"
 
-template <typename Map>
-class LaserScanGridWorld : public World<TransformedLaserScan, Map> {
+/*
+ * TODO: Conceptual Refactoring
+ *       Introduce an Observation2PoseTransformer that incapsulates
+ *       a transformation strategy (a grid + scan matcher, NN, BoW, etc.).
+ *       Draft interface:
+ *         * convert(Observation obs, RobotPose hint) -> RobotPose
+ *           // performs the conversion on each iteration
+ *         * notify_with_correspondence(Observation, RobotPose) -> void
+ *           // actualize transformer's state with a new correspondence.
+ *       NB: transformer's map means correspondence (~ a hash_map)
+ *           world's map means environment state (~ a blueprint)
+ */
+class LaserScanGridWorld : public World<TransformedLaserScan, GridMap> {
 public: //types
-  using MapType = typename World<TransformedLaserScan, Map>::MapType;
+  using MapType = GridMap;
   using ScanType = TransformedLaserScan;
 public: // methods
 
   void handle_sensor_data(ScanType &scan) override {
-    this->update_robot_pose(scan.pose_delta);
+    update_robot_pose(scan.pose_delta);
     handle_observation(scan);
 
-    this->notify_with_pose(this->pose());
-    this->notify_with_map(this->map());
+    notify_with_pose(this->pose());
+    notify_with_map(this->map());
   }
 
   virtual void handle_observation(ScanType &tr_scan) = 0;

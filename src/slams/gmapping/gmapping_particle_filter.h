@@ -26,11 +26,10 @@ private:
 };
 
 // TODO: add restriction on particle type
-class GmappingParticleFilter :
-  public LaserScanGridWorld<GmappingWorld::MapType> {
+class GmappingParticleFilter : public LaserScanGridWorld {
 public:
   using MapType = GmappingWorld::MapType;
-  using WorldT = LaserScanGridWorld<MapType>;
+  using WorldT = LaserScanGridWorld;
 public: // methods
 
   GmappingParticleFilter(const SingleStateHypothesisLSGWProperties &shw_p,
@@ -62,7 +61,9 @@ public: // methods
   }
 
   const RobotPose& pose() const override { return world().pose(); }
-  const GmappingWorld::MapType& map() const override { return world().map(); }
+  const LaserScanGridWorld::MapType& map() const override {
+    return world().map();
+  }
 
 protected:
 

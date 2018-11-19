@@ -83,9 +83,7 @@ struct ProgramArgs {
   bool is_verbose;
 };
 
-// TODO: consider moving map type to runtime params
-template <typename MapType>
-void run_slam(std::shared_ptr<LaserScanGridWorld<MapType>> slam,
+void run_slam(std::shared_ptr<LaserScanGridWorld> slam,
               const ProgramArgs &args) {
   auto lscan_observer = LaserScanObserver{
     slam, get_skip_exceeding_lsr(args.props), get_use_trig_cache(args.props)};
@@ -115,7 +113,8 @@ void run_slam(std::shared_ptr<LaserScanGridWorld<MapType>> slam,
 
   if (!args.map_fname.empty()) {
     auto map_file = std::ofstream{args.map_fname, std::ios::binary};
-    GridMapToPgmDumber<MapType>::dump_map(map_file, slam->map());
+    using MapT = LaserScanGridWorld::MapType;
+    GridMapToPgmDumber<MapT>::dump_map(map_file, slam->map());
   }
 }
 
@@ -128,10 +127,9 @@ int main(int argc, char** argv) {
 
   // TODO: replace with "1h", make map type configurable at launch time
   if (args.slam_type == "viny" || args.slam_type == "tiny") {
-    using MapT = UnboundedPlainGridMap;
-    run_slam<MapT>(init_1h_slam<MapT>(args.props), args);
+    run_slam(init_1h_slam(args.props), args);
   } else if (args.slam_type == "gmapping") {
-    run_slam<typename Gmapping::MapType>(init_gmapping(args.props), args);
+    run_slam(init_gmapping(args.props), args);
   } else {
     std::cout << "Unkonw slam type: " << args.slam_type << std::endl;
   }

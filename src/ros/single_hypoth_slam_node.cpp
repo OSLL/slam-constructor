@@ -12,11 +12,10 @@
 
 #include "launch_properties_provider.h"
 #include "../utils/init_slam.h"
-#include "../core/maps/plain_grid_map.h"
 
 using ObservT = sensor_msgs::LaserScan;
 // TODO: make map type configurable via properties
-using SlamT = SingleStateHypothesisLaserScanGridWorld<UnboundedPlainGridMap>;
+using SlamT = SingleStateHypothesisLaserScanGridWorld;
 using SlamMapT = SlamT::MapType;
 
 auto init_properties_provider() {
@@ -36,7 +35,7 @@ int main(int argc, char** argv) {
   ros::init(argc, argv, "1H_SLAM");
 
   auto props = init_properties_provider();
-  auto slam = init_1h_slam<SlamMapT>(props);
+  auto slam = init_1h_slam(props);
 
   // connect the slam to a ros-topic based data provider
   ros::NodeHandle nh;
@@ -48,6 +47,7 @@ int main(int argc, char** argv) {
     nh, laser_scan_2D_ros_topic_name(props), tf_odom_frame_id(props),
     ros_tf_buffer_size, ros_filter_queue, ros_subscr_queue
   );
+
   auto occup_grid_pub_pin = create_occupancy_grid_publisher<SlamMapT>(
     slam.get(), nh, ros_map_publishing_rate);
 
