@@ -9,15 +9,11 @@
 #include "../geometry_primitives.h"
 
 class BruteForceMultiResolutionScanMatcher : public GridScanMatcher {
-private: // consts
-  static constexpr double _Max_Translation_Error = 1,
-                          _Max_Rotation_Error = deg2rad(5);
 public:
   BruteForceMultiResolutionScanMatcher(SPE est,
-                                       double ang_step = deg2rad(0.1),
-                                       double transl_step = 0.05)
-    : GridScanMatcher{est, _Max_Translation_Error, _Max_Translation_Error,
-                      _Max_Rotation_Error}
+    double x_limit = 1, double y_limit = 1, double rot_limit = deg2rad(5),
+    double ang_step = deg2rad(0.1), double transl_step = 0.05)
+    : GridScanMatcher{est, x_limit, y_limit, rot_limit}
     , _ang_step{ang_step}, _transl_step{transl_step} {}
 
   void set_target_accuracy(double angle_step, double translation_step) {

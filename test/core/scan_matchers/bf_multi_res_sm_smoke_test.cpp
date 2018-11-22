@@ -28,7 +28,8 @@ protected: // methods
                               std::make_shared<SPW>()),
         to_lsp(LS_Max_Dist, LS_FoW, LS_Pts_Nm)
       }
-    , bfmrsm{spe, SM_Ang_Step, SM_Transl_Step} {
+    , bfmrsm{spe, SM_Max_Translation_Error, SM_Max_Translation_Error,
+             SM_Max_Rotation_Error, SM_Ang_Step, SM_Transl_Step} {
     bfmrsm.set_lookup_ranges(SM_Max_Translation_Error, SM_Max_Translation_Error,
                             SM_Max_Rotation_Error);
   }

@@ -14,6 +14,7 @@
 #include "../core/scan_matchers/hill_climbing_scan_matcher.h"
 #include "../core/scan_matchers/hcsm_fixed.h"
 #include "../core/scan_matchers/brute_force_scan_matcher.h"
+#include "../core/scan_matchers/bf_multi_res_scan_matcher.h"
 #include "../core/scan_matchers/no_action_scan_matcher.h"
 #include "../core/scan_matchers/connect_the_dots_ambiguous_drift_detector.h"
 #include "../core/scan_matchers/weighted_mean_point_probability_spe.h"
@@ -28,6 +29,7 @@ init_oie(const PropertiesProvider &props) {
   static const std::string OIE_NS = Slam_SM_NS + "oie/";
   auto type = props.get_str(OIE_NS + "type", "discrepancy");
 
+  std::cout << "Used OIE: " << type << std::endl;
   if (type == "discrepancy") {
     return std::make_shared<DiscrepancyOIE>();
   } else if (type == "occupancy") {
@@ -48,6 +50,7 @@ std::shared_ptr<OccupancyObservationProbabilityEstimator> init_oope(
   auto type = props.get_str(OOPE_NS + "type", "obstacle");
   auto oie = init_oie(props);
 
+  std::cout << "Used OOPE: " << type << std::endl;
   if (type == "obstacle") {
     return std::make_shared<ObstacleBasedOccupancyObservationPE>(oie);
   } else if (type == "max") {
@@ -163,14 +166,37 @@ auto init_brute_force_sm(const PropertiesProvider &props,
     spe, from_x, to_x, step_x, from_y, to_y, step_y, from_t, to_t, step_t);
 }
 
+decltype(auto) init_bf_m3rsm(const PropertiesProvider &props,
+                             std::shared_ptr<ScanProbabilityEstimator> spe) {
+  static const std::string SM_NS = Slam_SM_NS + "BF_M3RSM/";
+  auto ang_acc = props.get_dbl(SM_NS + "accuracy/rotation", deg2rad(0.1));
+  auto trl_acc = props.get_dbl(SM_NS + "accuracy/translation", 0.05);
+
+  auto max_x_err = props.get_dbl(SM_NS + "limits/x_translation", 1);
+  auto max_y_err = props.get_dbl(SM_NS + "limits/y_translation", 1);
+  auto max_rot_err = props.get_dbl(SM_NS + "limits/rotation", deg2rad(5));
+
+  return std::make_shared<BruteForceMultiResolutionScanMatcher>(
+    spe, max_x_err, max_y_err, max_rot_err, ang_acc, trl_acc);
+}
+
+decltype(auto) scan_matcher_type(const PropertiesProvider &props) {
+  return props.get_str(Slam_SM_NS + "type", "<undefined>");
+}
+
+decltype(auto) is_m3rsm(const std::string &sm_type) {
+  return sm_type == "BF_M3RSM";
+}
+
 auto init_scan_matcher(const PropertiesProvider &props) {
   auto spe = init_spe(props);
   auto sm = std::shared_ptr<GridScanMatcher>{};
-  auto sm_type = props.get_str(Slam_SM_NS + "type", "<undefined>");
+  auto sm_type = scan_matcher_type(props);
   std::cout << "Used Scan Matcher: " << sm_type << std::endl;
   if      (sm_type == "MC") { sm = init_monte_carlo_sm(props, spe); }
   else if (sm_type == "HC") { sm = init_hill_climbing_sm(props, spe); }
   else if (sm_type == "BF") { sm = init_brute_force_sm(props, spe); }
+  else if (is_m3rsm(sm_type)) { sm = init_bf_m3rsm(props, spe); }
   else if (sm_type == "idle") {
     sm = std::make_shared<NoActionScanMatcher>(spe);
   }
