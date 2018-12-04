@@ -129,7 +129,7 @@ private:
     auto file = std::ifstream{path};
     if (!file) {
       std::cout << "[WARN][FilePropertiesProvider] File " << path
-                << "does not exist." << std::endl;
+                << " does not exist." << std::endl;
       return props;
     }
 

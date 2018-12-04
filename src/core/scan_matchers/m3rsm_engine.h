@@ -6,6 +6,7 @@
 #include <queue>
 #include <iostream>
 #include <cstdlib>
+#include <set>
 
 #include "../geometry_primitives.h"
 #include "grid_scan_matcher.h"

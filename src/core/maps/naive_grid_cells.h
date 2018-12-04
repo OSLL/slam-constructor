@@ -7,7 +7,7 @@ class AffineQualityMergeCell : public GridCell {
 public:
   AffineQualityMergeCell(): GridCell{Occupancy{0.5, 1}} {}
 
-  virtual std::unique_ptr<GridCell> clone() const {
+  std::unique_ptr<GridCell> clone() const override {
     return std::make_unique<AffineQualityMergeCell>(*this);
   }
 
@@ -26,7 +26,7 @@ class MeanProbabilityCell : public GridCell {
 public:
   MeanProbabilityCell(): GridCell{Occupancy{0.5, 1}}, _n(0) {}
 
-  virtual std::unique_ptr<GridCell> clone() const {
+  std::unique_ptr<GridCell> clone() const override {
     return std::make_unique<MeanProbabilityCell>(*this);
   }
 

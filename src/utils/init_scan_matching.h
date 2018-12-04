@@ -25,11 +25,13 @@ static const std::string Slam_SM_NS = "slam/scmtch/";
 /* Init Obeservation Impact Estimator                                         */
 
 std::shared_ptr<ObservationImpactEstimator>
-init_oie(const PropertiesProvider &props) {
+init_oie(const PropertiesProvider &props, bool verbose = true) {
   static const std::string OIE_NS = Slam_SM_NS + "oie/";
   auto type = props.get_str(OIE_NS + "type", "discrepancy");
 
-  std::cout << "Used OIE: " << type << std::endl;
+  if (verbose) {
+    std::cout << "Used OIE: " << type << std::endl;
+  }
   if (type == "discrepancy") {
     return std::make_shared<DiscrepancyOIE>();
   } else if (type == "occupancy") {

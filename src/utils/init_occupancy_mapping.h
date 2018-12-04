@@ -116,7 +116,7 @@ std::shared_ptr<GridMap> create_grid_map(const PropertiesProvider &props,
   auto map_params = init_grid_map_params(props);
   if (is_m3rsm(scan_matcher_type(props))) {
     using M3RSM_MapT = M3RSMRescalableGridMap<MapT>;
-    auto oie = init_oie(props);
+    auto oie = init_oie(props, false);
     return std::make_shared<M3RSM_MapT>(oie, area_model, map_params);
   }
 
