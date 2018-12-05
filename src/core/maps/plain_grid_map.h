@@ -8,6 +8,7 @@
 #include <algorithm>
 
 #include "grid_map.h"
+#include "../serialization.h"
 
 class PlainGridMap : public GridMap {
 public:
@@ -77,7 +78,7 @@ public: // methods
 
   std::vector<char> save_state() const override {
     auto w = width(), h = height();
-    size_t map_size_bytes = w * h * _unknown_cell->serialize().size();
+    size_t map_size_bytes = w * h * cell_prototype()->serialize().size();
 
     Serializer s(sizeof(GridMapParams) + sizeof(Coord) + map_size_bytes);
     s << h << w << scale() << origin().x << origin().y;
@@ -109,7 +110,7 @@ public: // methods
   #ifdef COMPRESSED_SERIALIZATION
     std::vector<char> map_data = Deserializer::decompress(
         data.data() + d.pos(), data.size() - d.pos(),
-        w * h * _unknown_cell->serialize().size());
+        w * h * cell_prototype()->serialize().size());
     size_t pos = 0;
   #else
     const std::vector<char> &map_data = data;
@@ -155,7 +156,7 @@ protected: // methods
     std::vector<std::vector<std::unique_ptr<GridCell>>> new_cells{new_h};
     for (size_t y = 0; y != new_h; ++y) {
       std::generate_n(std::back_inserter(new_cells[y]), new_w,
-                      [this](){ return this->_unknown_cell->clone(); });
+                      [this](){ return this->cell_prototype()->clone(); });
       if (y < prep_y || prep_y + h <= y) { continue; }
 
       std::move(_cells[y - prep_y].begin(), _cells[y - prep_y].end(),

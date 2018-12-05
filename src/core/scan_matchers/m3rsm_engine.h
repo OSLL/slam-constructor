@@ -46,7 +46,7 @@ protected:
     using GRRectangle = GridRasterizedRectangle;
     // TODO: update if a "non-finest" cell is updated?
     assert(scale_id() == finest_scale_id());
-    auto modified_area = active_map()[area_id];
+    const auto &modified_area = active_map()[area_id];
     auto modified_space = active_map().world_cell_bounds(area_id);
     auto fine_impact = estimate_spe_obstacle_impact(modified_area);
 

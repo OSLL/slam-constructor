@@ -92,6 +92,33 @@ protected:
   TesteeMapType<T> make_map(int width, int height, double scale) {
     return TesteeMapType<T>{oie, cell_proto, {width, height, 1}};
   }
+
+  template <typename T = DefaultBackMapType>
+  void ensure_equal(TesteeMapType<T> &a, TesteeMapType<T> &b) {
+    auto orig_scale_a = a.scale_id();
+    auto orig_scale_b = b.scale_id();
+
+    ASSERT_EQ(a.finest_scale_id(), b.finest_scale_id());
+    ASSERT_EQ(a.coarsest_scale_id(), b.coarsest_scale_id());
+    ASSERT_EQ(a.origin(), b.origin());
+    for (auto id = a.finest_scale_id(); id <= a.coarsest_scale_id(); ++id) {
+      a.set_scale_id(id);
+      b.set_scale_id(id);
+
+      auto raw_crd = DiscretePoint2D{0, 0};
+      for (raw_crd.x = 0; raw_crd.x < a.width(); ++raw_crd.x) {
+        for (raw_crd.y = 0; raw_crd.y < a.height(); ++raw_crd.y) {
+          auto area_id_a = a.internal2external(raw_crd);
+          auto area_id_b = b.internal2external(raw_crd);
+          ASSERT_EQ(double(a[area_id_a]), double(b[area_id_b]));
+        }
+      }
+    }
+
+    a.set_scale_id(orig_scale_a);
+    b.set_scale_id(orig_scale_b);
+  }
+
 protected: // fields
   std::shared_ptr<GridCell> cell_proto;
   std::shared_ptr<OIE> oie;
@@ -170,6 +197,35 @@ TEST_F(M3RSMRescalableMapTest, approximationLevelExtension) {
     auto updated_point = Point2D{16, 16};
     map.update(map.world_to_cell(updated_point), val);
     ASSERT_EQ(map.coarsest_scale_id(), 6);
+  }
+}
+
+TEST_F(M3RSMRescalableMapTest, serialization) {
+  auto original_map = make_map<UnboundedPlainGridMap>(100, 100, 1);
+  original_map.set_scale_id(original_map.finest_scale_id());
+  smoke_map_init(original_map, 0, 1);
+
+  auto buf = original_map.save_state();
+  auto restored_map = make_map<UnboundedPlainGridMap>(0, 0, 0);
+  restored_map.load_state(buf);
+
+  ensure_equal(original_map, restored_map);
+}
+
+TEST_F(M3RSMRescalableMapTest, noSlicingOnUpdate) {
+  auto map = make_map<UnboundedPlainGridMap>(100, 100, 1);
+  smoke_map_init(map, 0, 1);
+
+  for (auto id = map.finest_scale_id(); id <= map.coarsest_scale_id(); ++id) {
+    map.set_scale_id(id);
+    auto raw_crd = DiscretePoint2D{0, 0};
+    for (raw_crd.x = 0; raw_crd.x < map.width(); ++raw_crd.x) {
+      for (raw_crd.y = 0; raw_crd.y < map.height(); ++raw_crd.y) {
+        auto area_id = map.internal2external(raw_crd);
+        auto area_ptr = dynamic_cast<const MockGridCell*>(&map[area_id]);
+        ASSERT_NE(area_ptr, nullptr);
+      }
+    }
   }
 }
 

@@ -5,10 +5,13 @@
 #include <cassert>
 #include <limits>
 #include <utility>
+#include <iterator>
+#include <algorithm>
 
 #include "grid_cell.h"
 #include "grid_map.h"
 #include "grid_rasterization.h"
+#include "../serialization.h"
 
 template <typename BackGridMap>
 class RescalableCachingGridMap : public GridMap {
@@ -106,6 +109,39 @@ public:
     on_area_update(area_id);
   }
 
+  // = Serialization
+  // Q: Do we need to save currest scale_id?
+  std::vector<char> save_state() const override {
+    auto map_s = Serializer{};
+    assert(coarsest_scale_id() - finest_scale_id() == scales_nm() - 1);
+    for (auto id = finest_scale_id(); id <= coarsest_scale_id(); id++) {
+      auto map_data = map(id).save_state();
+      map_s << map_data.size();
+      map_s.append(map_data);
+    }
+    return map_s.result();
+  }
+
+  void load_state(const std::vector<char>& data) override {
+    auto map_d = Deserializer{data};
+    _map_cache->clear();
+    while (map_d.pos() != data.size()) {
+      decltype(data.size()) chunk_size;
+      map_d >> chunk_size;
+      auto ptr = data.begin() + map_d.pos();
+      assert(ptr + chunk_size <= data.end() && "Unable to load map");
+      auto map_chunk = std::vector<char>{};
+      std::copy(ptr, ptr + chunk_size, std::back_inserter(map_chunk));
+      map_d.inc_pose(chunk_size);
+
+      BackGridMap curr_map{cell_prototype(), {0, 0, 0}};
+      curr_map.load_state(map_chunk);
+      _map_cache->push_back(std::make_unique<BackGridMap>(std::move(curr_map)));
+    }
+    ensure_map_cache_is_continuous();
+    set_scale_id(finest_scale_id());
+  }
+
 protected:
 
   // coraser areas update policy
@@ -130,6 +166,7 @@ protected:
   }
 
   void ensure_map_cache_is_continuous() const {
+    if (_map_cache->size() < 2) { return; }
     static const int PC_W_Target = Coarsest_Map_W * Map_Scale_Factor,
                      PC_H_Target = Coarsest_Map_H * Map_Scale_Factor;
 

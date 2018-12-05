@@ -35,13 +35,14 @@ public:
   }
 
   virtual std::vector<char> serialize() const {
-      Serializer s; s << _occupancy.prob_occ << _occupancy.estimation_quality;
+      Serializer s;
+      s << _occupancy.prob_occ << _occupancy.estimation_quality << _is_unknown;
       return s.result();
   }
 
   virtual size_t deserialize(const std::vector<char>& data, size_t pos = 0) {
       Deserializer d(data, pos);
-      d >> _occupancy.prob_occ >> _occupancy.estimation_quality;
+      d >> _occupancy.prob_occ >> _occupancy.estimation_quality >> _is_unknown;
       return d.pos();
   }
 

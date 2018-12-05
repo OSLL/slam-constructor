@@ -74,6 +74,10 @@ public:
         return ptr;
     }
 
+    void inc_pose(std::size_t delta) {
+      ptr += delta;
+    }
+
     template<typename Type>
     Type read_value() {
         Type value = *reinterpret_cast<const Type*>(data.data() + ptr);
