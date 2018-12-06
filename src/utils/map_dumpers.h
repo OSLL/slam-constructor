@@ -10,8 +10,7 @@
 #include "../core/states/state_data.h"
 #include "../core/maps/grid_map.h"
 
-template <typename GridMapType>
-class GridMapToPgmDumber : public WorldMapObserver<GridMapType> {
+class GridMapToPgmDumber : public WorldMapObserver<GridMap> {
   // Used PGM format discription: http://netpbm.sourceforge.net/doc/pgm.html
 private:
   using IntensityType = unsigned char;
@@ -55,7 +54,7 @@ public:
     : _base_fname{base_fname + "_"}
     , _id{0} {}
 
-  void on_map_update(const GridMapType &map) override {
+  void on_map_update(const GridMap &map) override {
     auto dst = std::ofstream{_base_fname + std::to_string(_id) + ".pgm",
                              std::ios::binary | std::ios::out};
     dump_map(dst, map);
@@ -63,7 +62,7 @@ public:
     ++_id;
   }
 
-  static void dump_map(std::ofstream &os, const GridMapType &map) {
+  static void dump_map(std::ofstream &os, const GridMap &map) {
     auto w = map.width(), h = map.height();
     auto origin = map.origin();
     // write pgm header
@@ -72,7 +71,7 @@ public:
     os.write(&new_line, sizeof(new_line));
 
     // write map content
-    using AreaId = typename GridMapType::Coord;
+    using AreaId = typename GridMap::Coord;
     auto area_id = AreaId{};
 
     int val_nm = 0;

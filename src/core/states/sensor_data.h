@@ -145,6 +145,8 @@ struct LaserScan2D {
 public:
   using Points = std::vector<ScanPoint2D>;
 public:
+  LaserScan2D() : trig_provider{std::make_shared<RawTrigonometryProvider>()} {}
+
   const Points& points() const { return _points; }
   Points& points() {
     return const_cast<Points&>(
@@ -172,6 +174,31 @@ public:
 private:
   Points _points;
 };
+
+std::ostream& operator<<(std::ostream &osm, const LaserScan2D &scan) {
+  osm << scan.points().size() << std::endl;
+  for (const auto &sp : scan.points()) {
+    osm << sp.range() << " " << sp.angle() << " "
+        << sp.is_occupied() << std::endl;
+  }
+  return osm;
+}
+
+std::istream& operator>>(std::istream &ism, LaserScan2D &scan) {
+  using sp_nm_t = typename LaserScan2D::Points::size_type;
+  auto sp_nm = sp_nm_t{0};
+  ism >> sp_nm;
+
+  scan.points().clear();
+  for (sp_nm_t sp_i = 0; sp_i < sp_nm; sp_i++) {
+    double range = 0, angle = 0;
+    bool is_occupied;
+    ism >> range >> angle >> is_occupied;
+    scan.points().push_back(ScanPoint2D::make_polar(range, angle, is_occupied));
+  }
+
+  return ism;
+}
 
 struct TransformedLaserScan {
   RobotPoseDelta pose_delta;

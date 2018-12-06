@@ -4,6 +4,8 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <algorithm>
+#include <iterator>
 
 #include <sensor_msgs/LaserScan.h>
 
@@ -83,6 +85,37 @@ struct ProgramArgs {
   bool is_verbose;
 };
 
+void dump_map_image(std::shared_ptr<LaserScanGridWorld> slam,
+                    const ProgramArgs &args) {
+  if (args.map_fname.empty()) { return; }
+
+  auto map_strm = std::ofstream{args.map_fname, std::ios::binary};
+  GridMapToPgmDumber::dump_map(map_strm, slam->map());
+}
+
+void dump_state(const std::string &id,
+                std::shared_ptr<LaserScanGridWorld> slam,
+                const LaserScan2D &scan) {
+  // pose
+  auto pose_strm = std::ofstream{id + ".pose2D"};
+  auto pose = slam->pose();
+  pose_strm << pose.x << " " << pose.y << " " << pose.theta;
+  pose_strm.close();
+
+  // scan
+  auto scan_strm = std::ofstream{id + ".scan2D"};
+  scan_strm << scan;
+  scan_strm.close();
+
+  // map
+  // TODO: validate
+  auto map_strm = std::ofstream{id + ".map"};
+  auto buf = slam->map().save_state();
+  std::copy(buf.begin(), buf.end(),
+            std::ostreambuf_iterator<char>{map_strm});
+  map_strm.close();
+}
+
 void run_slam(std::shared_ptr<LaserScanGridWorld> slam,
               const ProgramArgs &args) {
   auto lscan_observer = LaserScanObserver{
@@ -100,6 +133,11 @@ void run_slam(std::shared_ptr<LaserScanGridWorld> slam,
 
   auto scan_id = unsigned{0};
   while (bag.extract_next_msg()) {
+    // if (scan_id == 2) {
+    //   dump_state("2", slam, lscan_observer.msg2scan(bag.msg()).scan);
+    //   std::exit(0);
+    // }
+
     lscan_observer.handle_transformed_msg(bag.msg(), bag.transform());
     if (args.traj_dumper) {
       args.traj_dumper->log_robot_pose(bag.timestamp(), slam->pose());
@@ -111,11 +149,7 @@ void run_slam(std::shared_ptr<LaserScanGridWorld> slam,
     }
   }
 
-  if (!args.map_fname.empty()) {
-    auto map_file = std::ofstream{args.map_fname, std::ios::binary};
-    using MapT = LaserScanGridWorld::MapType;
-    GridMapToPgmDumber<MapT>::dump_map(map_file, slam->map());
-  }
+  dump_map_image(slam, args);
 }
 
 int main(int argc, char** argv) {

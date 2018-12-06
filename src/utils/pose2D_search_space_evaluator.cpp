@@ -82,7 +82,7 @@ void run_closed_corridor_case() {
     }
   }
 
-  GridMapToPgmDumber<decltype(map)>{"input_map"}.on_map_update(map);
+  GridMapToPgmDumber{"input_map"}.on_map_update(map);
   // TODO: dump scan
   run_evaluation(map, 0.01);
 }
@@ -112,7 +112,7 @@ void run_open_corridor_case() {
   //   }
   // }
 
-  GridMapToPgmDumber<decltype(map)>{"input_map"}.on_map_update(map);
+  GridMapToPgmDumber{"input_map"}.on_map_update(map);
   // TODO: dump scan
   run_evaluation(map, 0.01);
 }
@@ -127,7 +127,7 @@ void run_several_corridors_case() {
   GridMapPatcher{}.apply_text_raster(map, primitive.to_stream(), {0, 7}, 1, 1);
 
 
-  GridMapToPgmDumber<decltype(map)>{"input_map"}.on_map_update(map);
+  GridMapToPgmDumber{"input_map"}.on_map_update(map);
   // TODO: dump scan
   run_evaluation(map, 0.01);
 }
@@ -148,7 +148,7 @@ void dump_scan(const LaserScan2D &scan, const RobotPose &pose) {
                                                 Occupancy{0.0, 1.0}))
     .build();
   scan_adder->append_scan(map, pose, scan, 1.0);
-  GridMapToPgmDumber<decltype(map)>{"scan"}.on_map_update(map);
+  GridMapToPgmDumber{"scan"}.on_map_update(map);
 }
 
 void run_evaluation(const GridMap &map, double resolution) {
@@ -178,8 +178,7 @@ void run_evaluation(const GridMap &map, double resolution) {
   auto diff = std::chrono::duration<double>(end_time - start_time);
   std::cout << "BF: " << diff.count() << std::endl;
   
-  GridMapToPgmDumber<GridMap>{"sss_map"}
-    .on_map_update(*(sssb->map()));
+  GridMapToPgmDumber{"sss_map"}.on_map_update(*(sssb->map()));
 
   // TODO: generate testee search space map
 }
