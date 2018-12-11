@@ -32,6 +32,32 @@ public:
   using RescalableCachingGridMap<BackGridMap>::finest_scale_id;
   using RescalableCachingGridMap<BackGridMap>::coarsest_scale_id;
 
+public:
+
+  bool validate() const override {
+    const auto &finest_map = map(finest_scale_id());
+    for (auto id = finest_scale_id() + 1; id <= coarsest_scale_id(); ++id) {
+      const auto &coarser_map = map(id);
+      auto raw_crd = DiscretePoint2D{0, 0};
+      for (raw_crd.x = 0; raw_crd.x < coarser_map.width(); ++raw_crd.x) {
+        for (raw_crd.y = 0; raw_crd.y < coarser_map.height(); ++raw_crd.y) {
+          auto area_id = coarser_map.internal2external(raw_crd);
+          auto area = coarser_map.world_cell_bounds(area_id);
+
+          auto max_f_impact = estimate_max_spe_impact(finest_map, area);
+          auto c_impact = estimate_spe_obstacle_impact(coarser_map[area_id]);
+          // NB: use le, since probability of coarser areas are not descreased
+          //     is the current impleentation (see post_area_update)
+          if (!less_or_equal(max_f_impact, c_impact)) {
+            std::cout << max_f_impact << " " << c_impact << std::endl;
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+
 protected:
   using RescalableCachingGridMap<BackGridMap>::active_map;
   using RescalableCachingGridMap<BackGridMap>::map;
@@ -42,18 +68,45 @@ protected:
     return _oie->estimate_obstacle_impact(area);
   }
 
-  void on_area_update(const AreaId &area_id) {
-    using GRRectangle = GridRasterizedRectangle;
+  double estimate_max_spe_impact(const GridMap &map,
+                                 const Rectangle &area) const {
+    double max = std::numeric_limits<double>::lowest();
+    for (auto &a_id : GridRasterizedRectangle{map, area, false}.to_vector()) {
+      if (map[a_id].is_unknown()) { continue; }
+      max = std::max(estimate_spe_obstacle_impact(map[a_id]), max);
+    }
+
+    if (are_equal(max, std::numeric_limits<double>::lowest())) {
+      max = estimate_spe_obstacle_impact(*GridMap::cell_prototype());
+    }
+    return max;
+  }
+
+  void pre_area_update(const AreaId &area_id) {
+    _prev_fine_impact = estimate_spe_obstacle_impact(active_map()[area_id]); 
+  }
+
+  void post_area_update(const AreaId &area_id) {
     // TODO: update if a "non-finest" cell is updated?
     assert(scale_id() == finest_scale_id());
     const auto &modified_area = active_map()[area_id];
     auto modified_space = active_map().world_cell_bounds(area_id);
     auto fine_impact = estimate_spe_obstacle_impact(modified_area);
 
+    // TODO: implement coarcer maps update on impact decrease
+    // assert(less_or_equal(_prev_fine_impact, fine_impact));
+    update_coarser_maps(area_id, fine_impact);
+  }
+
+  void update_coarser_maps(const AreaId &area_id, const double impact) {
+    const auto &modified_area = active_map()[area_id];
+    auto modified_space = active_map().world_cell_bounds(area_id);
+
     for (unsigned coarser_scale_id = scale_id() + 1;
          coarser_scale_id <= coarsest_scale_id(); ++coarser_scale_id) {
       auto& coarser_map = map(coarser_scale_id);
       bool coarser_area_is_updated = false;
+      using GRRectangle = GridRasterizedRectangle;
       auto cm_coords = GRRectangle{coarser_map, modified_space, false};
       while (cm_coords.has_next()) {
         auto coord = cm_coords.next();
@@ -62,7 +115,7 @@ protected:
         // TODO: move "propagate max" to the strategy if required.
         auto coarser_update_is_not_required =
           !coarser_area.is_unknown() &&
-          less_or_equal(fine_impact, coarser_impact);
+          less_or_equal(impact, coarser_impact);
         if (coarser_update_is_not_required) { continue; }
 
         coarser_map.reset(coord, modified_area);
@@ -71,8 +124,10 @@ protected:
       if (!coarser_area_is_updated) { break; }
     }
   }
+
 private:
   std::shared_ptr<ObservationImpactEstimator> _oie;
+  double _prev_fine_impact;
 };
 
 struct Match {
@@ -295,7 +350,7 @@ private:
     for (auto& finer_drift : finer_drifts) {
       auto finer_match = Match{finer_drift, coarse_match};
       assert(less_or_equal(finer_match.prob_upper_bound,
-                           coarse_match.prob_upper_bound) &&
+                           coarse_match.prob_upper_bound, 1e-5) &&
              "BUG: Bounding assumption is violated");
       add_match(std::move(finer_match));
     }

@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
   auto pose = setup_pose2D(argv[Pose_File_I]);
   auto raw_scan = setup_laser_scan2D(argv[Scan_File_I]);
   auto map = setup_map(props, argv[Map_File_I]);
-  // TODO: validate map
+  assert(map->validate());
 
   // 2)
   auto sm = init_scan_matcher(props);

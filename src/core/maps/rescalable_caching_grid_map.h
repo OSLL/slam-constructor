@@ -99,14 +99,16 @@ public:
 
   void update(const Coord &area_id,
               const AreaOccupancyObservation &aoo) override {
+    pre_area_update(area_id);
     active_map().update(area_id, aoo);
-    on_area_update(area_id);
+    post_area_update(area_id);
   }
 
   void reset(const Coord &area_id,
              const GridCell &area) override {
+    pre_area_update(area_id);
     active_map().reset(area_id, area);
-    on_area_update(area_id);
+    post_area_update(area_id);
   }
 
   // = Serialization
@@ -145,7 +147,8 @@ public:
 protected:
 
   // coraser areas update policy
-  virtual void on_area_update(const AreaId &area_id) {}
+  virtual void pre_area_update(const AreaId &area_id) {}
+  virtual void post_area_update(const AreaId &area_id) {}
 
   const GridMap& map(unsigned scale_id) const {
     return *(*_map_cache)[scale_id];

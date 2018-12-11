@@ -60,7 +60,7 @@ public:
   }
 
   virtual const GridCell &operator[](const Coord& coord) const = 0;
-
+  virtual bool validate() const { return true; }
   virtual void load_state(const std::vector<char>&) {}
   virtual std::vector<char> save_state() const {
       return std::vector<char>();

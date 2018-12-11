@@ -63,6 +63,7 @@ protected:
 
   template <typename BaseMapType>
   void verify_map_state(TesteeMapType<BaseMapType> &map) {
+    ASSERT_TRUE(map.validate());
     for (unsigned scale_id = map.finest_scale_id();
          scale_id <= map.coarsest_scale_id(); ++scale_id) {
       map.set_scale_id(scale_id);

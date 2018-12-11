@@ -38,6 +38,10 @@ inline bool less_or_equal(double a, double b) {
   return are_equal(a, b) || less(a, b);
 }
 
+inline bool less_or_equal(double a, double b, double eps) {
+  return are_equal(a, b, eps) || less(a, b);
+}
+
 inline bool are_strictly_ordered(double a, double b, double c) {
   return less(a, b) && less(b, c);
 }
