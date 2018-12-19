@@ -65,7 +65,7 @@ std::shared_ptr<ObservationMappingQualityEstimator> init_omqe(
     const PropertiesProvider &props) {
 
   static const auto MAPPING_NS = std::string{"slam/mapping/"};
-  static const auto OMQE_NS = MAPPING_NS + "observation_quality_estimator/type";
+  static const auto OMQE_NS = MAPPING_NS + "observation_quality_estimator/";
   // TODO: replace with <undefined> after config refactoring
   auto type = props.get_str(OMQE_NS + "type", "idle");
   std::cout << "Used OMQE: " << type << std::endl;
@@ -88,6 +88,7 @@ auto init_scan_adder(const PropertiesProvider &props) {
            .set_blur_distance(props.get_dbl("slam/mapping/blur", 0.0))
            .set_max_usable_range(props.get_dbl("slam/mapping/max_range",
                                                DBL_INF))
+           .set_should_add_empty(props.get_bool("slam/mapping/add_empty", true))
            .build();
 }
 

@@ -108,6 +108,7 @@ private:
     ADD_SETTER(std::shared_ptr<ObservationMappingQualityEstimator>,
                observation_quality_estimator);
     ADD_SETTER(double, max_usable_range);
+    ADD_SETTER(bool, should_add_empty);
   #undef ADD_SETTER
 
   public:
@@ -129,8 +130,19 @@ public:
     : GridMapScanAdder{props.occupancy_estimator(),
                        props.observation_quality_estimator()}
     , _props{props}
-    , _max_usable_range_sq{std::pow(_props.max_usable_range(), 2)}{}
+    , _max_usable_range_sq{std::pow(_props.max_usable_range(), 2)}
+    , _should_add_empty{_props.should_add_empty()} {}
 protected:
+
+  decltype(auto) estimate_empty_area_ids(
+    const GridMap &map, const Segment2D &beam,
+    const GridMap::AreaId &obst_area_id) const {
+
+    auto area_ids_covered_by_beam = map.world_to_cells(beam);
+    assert(area_ids_covered_by_beam.back() == obst_area_id);
+    area_ids_covered_by_beam.pop_back(); // remove already updated occupied area
+    return area_ids_covered_by_beam;
+  }
 
   // TODO: limit beam randering by distance
   //       either from a robot or a from obstace
@@ -140,26 +152,28 @@ protected:
     if (_max_usable_range_sq < beam.length_sq()) {
       return;
     }
+
+    auto obst_area_id = map.world_to_cell(beam.end());
+    auto obst_area_bounds = map.world_cell_bounds(obst_area_id);
+    auto base_occup = estimate_occupancy(beam, obst_area_bounds, is_occ);
+    auto occ_aoo = AOO{is_occ, base_occup, beam.end(), scan_quality};
+
+    map.update(obst_area_id, occ_aoo);
+    if (!_should_add_empty) { return; }
+
     // TODO: simplify, consider performance if _blur_dist is not set
     //       (a static factory method)
-    auto robot_pt = map.world_to_cell(beam.beg());
-    auto obst_pt = map.world_to_cell(beam.end());
-    auto obst_dist_sq = robot_pt.dist_sq(obst_pt);
+    auto empty_area_ids = estimate_empty_area_ids(map, beam, obst_area_id);
+
+    auto robot_area_id = map.world_to_cell(beam.beg());
+    auto obst_dist_sq = robot_area_id.dist_sq(obst_area_id);
     auto hole_dist_sq = std::pow(blur_cell_dist(map, beam, is_occ), 2);
-
-    auto pts = map.world_to_cells(beam);
-    auto pt_bounds = map.world_cell_bounds(pts.back());
-    auto base_occup = estimate_occupancy(beam, pt_bounds, is_occ);
-    auto occ_aoo = AOO{is_occ, base_occup, beam.end(), scan_quality};
-    map.update(pts.back(), occ_aoo);
-    pts.pop_back();
-
     auto empty_aoo = AOO{false, {0, 0}, beam.end(), scan_quality};
-    for (const auto &pt : pts) {
-      const auto dist_sq = pt.dist_sq(obst_pt);
-      auto pt_bounds = map.world_cell_bounds(pt);
+    for (const auto &empty_area_id : empty_area_ids) {
+      const auto dist_sq = empty_area_id.dist_sq(obst_area_id);
+      auto empty_area_bounds = map.world_cell_bounds(empty_area_id);
       empty_aoo.is_occupied = false;
-      empty_aoo.occupancy = estimate_occupancy(beam, pt_bounds, false);
+      empty_aoo.occupancy = estimate_occupancy(beam, empty_area_bounds, false);
 
       if (dist_sq < hole_dist_sq && hole_dist_sq < obst_dist_sq) {
         // NB: empty cell occupancy quality is not changed
@@ -167,7 +181,7 @@ protected:
         auto prob_scale = 1.0 - dist_sq / hole_dist_sq;
         empty_aoo.occupancy.prob_occ = base_occup.prob_occ * prob_scale;
       }
-      map.update(pt, empty_aoo);
+      map.update(empty_area_id, empty_aoo);
     }
   }
 
@@ -191,6 +205,7 @@ private:
 private:
   ScanAdderProperties _props;
   double _max_usable_range_sq;
+  bool _should_add_empty;
 };
 
 #endif
