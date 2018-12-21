@@ -5,6 +5,7 @@
 #include <memory>
 #include <algorithm>
 #include <limits>
+#include <functional>
 
 #include "../states/state_data.h"
 #include "../states/sensor_data.h"
