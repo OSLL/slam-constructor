@@ -157,5 +157,5 @@ lslam2d_bag_runner <slam type> <bag file>
 * Anton Filatov
 * Artem Filatov
 
-Copyright (c) 2018 JetBrains Research, Mobile Robot Algorithms Laboratory
+Copyright (c) 2019 JetBrains Research, Mobile Robot Algorithms Laboratory
 
