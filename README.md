@@ -151,11 +151,11 @@ lslam2d_bag_runner <slam type> <bag file>
 
 ## Contributors
 
-* Artur Huletski
-* Dmitriy Kartashov
-* Kirill Krinkin
-* Anton Filatov
-* Artem Filatov
+* Artur Huletski (JetBrains Research)
+* Dmitriy Kartashov (JetBrains Research)
+* Kirill Krinkin (JetBrains Research, SPb ETU)
+* Anton Filatov (JetBrains Research, SPb ETU)
+* Artem Filatov (JetBrains Research, SPb ETU)
 
-Copyright (c) 2019 JetBrains Research, Mobile Robot Algorithms Laboratory
+Copyright (c) 2017-2020 JetBrains Research, Mobile Robot Algorithms Laboratory
 
