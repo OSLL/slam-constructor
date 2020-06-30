@@ -54,8 +54,11 @@ public:
     sm->reset_state();
 
     auto pose_delta = RobotPoseDelta{};
-    sm->process_scan(tr_scan, pose(), map(), pose_delta);
+    auto score = sm->process_scan(tr_scan, pose(), map(), pose_delta);
     update_robot_pose(pose_delta);
+
+    if (score < 0)
+      return;
 
     tr_scan.quality = pose_delta ? _props.localized_scan_quality
                                  : _props.raw_scan_quality;

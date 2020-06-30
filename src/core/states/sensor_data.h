@@ -205,6 +205,8 @@ struct TransformedLaserScan {
 
   LaserScan2D scan;
   double quality; // 0 - low, 1 - fine
+  double range_min;
+  double range_max;
 };
 
 #endif
