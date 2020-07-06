@@ -56,6 +56,8 @@ public:
     }
   }
 
+
+
 private:
   void reset_shift(double new_translation_dispersion,
                    double new_rotation_dispersion) {
@@ -65,6 +67,7 @@ private:
     _pose_shift_rv = {GaussianRV1D<Engine>{0, _translation_dispersion},
                       GaussianRV1D<Engine>{0, _translation_dispersion},
                       GaussianRV1D<Engine>{0, _rotation_dispersion}};
+                      
   }
 
   void reset_shift(double dispersion_scale_factor) {
@@ -104,7 +107,7 @@ public:
                       const RobotPose &init_pose,
                       const GridMap &map,
                       RobotPoseDelta &pose_delta) override {
-    auto histogram = make_range_hist(raw_scan);
+    auto histogram = make_mean_ragne_hist(raw_scan);
     
     double correlation = calc_buf_correlation(histogram);
     std::cout << "correlation " <<correlation << std::endl;
@@ -170,6 +173,29 @@ using my_t = double;
 
     for (int i = 0; i < column_amount + 1; i++) {
       histogram[i] = sq_means[i]/ (double)column_amount - means[i] / (double)(column_amount * column_amount);
+    }
+
+    return histogram;
+  }
+
+  std::vector<double> make_mean_ragne_hist(const TransformedLaserScan &scan) {
+    int column_amount = 30;
+    std::vector<double> histogram(column_amount + 1, 0);
+    std::vector<double> means(column_amount + 1, 0);
+    std::vector<double> sq_means(column_amount + 1, 0);
+
+    double column_part = (double) column_amount / (double) scan.scan.points().size();
+
+    for (int i = 0; i < scan.scan.points().size(); i++) {
+      if((int)((double) i * column_part) <= column_amount) {
+        //std::cout << (int) ((double)i * column_part) << std::endl;
+        means[ (int) ((double)i * column_part)] += scan.scan.points()[i].range();
+      }
+      //std::cout << i << " " << i / items_in_column << std::endl;
+    }
+
+    for (int i = 0; i < column_amount + 1; i++) {
+      histogram[i] = means[i]/ (double)column_amount;
     }
 
     return histogram;
