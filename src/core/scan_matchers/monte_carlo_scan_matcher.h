@@ -107,12 +107,14 @@ public:
                       const RobotPose &init_pose,
                       const GridMap &map,
                       RobotPoseDelta &pose_delta) override {
-    auto histogram = make_mean_ragne_hist(raw_scan);
+    auto histogram = make_range_hist(raw_scan);
     
     double correlation = calc_buf_correlation(histogram);
     std::cout << "correlation " <<correlation << std::endl;
     add_scan_to_buf(histogram);
-    if(correlation > 0.8 and skipped_combo++ < 10) {
+    double scan_info = calc_scan_information(raw_scan);
+    bool required_scan = scan_info > 0.4;
+    if(correlation > 0.8 and skipped_combo++ < 10 and !required_scan) {
       pose_delta = {0,0,0};
       std::cout << "------------------------------"<< std::endl << "scan skipped" << std::endl;
       std::cout << skipped_scans++ << std::endl;
@@ -120,6 +122,8 @@ public:
 
     }
     else {
+      if(required_scan)
+        std::cout <<"!!!!!!!!!!!!!!!";
       skipped_combo = 0;
       std::cout << "------------------------------"<< std::endl << "scan proccesed" << std::endl;
       std::cout << total_scans++ << std::endl;
@@ -178,7 +182,7 @@ using my_t = double;
     return histogram;
   }
 
-  std::vector<double> make_mean_ragne_hist(const TransformedLaserScan &scan) {
+  std::vector<double> make_mean_range_hist(const TransformedLaserScan &scan) {
     int column_amount = 30;
     std::vector<double> histogram(column_amount + 1, 0);
     std::vector<double> means(column_amount + 1, 0);
@@ -243,6 +247,25 @@ using my_t = double;
 
   }
 
+  double calc_scan_information(const TransformedLaserScan &scan) {
+    auto sgn = [] (double val) {return (0.0 < val) - (val < 0); };
+    int score = 0;
+    bool point_is_in_front = false;
+    bool point_is_in_left = false;
+    auto& points = scan.scan.points();
+    //std::cout << scan.scan.points()[1].angle() << std::endl;
+    for (unsigned i = 0; i < points.size(); i++) {
+
+      point_is_in_front = (-M_PI_2 < points[i].angle()) && (points[i].angle() < M_PI_2);
+      point_is_in_left = points[i].angle() < 0.0;
+      score += sgn(points[i].range() - points[i+1].range()) * (point_is_in_front ? 1 : -1) * (point_is_in_left ? 1 : -1);
+    }
+    return (double) std::abs(score) / (double) points.size();
+    if (abs(score) > 500)
+      std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ";
+    std::cout << score << std::endl;
+  }
+
 private:
   std::list<std::vector<my_t>> scan_buffer;
   int total_scans = 0, skipped_scans = 0;
@@ -250,3 +273,4 @@ private:
 };
 
 #endif
+

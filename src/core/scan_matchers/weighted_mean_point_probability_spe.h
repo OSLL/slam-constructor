@@ -51,9 +51,9 @@ public:
     auto angle = sp.angle();
     auto weight = std::abs(std::sin(angle)) + std::abs(std::cos(angle));
     if (0.9 < std::abs(std::cos(angle))) {
-      weight = 3;
+      weight = 3.5;
     } else if (0.8 < std::abs(std::cos(angle))) {
-      weight = 2;
+      weight = 2.5;
     }
     return weight * std::sqrt(sp.range());
   }
