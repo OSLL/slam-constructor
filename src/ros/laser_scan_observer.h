@@ -45,6 +45,8 @@ public: //methods
     transformed_scan.scan.trig_provider = trig_provider(msg);
 
     double sp_angle = msg->angle_min - msg->angle_increment;
+    double range_max = -1.0;
+    double range_min = msg->range_max + 1.0;
     for (const auto &range : msg->ranges) {
       bool sp_is_occupied = true;
       double sp_range = range;
@@ -61,10 +63,18 @@ public: //methods
         }
       }
 
+
+      if (range_max < sp_range)
+        range_max = sp_range;
+      if(sp_range < range_min)
+        range_min = sp_range;
+      
       // add a scan point to a scan
       transformed_scan.scan.points().emplace_back(sp_range, sp_angle,
                                                   sp_is_occupied);
     }
+    transformed_scan.range_max = range_max;
+    transformed_scan.range_min = range_min;
     assert(are_equal<double>(sp_angle, msg->angle_max, deg2rad(0.001)));
     return transformed_scan;
   }

@@ -107,7 +107,7 @@ public:
                       const RobotPose &init_pose,
                       const GridMap &map,
                       RobotPoseDelta &pose_delta) override {
-    auto histogram = make_range_hist(raw_scan);
+    auto histogram = make_hist(raw_scan);
     
     double correlation = calc_buf_correlation(histogram);
     std::cout << "correlation " <<correlation << std::endl;
@@ -134,10 +134,11 @@ public:
 
 private:
   
-using my_t = double;
+using my_t = long;
 
   std::vector<long> make_hist(const TransformedLaserScan &scan){
-    int column_amount = 20; ///////////////////////////////////////////////////// 20 <======== magic constant
+std::cout << "!!" << std::endl;
+    int column_amount = 30; ///////////////////////////////////////////////////// 20 <======== magic constant
     std::vector<long> histogram(column_amount + 1);
     double range_size = scan.range_max - scan.range_min;
 
@@ -183,7 +184,7 @@ using my_t = double;
   }
 
   std::vector<double> make_mean_range_hist(const TransformedLaserScan &scan) {
-    int column_amount = 30;
+    int column_amount = 40;
     std::vector<double> histogram(column_amount + 1, 0);
     std::vector<double> means(column_amount + 1, 0);
     std::vector<double> sq_means(column_amount + 1, 0);
@@ -207,7 +208,7 @@ using my_t = double;
 
   template <typename T>
   void add_scan_to_buf(const std::vector<T> &raw_scan) {
-    if (scan_buffer.size() > 4) {
+    if (scan_buffer.size() > 6) {
       scan_buffer.pop_front();
     }
     scan_buffer.push_back(raw_scan);
@@ -248,17 +249,18 @@ using my_t = double;
   }
 
   double calc_scan_information(const TransformedLaserScan &scan) {
-    auto sgn = [] (double val) {return (0.0 < val) - (val < 0); };
+    auto sgn = [] (double val) {return (0.0 < val) - (val < 0.0); };
     int score = 0;
     bool point_is_in_front = false;
     bool point_is_in_left = false;
     auto& points = scan.scan.points();
     //std::cout << scan.scan.points()[1].angle() << std::endl;
-    for (unsigned i = 0; i < points.size(); i++) {
+    std::vector<int> score_buf = {0,0,0,0};
+    for (unsigned i = 0; i < points.size() - 3; i++) {
 
       point_is_in_front = (-M_PI_2 < points[i].angle()) && (points[i].angle() < M_PI_2);
       point_is_in_left = points[i].angle() < 0.0;
-      score += sgn(points[i].range() - points[i+1].range()) * (point_is_in_front ? 1 : -1) * (point_is_in_left ? 1 : -1);
+      score += sgn(points[i].range() - points[i+3].range()) * (point_is_in_front ? 1 : -1) * (point_is_in_left ? 1 : -1);;
     }
     return (double) std::abs(score) / (double) points.size();
     if (abs(score) > 500)
