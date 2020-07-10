@@ -107,7 +107,7 @@ public:
                       const RobotPose &init_pose,
                       const GridMap &map,
                       RobotPoseDelta &pose_delta) override {
-    auto histogram = make_hist(raw_scan);
+    auto histogram = make_TBM_hist(raw_scan);
     
     double correlation = calc_buf_correlation(histogram);
     std::cout << "correlation " <<correlation << std::endl;
@@ -134,7 +134,7 @@ public:
 
 private:
   
-using my_t = long;
+using my_t = double;
 
   std::vector<long> make_hist(const TransformedLaserScan &scan){
 std::cout << "!!" << std::endl;
@@ -206,9 +206,34 @@ std::cout << "!!" << std::endl;
     return histogram;
   }
 
+
+  std::vector<double> make_TBM_hist(const TransformedLaserScan &scan) {
+    int column_amount = 30;
+    std::vector<double> histogram(column_amount + 1, 0);
+    std::vector<MTBM> coherences(column_amount + 1, 0);
+    double range_size = scan.range_max - scan.range_min;
+
+    auto& points = scan.scan.points();
+    double column_part = (double) column_amount / (double) points.size();
+
+    for (int i = 0; i < points.size(); i++) {
+      if((int)((double) i * column_part) <= column_amount) {
+        double close_to_max = (points[i].range() - scan.range_min)/range_size;
+        double close_to_min = 1 - close_to_max;
+        coherences[(int)((double)i * column_part)] *= MTBM(close_to_max*0.9, close_to_min*0.9, 0.1);
+      }
+    }
+
+    for (int i = 0; i < column_amount + 1; i++) {
+      histogram[i] = coherences[i].a;
+    }
+
+    return histogram;
+  }
+
   template <typename T>
   void add_scan_to_buf(const std::vector<T> &raw_scan) {
-    if (scan_buffer.size() > 6) {
+    if (scan_buffer.size() > 3) {
       scan_buffer.pop_front();
     }
     scan_buffer.push_back(raw_scan);
@@ -272,6 +297,36 @@ private:
   std::list<std::vector<my_t>> scan_buffer;
   int total_scans = 0, skipped_scans = 0;
   int skipped_combo = 0;
+
+  struct MTBM {
+    double a;
+    double b;
+    double ab;
+    bool is_zero(double val) {
+      return (val < 0.00001)  && (-0.00001 < val);
+    }
+
+    MTBM(double A = 0, double B = 0, double AB = 0) : a(A), b(B), ab(AB) {}
+
+    MTBM operator * (MTBM x) {
+      
+      if (is_zero(a) && is_zero(b) && is_zero(ab))
+        return x;
+      MTBM res;
+      double conflict = x.a * this->b + x.b * this->a;
+      conflict = 1/(1 - conflict);
+      res.a = (x.a * this->a + x.a * this->ab + x.ab * this->a) * conflict;
+      res.b = (x.b * this->b + x.b * this->ab + x.ab * this->b) * conflict;
+      res.ab = (x.ab * this->ab) * conflict;
+      return res;
+    }
+
+    MTBM operator *= (MTBM x) {
+      *this = *this * x;
+      return *this; 
+    }
+  };
+
 };
 
 #endif
