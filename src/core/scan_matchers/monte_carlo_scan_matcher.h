@@ -107,14 +107,14 @@ public:
                       const RobotPose &init_pose,
                       const GridMap &map,
                       RobotPoseDelta &pose_delta) override {
-    auto histogram = make_TBM_hist(raw_scan);
+    auto histogram = make_mean_range_hist(raw_scan);
     
     double correlation = calc_buf_correlation(histogram);
     std::cout << "correlation " <<correlation << std::endl;
     add_scan_to_buf(histogram);
     double scan_info = calc_scan_information(raw_scan);
     bool required_scan = scan_info > 0.4;
-    if(correlation > 0.8 and skipped_combo++ < 10 and !required_scan) {
+    if(correlation > 0.9 and skipped_combo++ < 10 and !required_scan) {
       pose_delta = {0,0,0};
       std::cout << "------------------------------"<< std::endl << "scan skipped" << std::endl;
       std::cout << skipped_scans++ << std::endl;
@@ -233,7 +233,7 @@ std::cout << "!!" << std::endl;
 
   template <typename T>
   void add_scan_to_buf(const std::vector<T> &raw_scan) {
-    if (scan_buffer.size() > 3) {
+    if (scan_buffer.size() > 7) {
       scan_buffer.pop_front();
     }
     scan_buffer.push_back(raw_scan);
