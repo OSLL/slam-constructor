@@ -107,7 +107,7 @@ public:
                       const RobotPose &init_pose,
                       const GridMap &map,
                       RobotPoseDelta &pose_delta) override {
-    auto histogram = make_hist(raw_scan);
+    auto histogram = make_mean_range_hist(raw_scan);
     
     double correlation = calc_buf_correlation(histogram);
     std::cout << "correlation " <<correlation << std::endl;
@@ -184,7 +184,7 @@ std::cout << "!!" << std::endl;
   }
 
   std::vector<double> make_mean_range_hist(const TransformedLaserScan &scan) {
-    int column_amount = 40;
+    int column_amount = 30;
     std::vector<double> histogram(column_amount + 1, 0);
     std::vector<double> means(column_amount + 1, 0);
     std::vector<double> sq_means(column_amount + 1, 0);
@@ -233,7 +233,7 @@ std::cout << "!!" << std::endl;
 
   template <typename T>
   void add_scan_to_buf(const std::vector<T> &raw_scan) {
-    if (scan_buffer.size() > 7) {
+    if (scan_buffer.size() > 4) {
       scan_buffer.pop_front();
     }
     scan_buffer.push_back(raw_scan);
