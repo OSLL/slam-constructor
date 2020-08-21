@@ -37,6 +37,7 @@ add_executable(credibilist_slam src/slams/credibilist/slam.cpp)
 add_executable(path_publisher src/ros/path_publisher.cpp)
 add_executable(p2D_ss_evaluator src/utils/pose2D_search_space_evaluator.cpp)
 add_executable(sm_runner src/utils/sm_runner.cpp)
+add_executable(scan_filter src/ros/scan_filter.cpp)
 
 target_link_libraries(wg_pr2_bag_adapter ${catkin_LIBRARIES})
 target_link_libraries(lslam2D_bag_runner ${catkin_LIBRARIES})
@@ -46,6 +47,7 @@ target_link_libraries(credibilist_slam ${catkin_LIBRARIES})
 #target_link_libraries(graph_slam ${catkin_LIBRARIES})
 #target_link_libraries(viny_slam_x ${catkin_LIBRARIES})
 target_link_libraries(path_publisher ${catkin_LIBRARIES})
+target_link_libraries(scan_filter ${catkin_LIBRARIES})
 
 install(
   TARGETS wg_pr2_bag_adapter lslam2D_bag_runner sh_slam gmapping credibilist_slam path_publisher
