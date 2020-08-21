@@ -20,8 +20,6 @@ private:
   std::list<std::vector<my_t>> scan_buffer;
   int total_scans = 0, skipped_scans = 0;
   int skipped_combo = 0;
-  //RobotPose prev_pose;
-  //std::ofstream poses;
 
   struct LaserScan_info {
     struct Point {
@@ -121,11 +119,9 @@ private:
 
     for (unsigned i = 0; i < scan.points.size(); i++) {
       if((int)((double) i * column_part) <= column_amount) {
-        //std::cout << (int) ((double)i * column_part) << std::endl;
         means[ (int) ((double)i * column_part)] += scan.points[i].range;
         sq_means[ (int) ((double)i * column_part)] += scan.points[i].range * scan.points[i].range;
       }
-      //std::cout << i << " " << i / items_in_column << std::endl;
     }
 
     for (int i = 0; i < column_amount + 1; i++) {
@@ -145,10 +141,8 @@ private:
 
     for (unsigned i = 0; i < scan.points.size(); i++) {
       if((int)((double) i * column_part) <= column_amount) {
-        //std::cout << (int) ((double)i * column_part) << std::endl;
         means[ (int) ((double)i * column_part)] += scan.points[i].range;
       }
-      //std::cout << i << " " << i / items_in_column << std::endl;
     }
 
     for (int i = 0; i < column_amount + 1; i++) {
@@ -157,31 +151,6 @@ private:
 
     return histogram;
   }
-
-
-  /*std::vector<double> make_TBM_hist(const LaserScan_info &scan) {
-    int column_amount = 30;
-    std::vector<double> histogram(column_amount + 1, 0);
-    std::vector<MTBM> coherences(column_amount + 1, 0);
-    double range_size = scan.range_max - scan.range_min;
-
-    auto& points = scan.scan.points();
-    double column_part = (double) column_amount / (double) points.size();
-
-    for (int i = 0; i < points.size(); i++) {
-      if((int)((double) i * column_part) <= column_amount) {
-        double close_to_max = (points[i].range() - scan.range_min)/range_size;
-        double close_to_min = 1 - close_to_max;
-        coherences[(int)((double)i * column_part)] *= MTBM(close_to_max*0.9, close_to_min*0.9, 0.1);
-      }
-    }
-
-    for (int i = 0; i < column_amount + 1; i++) {
-      histogram[i] = coherences[i].a;
-    }
-
-    return histogram;
-  }*/
 
   template <typename T>
   void add_scan_to_buf(const std::vector<T> &raw_scan) {
@@ -267,17 +236,13 @@ private:
   
 public:
   ROS_filter(std::string in_topic, std::string out_topic) {
-    p = nh.advertise<sensor_msgs::LaserScan>("/scan", 1000);
-    ros::spinOnce();
-    std::cout << "publisher created" << std::endl;
-    s = nh.subscribe("/base_scan", 1000, &ROS_filter::handle_scan, this);
-    ros::spinOnce();
-    std::cout << "subscriber created" << std::endl;
+    p = nh.advertise<sensor_msgs::LaserScan>(out_topic, 1000);
+    s = nh.subscribe(in_topic, 1000, &ROS_filter::handle_scan, this);
   }
 
-  void handle_scan(boost::shared_ptr<sensor_msgs::LaserScan> msg) {
-    if (sf.useful_scan(*msg))
-      p.publish(std::move(*msg));
+  void handle_scan(const sensor_msgs::LaserScan& msg) {
+    if (sf.useful_scan(msg))
+      p.publish(msg);
   }
 };
 
@@ -285,16 +250,7 @@ public:
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "scan_filter");
-  //ros::NodeHandle nh;
-  //ros::Subscriber s = nh.subscribe("/base_scan", 1000, handle_scan);
-  /*ros::Publisher p = nh.advertise<std_msgs::Int64>("/ololo", 1000);
-  ros::Rate r(100);
-  for (int i = 0; i < 10000000; i++) {
-      std_msgs::Int64 msg;
-      msg.data = i;
-      p.publish(msg);
-      r.sleep();
-    }*/
+
   ROS_filter r("/base_scan", "/scan");
   ros::spin();
 
